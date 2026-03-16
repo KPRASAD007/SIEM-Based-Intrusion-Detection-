@@ -45,6 +45,7 @@ async def process_log_for_alerts(log_dict: Dict[str, Any], db):
                 alert_dict["triggered_time"] = datetime.utcnow()
             result = await db.alerts.insert_one(alert_dict)
             alert_dict["_id"] = str(result.inserted_id)
+            alert_dict["id"] = alert_dict["_id"]
             
             # Broadcast alert
             await manager.broadcast({
@@ -212,6 +213,7 @@ async def ingest_caldera_webhook(payload: Dict[str, Any], db=Depends(get_db)):
             
         alert_db_result = await db.alerts.insert_one(alert_dict)
         alert_dict["_id"] = str(alert_db_result.inserted_id)
+        alert_dict["id"] = alert_dict["_id"]
         
         # Broadcast the alert
         await manager.broadcast({

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, User, MessageSquare, Clock, X, CheckCircle, AlertCircle, Plus, Send } from 'lucide-react';
+import { Briefcase, User, MessageSquare, Clock, X, CheckCircle, AlertCircle, Plus, Send, Shield, Activity, Target } from 'lucide-react';
+import KillChainVisualization from '../components/KillChainVisualization';
 
 export default function Incidents() {
   const [incidents, setIncidents] = useState([]);
@@ -14,6 +15,8 @@ export default function Incidents() {
     analyst_assigned: 'SOC Analyst',
   });
   const [creatingCase, setCreatingCase] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     fetchIncidents();
@@ -65,6 +68,25 @@ export default function Incidents() {
 
   const openCaseDetails = (inc) => {
     setSelectedCase(inc);
+    setAiAnalysis(null); // Reset analysis when opening new case
+  };
+
+  const runAIAnalysis = async () => {
+    if (!selectedCase) return;
+    setIsAnalyzing(true);
+    setAiAnalysis(null);
+    try {
+      const res = await fetch(`http://localhost:8000/api/incidents/${selectedCase.id}/ai-analyze`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAiAnalysis(data.analysis);
+      }
+    } catch (err) {
+      console.error("AI Analysis failed", err);
+    }
+    setIsAnalyzing(false);
   };
 
   const handleStatusUpdate = async (id, newStatus) => {
@@ -105,7 +127,31 @@ export default function Incidents() {
     }
     setSubmittingNote(false);
   };
-
+  const getTacticsFromMapping = (mappings) => {
+    if (!mappings) return [];
+    const techToTactic = {
+      'T1003': 'TA0006',
+      'T1110': 'TA0006',
+      'T1047': 'TA0008',
+      'T1059': 'TA0002',
+      'T1547': 'TA0003',
+      'T1053': 'TA0003',
+      'T1562': 'TA0005',
+      'T1105': 'TA0001',
+      'T1041': 'TA0010',
+      'T1486': 'TA0040',
+      'T1548': 'TA0004'
+    };
+    
+    const tactics = new Set();
+    mappings.forEach(m => {
+      const tid = m.match(/T\d+/)?.[0];
+      if (tid && techToTactic[tid]) {
+        tactics.add(techToTactic[tid]);
+      }
+    });
+    return Array.from(tactics);
+  };
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -229,15 +275,38 @@ export default function Incidents() {
                   </div>
 
                   <div className="bg-soc-panel/50 border border-soc-border rounded-lg p-4">
+                    <label className="text-xs text-soc-muted block mb-2 font-medium">L3 AI Assistant</label>
+                    <button 
+                      onClick={runAIAnalysis}
+                      disabled={isAnalyzing}
+                      className={`w-full py-2 rounded text-xs font-bold transition-all flex items-center justify-center space-x-2 ${isAnalyzing ? 'bg-soc-primary/20 text-soc-primary animate-pulse' : 'bg-gradient-to-r from-soc-primary to-blue-600 text-white shadow-lg shadow-soc-primary/20 hover:scale-[1.02]'}`}
+                    >
+                      {isAnalyzing ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <span>TRIAGING...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Shield size={14} />
+                          <span>DEEP DIVE ANALYSIS</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="bg-soc-panel/50 border border-soc-border rounded-lg p-4">
                     <label className="text-xs text-soc-muted block mb-2 font-medium">Evidence Context</label>
                     <div className="space-y-3">
                        <div className="flex justify-between text-xs">
                           <span className="text-soc-muted">Affected Host:</span>
-                          <span className="text-soc-text font-mono">LAB-WS-09</span>
+                          <span className="text-soc-text font-mono tracking-tight">LAB-WS-09</span>
                        </div>
                        <div className="flex justify-between text-xs">
-                          <span className="text-soc-muted">Linked Alerts:</span>
-                          <span className="text-soc-text">4 detected</span>
+                          <span className="text-soc-muted">Threat Score:</span>
+                          <span className={`${aiAnalysis?.score > 70 ? 'text-soc-critical' : 'text-soc-success'} font-bold`}>
+                            {aiAnalysis ? `${aiAnalysis.score}%` : 'Pending'}
+                          </span>
                        </div>
                     </div>
                   </div>
@@ -247,29 +316,80 @@ export default function Incidents() {
               {/* Right Column: Timeline & Notes */}
               <div className="flex-1 flex flex-col bg-soc-panel/30">
                 <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-6">
-                  <h4 className="text-xs font-semibold text-soc-muted uppercase tracking-widest mb-4">Investigation Timeline</h4>
-                  
-                  {(!selectedCase.notes || selectedCase.notes.length === 0) ? (
-                    <div className="text-center py-12 text-soc-muted">
-                      <Clock size={32} className="mx-auto mb-2 opacity-10" />
-                      <p className="text-sm">No notes have been recorded for this case yet.</p>
+                  {aiAnalysis ? (
+                    <div className="space-y-6 animate-in fade-in duration-500">
+                       {/* Kill Chain Visualization */}
+                       <KillChainVisualization activeTactics={getTacticsFromMapping(aiAnalysis.mitre_mapping)} />
+
+                       <div className="p-4 bg-soc-primary/5 border-l-4 border-soc-primary rounded-r-lg">
+                          <h4 className="text-sm font-bold text-soc-primary mb-2 flex items-center">
+                            <Shield size={16} className="mr-2" /> AI Forensic Summary
+                          </h4>
+                          <p className="text-sm text-soc-text leading-relaxed italic">"{aiAnalysis.technical_summary}"</p>
+                       </div>
+
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-soc-bg/40 p-4 border border-soc-border rounded-lg">
+                             <h5 className="text-[10px] font-bold text-soc-muted uppercase tracking-wider mb-3">Target Observation</h5>
+                             <p className="text-xs text-soc-text leading-relaxed">{aiAnalysis.observation}</p>
+                          </div>
+                          <div className="bg-soc-bg/40 p-4 border border-soc-border rounded-lg">
+                             <h5 className="text-[10px] font-bold text-soc-muted uppercase tracking-wider mb-3">MITRE Mapping</h5>
+                             <div className="flex flex-wrap gap-2">
+                                {aiAnalysis.mitre_mapping.map((m, i) => (
+                                  <span key={i} className="px-2 py-1 bg-soc-panel text-[10px] rounded text-soc-primary border border-soc-primary/30">
+                                    {m}
+                                  </span>
+                                ))}
+                             </div>
+                          </div>
+                       </div>
+
+                       <div className="bg-soc-danger/5 border border-soc-danger/20 p-4 rounded-lg">
+                          <h5 className="text-xs font-bold text-soc-danger mb-3 uppercase flex items-center">
+                             <AlertCircle size={14} className="mr-2" /> Recommended Remediation
+                          </h5>
+                          <ul className="space-y-2">
+                             {aiAnalysis.recommendation.map((rec, i) => (
+                               <li key={i} className="text-xs text-soc-text flex items-start">
+                                  <span className="text-soc-danger mr-2">•</span> {rec}
+                               </li>
+                             ))}
+                          </ul>
+                       </div>
+
+                       <div className="flex items-center space-x-4">
+                          <div className="flex-1 h-[1px] bg-soc-border"></div>
+                          <span className="text-[10px] font-mono text-soc-muted uppercase">End of AI Intelligence Report</span>
+                          <div className="flex-1 h-[1px] bg-soc-border"></div>
+                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      {selectedCase.notes.map((note, idx) => (
-                        <div key={idx} className="bg-soc-bg/40 border border-soc-border/50 rounded-lg p-4 relative group">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-bold text-soc-primary flex items-center">
-                              <User size={12} className="mr-1" /> {note.author}
-                            </span>
-                            <span className="text-[10px] text-soc-muted">
-                              {new Date(note.timestamp).toLocaleString()}
-                            </span>
-                          </div>
-                          <p className="text-sm text-soc-text leading-relaxed">{note.content}</p>
+                    <>
+                      <h4 className="text-xs font-semibold text-soc-muted uppercase tracking-widest mb-4">Investigation Timeline</h4>
+                      {(!selectedCase.notes || selectedCase.notes.length === 0) ? (
+                        <div className="text-center py-12 text-soc-muted">
+                          <Clock size={32} className="mx-auto mb-2 opacity-10" />
+                          <p className="text-sm">No notes have been recorded for this case yet.</p>
                         </div>
-                      ))}
-                    </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {selectedCase.notes.map((note, idx) => (
+                            <div key={idx} className="bg-soc-bg/40 border border-soc-border/50 rounded-lg p-4 relative group">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-bold text-soc-primary flex items-center">
+                                  <User size={12} className="mr-1" /> {note.author}
+                                </span>
+                                <span className="text-[10px] text-soc-muted">
+                                  {new Date(note.timestamp).toLocaleString()}
+                                </span>
+                              </div>
+                              <p className="text-sm text-soc-text leading-relaxed">{note.content}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 

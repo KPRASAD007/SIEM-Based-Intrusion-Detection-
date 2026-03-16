@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, CheckCircle, Clock, X, AlertTriangle, Activity, Lock, Search, Filter } from 'lucide-react';
+import { ShieldAlert, CheckCircle, Clock, X, AlertTriangle, Activity, Lock, Search, Filter, Globe, Database, ShieldCheck, ShieldX, Zap } from 'lucide-react';
 
 export default function AlertsCenter() {
   const [allAlerts, setAllAlerts] = useState([]);
@@ -7,6 +7,12 @@ export default function AlertsCenter() {
   const [severityFilter, setSeverityFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [investigatingAlert, setInvestigatingAlert] = useState(null);
+  const [intelData, setIntelData] = useState(null);
+  const [fetchingIntel, setFetchingIntel] = useState(false);
+  const [intelError, setIntelError] = useState(null);
+  const [soarRunning, setSoarRunning] = useState({}); // {actionName: true/false}
+  const [soarSuccess, setSoarSuccess] = useState({}); // {actionName: msg}
+  const [soarError, setSoarError] = useState(null);
 
   useEffect(() => {
     fetch('http://localhost:8000/api/alerts')
@@ -19,6 +25,20 @@ export default function AlertsCenter() {
         console.error("Error fetching alerts:", err);
         setLoading(false);
       });
+
+    // Real-time alert updates
+    const ws = new WebSocket('ws://localhost:8000/api/logs/ws');
+    ws.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.type === 'NEW_ALERT') {
+          setAllAlerts(prev => [payload.data, ...prev]);
+        }
+      } catch (e) {
+        console.error("WS error in AlertsCenter:", e);
+      }
+    };
+    return () => ws.close();
   }, []);
 
   const handleStatusChange = async (id, newStatus) => {
@@ -37,6 +57,59 @@ export default function AlertsCenter() {
 
   const startInvestigation = (alert) => {
     setInvestigatingAlert(alert);
+    setIntelData(null); // Reset intel when opening new investigation
+  };
+
+  const fetchThreatIntel = async (ip) => {
+    if (!ip || ip === 'N/A' || ip === 'Unknown') {
+      setIntelError("No valid IP address found for enrichment.");
+      return;
+    }
+    setFetchingIntel(true);
+    setIntelError(null);
+    setIntelData(null);
+    try {
+      const res = await fetch(`http://localhost:8000/api/intel/lookup/${encodeURIComponent(ip)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setIntelData(data);
+      } else {
+        setIntelError(`Failed to fetch intelligence: ${res.status} ${res.statusText}`);
+      }
+    } catch (err) {
+      console.error("TI lookup failed", err);
+      setIntelError("Could not connect to Threat Intelligence service.");
+    }
+    setFetchingIntel(false);
+  };
+
+  const triggerSoarAction = async (action, target) => {
+    if (!target || target === 'N/A' || target === 'Unknown') {
+      setSoarError(`Invalid target for ${action}: No valid identifier found.`);
+      return;
+    }
+    setSoarRunning(prev => ({ ...prev, [action]: true }));
+    setSoarSuccess(prev => ({ ...prev, [action]: null }));
+    setSoarError(null);
+    
+    try {
+      const endpoint = action === 'quarantine' ? `quarantine/${encodeURIComponent(target)}` : `ban-ip/${encodeURIComponent(target)}`;
+      const res = await fetch(`http://localhost:8000/api/soar/${endpoint}`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSoarSuccess(prev => ({ ...prev, [action]: data.message }));
+      } else {
+        const errData = await res.json().catch(() => ({ detail: 'Unknown error' }));
+        setSoarError(`SOAR Execution Failed: ${errData.detail || res.statusText}`);
+      }
+    } catch (err) {
+      console.error("SOAR action failed", err);
+      setSoarError("Failed to connect to SOAR orchestration service.");
+    }
+    setSoarRunning(prev => ({ ...prev, [action]: false }));
   };
 
   const filteredAlerts = allAlerts.filter(a => {
@@ -52,9 +125,9 @@ export default function AlertsCenter() {
 
   const formatTime = (timeStr) => {
     if (!timeStr) return 'N/A';
-    // Ensure the browser treats the timestamp as UTC if it doesn't have a timezone suffix
-    const date = new Date(timeStr.endsWith('Z') || timeStr.includes('+') ? timeStr : timeStr + 'Z');
-    return date.toLocaleString();
+    const dateStr = timeStr.endsWith('Z') || timeStr.includes('+') ? timeStr : timeStr.replace(' ', 'T') + 'Z';
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? 'N/A' : date.toLocaleString();
   };
 
   return (
@@ -204,10 +277,73 @@ export default function AlertsCenter() {
                     <div className="w-8 h-8 rounded-full bg-soc-primary/20 text-soc-primary flex items-center justify-center font-bold mr-4 shrink-0">1</div>
                     <div>
                       <h4 className="font-semibold text-soc-text text-sm">Verify Threat Intelligence & Triage</h4>
-                      <p className="text-xs text-soc-muted mt-1 leading-relaxed">
-                        Examine the origin of this alert. The associated IP is <span className="font-mono text-soc-text px-1 bg-black/30 rounded">{investigatingAlert.source_ip || 'Unknown'}</span>. 
-                        Launch a query in the Log Explorer filtering by <code>ip_address:{investigatingAlert.source_ip}</code> to check for lateral movement.
-                      </p>
+                      <div className="flex flex-col space-y-3 mt-2">
+                        <p className="text-xs text-soc-muted leading-relaxed">
+                          Examine the origin of this alert. The associated IP is <span className="font-mono text-soc-text px-1 bg-black/30 rounded">{investigatingAlert.source_ip || 'Unknown'}</span>. 
+                        </p>
+                        
+                        {!intelData ? (
+                          <div className="space-y-2">
+                            <button 
+                              onClick={() => fetchThreatIntel(investigatingAlert.source_ip)}
+                              disabled={fetchingIntel || !investigatingAlert.source_ip}
+                              className={`w-full flex items-center justify-center space-x-2 py-2 px-4 rounded text-xs font-bold border border-soc-primary/30 transition-all ${fetchingIntel ? 'bg-soc-primary/10 text-soc-primary animate-pulse' : 'bg-soc-primary/5 text-soc-primary hover:bg-soc-primary hover:text-white'}`}
+                            >
+                              <Database size={14} />
+                              <span>{fetchingIntel ? 'QUERYING TI ENGINES...' : 'ENRICH WITH THREAT INTEL'}</span>
+                            </button>
+                            {intelError && (
+                              <div className="text-[10px] text-soc-danger bg-soc-danger/10 p-2 rounded border border-soc-danger/20 flex items-center">
+                                <AlertTriangle size={12} className="mr-2" />
+                                {intelError}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="bg-soc-bg border border-soc-border rounded-lg p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <span className={`p-1 rounded ${intelData.verdict === 'CRITICAL RISK' ? 'bg-soc-critical/20 text-soc-critical' : 'bg-soc-warning/20 text-soc-warning'}`}>
+                                  {intelData.verdict === 'CRITICAL RISK' ? <ShieldAlert size={16} /> : <ShieldCheck size={16} />}
+                                </span>
+                                <span className="text-xs font-bold uppercase tracking-wider">{intelData.verdict}</span>
+                              </div>
+                              <span className="text-[10px] text-soc-muted uppercase">Reputation: {intelData.summary.reputation}</span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                               <div className="space-y-1">
+                                  <label className="text-[9px] text-soc-muted uppercase flex items-center"><Globe size={10} className="mr-1" /> Origin</label>
+                                  <p className="text-xs text-soc-text">{intelData.geodata.city}, {intelData.geodata.country}</p>
+                                  <p className="text-[10px] text-soc-muted font-mono">{intelData.geodata.asn}</p>
+                               </div>
+                               <div className="space-y-1">
+                                  <label className="text-[9px] text-soc-muted uppercase flex items-center"><Activity size={10} className="mr-1" /> Analysis</label>
+                                  <div className="flex space-x-2">
+                                     <div className="flex flex-col">
+                                        <span className="text-[10px] text-soc-muted">VT Hits</span>
+                                        <span className="text-xs font-bold text-soc-danger">{intelData.threat_details.provider_hits.virustotal}/72</span>
+                                     </div>
+                                     <div className="flex flex-col border-l border-soc-border pl-2">
+                                        <span className="text-[10px] text-soc-muted">Rep Score</span>
+                                        <span className="text-xs font-bold text-soc-warning">{intelData.summary.score}%</span>
+                                     </div>
+                                  </div>
+                               </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 pt-2 border-t border-soc-border/50">
+                               {intelData.threat_details.tags.map(tag => (
+                                 <span key={tag} className="px-2 py-0.5 bg-soc-panel text-[9px] rounded-full text-soc-muted border border-soc-border">#{tag}</span>
+                               ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        <p className="text-xs text-soc-muted leading-relaxed">
+                          Launch a query in the Log Explorer filtering by <code>ip_address:{investigatingAlert.source_ip}</code> to check for lateral movement.
+                        </p>
+                      </div>
                     </div>
                   </div>
                   
@@ -237,13 +373,29 @@ export default function AlertsCenter() {
                         If this execution is confirmed as a true positive attack by the Threat Actor, execute the following containment measures:
                       </p>
                       <div className="flex space-x-3">
-                        <button className="text-xs px-3 py-1.5 bg-soc-danger/10 text-soc-danger border border-soc-danger/30 rounded flex items-center hover:bg-soc-danger/20 transition-colors">
-                          <Lock size={12} className="mr-1" /> Network Quarantine Host
+                        <button 
+                          onClick={() => triggerSoarAction('quarantine', investigatingAlert.affected_host)}
+                          disabled={soarRunning['quarantine'] || soarSuccess['quarantine'] || !investigatingAlert.affected_host}
+                          className={`text-xs px-3 py-1.5 border rounded flex items-center transition-all ${soarSuccess['quarantine'] ? 'bg-soc-success/20 text-soc-success border-soc-success' : 'bg-soc-danger/10 text-soc-danger border-soc-danger/30 hover:bg-soc-danger/20'}`}
+                        >
+                          {soarRunning['quarantine'] ? <><Activity size={12} className="mr-1 animate-spin" /> ISOLATING...</> : soarSuccess['quarantine'] ? <><CheckCircle size={12} className="mr-1" /> HOST ISOLATED</> : <><Lock size={12} className="mr-1" /> Network Quarantine Host</>}
                         </button>
-                        <button className="text-xs px-3 py-1.5 bg-soc-warning/10 text-soc-warning border border-soc-warning/30 rounded flex items-center hover:bg-soc-warning/20 transition-colors">
-                          <Activity size={12} className="mr-1" /> Ban IP at Global Firewall
+                        <button 
+                          onClick={() => triggerSoarAction('ban-ip', investigatingAlert.source_ip)}
+                          disabled={soarRunning['ban-ip'] || soarSuccess['ban-ip'] || !investigatingAlert.source_ip}
+                          className={`text-xs px-3 py-1.5 border rounded flex items-center transition-all ${soarSuccess['ban-ip'] ? 'bg-soc-success/20 text-soc-success border-soc-success' : 'bg-soc-warning/10 text-soc-warning border-soc-warning/30 hover:bg-soc-warning/20'}`}
+                        >
+                          {soarRunning['ban-ip'] ? <><Activity size={12} className="mr-1 animate-spin" /> BANNING...</> : soarSuccess['ban-ip'] ? <><CheckCircle size={12} className="mr-1" /> IP BANNED</> : <><Zap size={12} className="mr-1" /> Ban IP at Global Firewall</>}
                         </button>
                       </div>
+                      {(soarSuccess['quarantine'] || soarSuccess['ban-ip'] || soarError) && (
+                        <div className={`mt-3 p-2 rounded text-[10px] flex items-start animate-in fade-in slide-in-from-left-2 border ${soarError ? 'bg-soc-danger/10 text-soc-danger border-soc-danger/20' : 'bg-soc-success/5 text-soc-success border-soc-success/20'}`}>
+                           {soarError ? <AlertTriangle size={12} className="mr-2 shrink-0 mt-0.5" /> : <ShieldCheck size={12} className="mr-2 shrink-0 mt-0.5" />}
+                           <span>
+                             {soarError ? soarError : `SOAR Action Logged: ${soarSuccess['quarantine'] || soarSuccess['ban-ip']}`}
+                           </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

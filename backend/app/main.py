@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import connect_to_mongo, close_mongo_connection
-from .routers import logs, rules, alerts, incidents, simulator, search, auth
+from .routers import logs, rules, alerts, incidents, simulator, search, auth, threat_intel, soar
 
 app = FastAPI(
     title="CyberDetect Lab API",
@@ -22,6 +22,8 @@ app.include_router(logs.router)
 app.include_router(rules.router)
 app.include_router(alerts.router)
 app.include_router(incidents.router)
+app.include_router(threat_intel.router)
+app.include_router(soar.router)
 app.include_router(simulator.router)
 app.include_router(search.router)
 app.include_router(auth.router)
