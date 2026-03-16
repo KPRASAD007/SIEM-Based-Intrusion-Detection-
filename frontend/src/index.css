@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-soc-bg text-soc-text antialiased;
+  }
+}
+
+@keyframes toastFade {
+  0% { opacity: 0; transform: translateY(20px) scale(0.9); }
+  5% { opacity: 1; transform: translateY(0) scale(1); }
+  95% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+}
+
+.animate-toast {
+  animation: toastFade 5.5s ease-in-out forwards;
+}
