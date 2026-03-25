@@ -106,6 +106,28 @@ export default function Dashboard() {
     </ResponsiveContainer>
   );
 
+  const renderPieChart = () => (
+    <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+      <PieChart>
+        <Pie
+          data={severityData}
+          cx="50%"
+          cy="50%"
+          innerRadius="60%"
+          outerRadius="80%"
+          paddingAngle={5}
+          dataKey="value"
+          stroke="none"
+        >
+          {severityData.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '8px' }} />
+      </PieChart>
+    </ResponsiveContainer>
+  );
+
   const renderAreaChart = () => (
     <ResponsiveContainer width="100%" height="100%" minHeight={300}>
       <AreaChart data={ingestionData}>
