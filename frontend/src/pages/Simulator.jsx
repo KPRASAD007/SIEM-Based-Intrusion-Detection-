@@ -8,7 +8,7 @@ export default function Simulator() {
   const [result, setResult] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/simulator/scenarios')
+    fetch(`http://${window.location.hostname}:8080/api/simulator/scenarios`)
       .then(res => res.json())
       .then(data => {
         setScenarios(data);
@@ -19,7 +19,7 @@ export default function Simulator() {
   const runScenario = (id) => {
     setRunning(id);
     setResult(null);
-    fetch(`http://localhost:8000/api/simulator/run/${id}`, { method: 'POST' })
+    fetch(`http://${window.location.hostname}:8080/api/simulator/run/${id}`, { method: 'POST' })
       .then(res => res.json())
       .then(data => {
         setRunning(null);
@@ -103,7 +103,7 @@ export default function Simulator() {
               onClick={() => {
                 setRunning('caldera');
                 setResult(null);
-                fetch('http://localhost:8000/api/logs/caldera', {
+                    fetch(`http://${window.location.hostname}:8080/api/logs/caldera`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({

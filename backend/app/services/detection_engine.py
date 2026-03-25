@@ -38,6 +38,7 @@ class DetectionEngine:
         if log_value is None:
             return False
 
+        print(f"DEBUG: Comparing field '{field}': LogValue='{log_value}' vs Expected='{expected_value}' (Op: {operator})")
         log_value = str(log_value).lower()
         expected_value = str(expected_value).lower()
 

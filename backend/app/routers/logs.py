@@ -11,10 +11,11 @@ from ..websocket_manager import manager
 
 router = APIRouter(prefix="/api/logs", tags=["Logs"])
 
-async def process_log_for_alerts(log_dict: Dict[str, Any], db):
+async def process_log_for_alerts(log_dict: Dict[str, Any], db, background_tasks: BackgroundTasks = None):
     # Fetch active rules
     rules_cursor = db.rules.find({"is_active": True})
     active_rules = await rules_cursor.to_list(length=100)
+    print(f"DEBUG: Processing log for alerts. Found {len(active_rules)} active rules. Log: {log_dict.get('process_name')}")
     
     import traceback
     try:
@@ -30,7 +31,7 @@ async def process_log_for_alerts(log_dict: Dict[str, Any], db):
                 mitre_attack_id=rule.get("mitre_attack_id"),
                 affected_host=log_dict.get("details", {}).get("host") or log_dict.get("ip_address"),
                 source_ip=log_dict.get("ip_address"),
-                triggered_time=datetime.utcnow().isoformat() + "Z",
+                triggered_time=datetime.utcnow(),
                 matching_logs=1,
                 log_ids=[str(log_dict.get("_id"))],
                 status="new"
@@ -53,8 +54,14 @@ async def process_log_for_alerts(log_dict: Dict[str, Any], db):
                 "data": alert_dict
             })
             
-            # Trigger Email Notification for High/Critical alerts (Disabled for now)
-            # await send_alert_email(alert, db)
+            # Trigger Email Notification for High/Critical alerts in Background (SO IT DOESN'T SLOW DOWN THE SIEM)
+            if background_tasks:
+                background_tasks.add_task(send_alert_email, alert, db)
+            else:
+                # Fallback for Splunk/Caldera or manual calls where BackgroundTasks may be missing
+                import threading
+                thread = threading.Thread(target=send_alert_email, args=(alert, db))
+                thread.start()
             
             # Auto-escalate High/Critical alerts to Active Cases (Incidents)
             if alert_dict.get("severity", "").lower() in ["high", "critical"]:
@@ -76,8 +83,10 @@ async def process_log_for_alerts(log_dict: Dict[str, Any], db):
                 }
                 await db.incidents.insert_one(incident_dict)
     except Exception as e:
-        print(f"Error in process_log_for_alerts: {e}")
-        traceback.print_exc()
+        error_msg = f"ERROR: process_log_for_alerts failed: {e}\n{traceback.format_exc()}"
+        print(error_msg)
+        with open(r"c:\Users\user\Documents\project\backend_errors.log", "a") as f:
+            f.write(f"[{datetime.utcnow()}] {error_msg}\n")
 
 @router.post("", response_model=LogModel)
 async def create_log(log: LogModel, background_tasks: BackgroundTasks, db=Depends(get_db)):
@@ -100,8 +109,10 @@ async def create_log(log: LogModel, background_tasks: BackgroundTasks, db=Depend
         "data": log_dict
     })
     
-    # Process rules inline to guarantee async emails fire
-    await process_log_for_alerts(log_dict, db)
+    print(f"SYSTEM: Ingested Log - ID: {log_dict.get('event_id')} | Proc: {log_dict.get('process_name')}")
+    
+    # Process rules using background tasks
+    await process_log_for_alerts(log_dict, db, background_tasks)
     
     return log_dict
 

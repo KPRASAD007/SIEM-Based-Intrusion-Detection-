@@ -9,7 +9,9 @@ import Simulator from './pages/Simulator';
 import MitreMapping from './pages/MitreMapping';
 import Documentation from './pages/Documentation';
 import Login from './pages/Login';
-import { Shield, LayoutDashboard, Database, Activity, Briefcase, Settings, FileText, Target, Bell, X } from 'lucide-react';
+import RemoteSensors from './pages/RemoteSensors';
+import WebSurveillance from './pages/WebSurveillance';
+import { Shield, LayoutDashboard, Database, Activity, Briefcase, Settings, FileText, Target, Bell, X, Globe, Eye } from 'lucide-react';
 
 function SidebarItem({ to, icon: Icon, label }) {
   const location = useLocation();
@@ -36,7 +38,7 @@ function App() {
   // Fetch admin profile data when authenticated
   useEffect(() => {
     if (isAuthenticated && currentUser) {
-      fetch(`http://localhost:8000/api/auth/profile/${currentUser}`)
+      fetch(`http://${window.location.hostname}:8080/api/auth/profile/${currentUser}`)
         .then(res => res.json())
         .then(data => {
           if (data.alert_email) setAlertEmail(data.alert_email);
@@ -48,7 +50,7 @@ function App() {
   const saveProfile = async () => {
     setSavingEmail(true);
     try {
-      const res = await fetch('http://localhost:8000/api/auth/profile', {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/auth/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: currentUser, alert_email: alertEmail })
@@ -67,7 +69,7 @@ function App() {
 
   useEffect(() => {
     // Connect to WebSocket purely for live toast notifications
-    const ws = new WebSocket('ws://localhost:8000/api/logs/ws');
+    const ws = new WebSocket(`ws://${window.location.hostname}:8080/api/logs/ws`);
     
     ws.onopen = () => console.log("Connected to SOC real-time stream");
     
@@ -121,6 +123,8 @@ function App() {
                 <SidebarItem to="/logs" icon={Database} label="Log Explorer" />
                 <SidebarItem to="/alerts" icon={Activity} label="Alerts Center" />
                 <SidebarItem to="/incidents" icon={Briefcase} label="Case Management" />
+                <SidebarItem to="/sensors" icon={Globe} label="Remote Sensors" />
+                <SidebarItem to="/web" icon={Eye} label="Web Surveillance" />
                 <div className="pt-4 mt-4 border-t border-soc-border">
                   <p className="px-4 text-xs font-semibold text-soc-muted/50 uppercase tracking-wider mb-2">Simulate & Rules</p>
                   <SidebarItem to="/rules" icon={Settings} label="Detection Rules" />
@@ -169,6 +173,8 @@ function App() {
               <Route path="/logs" element={<LogManagement />} />
               <Route path="/alerts" element={<AlertsCenter />} />
               <Route path="/incidents" element={<Incidents />} />
+              <Route path="/sensors" element={<RemoteSensors />} />
+              <Route path="/web" element={<WebSurveillance />} />
               <Route path="/rules" element={<RulesEngine />} />
               <Route path="/mitre" element={<MitreMapping />} />
               <Route path="/simulator" element={<Simulator />} />

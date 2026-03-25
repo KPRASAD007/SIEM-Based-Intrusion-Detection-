@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download } from 'lucide-react';
+import { Search, Filter, Download, RefreshCw } from 'lucide-react';
 
 export default function LogManagement() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Fetch logs from backend
-    fetch('http://localhost:8000/api/logs')
+  const fetchLogs = () => {
+    setLoading(true);
+    fetch(`http://${window.location.hostname}:8080/api/logs`)
       .then(res => res.json())
       .then(data => {
         setLogs(data);
@@ -16,6 +16,10 @@ export default function LogManagement() {
       .catch(err => {
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchLogs();
   }, []);
 
   const exportLogsToJSON = () => {
@@ -46,6 +50,9 @@ export default function LogManagement() {
           <p className="text-sm text-soc-muted mt-1">Search and filter ingested security logs</p>
         </div>
         <div className="flex space-x-3">
+          <button onClick={fetchLogs} className="flex items-center px-4 py-2 bg-soc-panel border border-soc-border rounded hover:border-soc-primary hover:text-soc-primary transition-colors text-sm">
+            <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </button>
           <button className="flex items-center px-4 py-2 bg-soc-panel border border-soc-border rounded hover:bg-soc-border transition-colors text-sm">
             <Filter size={16} className="mr-2" /> Filter
           </button>

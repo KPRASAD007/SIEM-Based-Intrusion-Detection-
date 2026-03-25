@@ -1,9 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
-from typing import List
 from bson import ObjectId
 
 from ..database import get_db
-from ..models.schemas import AlertModel
 
 router = APIRouter(prefix="/api/alerts", tags=["Alerts"])
 
@@ -13,7 +11,8 @@ def enrich_alert_with_threat_intel(alert_dict):
     if ip and not alert_dict.get("threat_intel"):
         # Mocking AbuseIPDB, OTX, VirusTotal response
         alert_dict["threat_intel"] = {
-            "reputation_score": 85 if ip.startswith("192") else 10,
+            "score": 85 if ip.startswith("192") else 10,
+            "status": "MALICIOUS" if ip.startswith("192") else "CLEAN",
             "country": "Mock Country",
             "known_malicious_activity": True if ip == "192.168.1.100" else False,
             "sources": ["AbuseIPDB (Mock)", "VirusTotal (Mock)"]

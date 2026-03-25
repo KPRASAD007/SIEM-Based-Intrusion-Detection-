@@ -1,6 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, User, MessageSquare, Clock, X, CheckCircle, AlertCircle, Plus, Send, Shield, Activity, Target } from 'lucide-react';
+import { Briefcase, User, MessageSquare, Clock, X, CheckCircle, AlertCircle, Plus, Send, Shield, Activity, Target, ShieldCheck, Info, Terminal, AlertTriangle, Search, Trash2, ChevronRight, BookOpen } from 'lucide-react';
 import KillChainVisualization from '../components/KillChainVisualization';
+
+const ATTACK_PLAYBOOKS = {
+  recon: {
+    title: "Reconnaissance Response",
+    steps: ["Identify Source IP of scans", "Check firewall blocklists", "Verify external exposure of affected ports"],
+    priority: "Monitor"
+  },
+  weaponization: {
+    title: "Weaponization Triage",
+    steps: ["Scan host for dropped artifacts", "Analyze file entropy", "Check email gateway for suspicious attachments"],
+    priority: "Investigate"
+  },
+  delivery: {
+    title: "Delivery Containment",
+    steps: ["Quarantine suspicious files", "Reset user credentials if phishing suspected", "Search for similar artifacts across fleet"],
+    priority: "Urgent"
+  },
+  exploitation: {
+    title: "Exploitation Mitigation",
+    steps: ["Isolate host from network", "Kill parent process subtree", "Snapshot memory for forensic analysis"],
+    priority: "CRITICAL"
+  },
+  installation: {
+    title: "Persistence Removal",
+    steps: ["Audit Scheduled Tasks/RegKeys", "Inspect newly created services", "Check for DLL hijacking signatures"],
+    priority: "CRITICAL"
+  },
+  c2: {
+    title: "C2 Signal Analysis",
+    steps: ["Block C2 IP/Domain at Perimeter", "Analyze beaconing interval", "Check for encrypted tunnels (VPN/DNS)"],
+    priority: "IMMEDIATE"
+  },
+  actions: {
+    title: "Impact & Exfiltration Analysis",
+    steps: ["Audit Data Access Logs", "Identify data staging directories", "Initiate legal/compliance notification"],
+    priority: "CATASTROPHIC"
+  }
+};
 
 export default function Incidents() {
   const [incidents, setIncidents] = useState([]);
@@ -24,7 +62,7 @@ export default function Incidents() {
 
   const fetchIncidents = () => {
     setLoading(true);
-    fetch('http://localhost:8000/api/incidents')
+    fetch(`http://${window.location.hostname}:8080/api/incidents`)
       .then(res => res.json())
       .then(data => {
         setIncidents(data);
@@ -50,7 +88,7 @@ export default function Incidents() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
-      const res = await fetch('http://localhost:8000/api/incidents', {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/incidents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -76,7 +114,7 @@ export default function Incidents() {
     setIsAnalyzing(true);
     setAiAnalysis(null);
     try {
-      const res = await fetch(`http://localhost:8000/api/incidents/${selectedCase.id}/ai-analyze`, {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/incidents/${selectedCase.id}/ai-analyze`, {
         method: 'POST'
       });
       if (res.ok) {
@@ -91,7 +129,7 @@ export default function Incidents() {
 
   const handleStatusUpdate = async (id, newStatus) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/incidents/${id}/status?status=${newStatus}`, {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/incidents/${id}/status?status=${newStatus}`, {
         method: 'PUT'
       });
       if (res.ok) {
@@ -109,7 +147,7 @@ export default function Incidents() {
     if (!newNote.trim() || !selectedCase) return;
     setSubmittingNote(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/incidents/${selectedCase.id}/notes?note_content=${encodeURIComponent(newNote)}`, {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/incidents/${selectedCase.id}/notes?note_content=${encodeURIComponent(newNote)}`, {
         method: 'PUT'
       });
       if (res.ok) {
@@ -318,8 +356,72 @@ export default function Incidents() {
                 <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-6">
                   {aiAnalysis ? (
                     <div className="space-y-6 animate-in fade-in duration-500">
-                       {/* Kill Chain Visualization */}
-                       <KillChainVisualization activeTactics={getTacticsFromMapping(aiAnalysis.mitre_mapping)} />
+                       <KillChainVisualization 
+                          activeTactics={getTacticsFromMapping(aiAnalysis.mitre_mapping)} 
+                          techniques={aiAnalysis.mitre_mapping}
+                       />
+
+                       {/* CASE PLAYBOOK SECTION */}
+                       <div className="mt-6 border border-soc-border rounded-lg bg-soc-bg overflow-hidden">
+                          <div className="bg-soc-panel px-4 py-2 border-b border-soc-border flex items-center justify-between">
+                            <h4 className="text-[10px] font-bold text-soc-primary uppercase tracking-widest flex items-center">
+                                <BookOpen size={14} className="mr-2" /> 
+                                AI-Generated SOC Playbook
+                            </h4>
+                            <span className="text-[9px] text-soc-muted font-mono">ADAPTIVE GUIDANCE</span>
+                          </div>
+                          
+                          <div className="p-5">
+                             {(() => {
+                                const tactics = getTacticsFromMapping(aiAnalysis.mitre_mapping);
+                                // Simple mapping to playbooks
+                                const phaseMap = {
+                                    'TA0007': 'recon', 'TA0043': 'recon',
+                                    'TA0042': 'weaponization',
+                                    'TA0001': 'delivery',
+                                    'TA0002': 'exploitation', 'TA0004': 'exploitation',
+                                    'TA0003': 'installation', 'TA0005': 'installation',
+                                    'TA0011': 'c2',
+                                    'TA0040': 'actions', 'TA0010': 'actions'
+                                };
+                                const currentTactic = tactics[tactics.length - 1];
+                                const playbook = ATTACK_PLAYBOOKS[phaseMap[currentTactic]] || ATTACK_PLAYBOOKS['recon'];
+
+                                return (
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                     <div>
+                                        <p className="text-xs text-soc-text font-bold mb-3 flex items-center">
+                                           <ChevronRight size={14} className="text-soc-primary mr-1" />
+                                           Next Phase Defense: {playbook.title}
+                                        </p>
+                                        <div className="space-y-2">
+                                           {playbook.steps.map((step, idx) => (
+                                              <div key={idx} className="flex items-start space-x-2 text-[11px] text-soc-muted">
+                                                 <div className="w-4 h-4 rounded-full bg-soc-panel border border-soc-border flex items-center justify-center text-[8px] font-bold mt-0.5">
+                                                    {idx + 1}
+                                                 </div>
+                                                 <span>{step}</span>
+                                              </div>
+                                           ))}
+                                        </div>
+                                     </div>
+                                     <div className="bg-soc-panel/30 rounded p-4 border border-soc-border/50">
+                                        <p className="text-[9px] font-bold text-soc-muted uppercase mb-2">Security Posture Impact</p>
+                                        <div className="flex items-center justify-between p-2 bg-soc-bg rounded border border-soc-border">
+                                            <span className="text-[10px] text-soc-text">Recommended Priority</span>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${playbook.priority === 'CRITICAL' || playbook.priority === 'IMMEDIATE' ? 'bg-soc-danger/20 text-soc-danger' : 'bg-soc-primary/20 text-soc-primary'}`}>
+                                                {playbook.priority}
+                                            </span>
+                                        </div>
+                                        <button className="w-full mt-4 py-2 bg-soc-primary hover:bg-soc-primary/80 text-white text-[10px] font-bold rounded transition-colors uppercase tracking-widest shadow-lg shadow-soc-primary/20">
+                                            Execute Auto-Containment
+                                        </button>
+                                     </div>
+                                  </div>
+                                );
+                             })()}
+                          </div>
+                       </div>
 
                        <div className="p-4 bg-soc-primary/5 border-l-4 border-soc-primary rounded-r-lg">
                           <h4 className="text-sm font-bold text-soc-primary mb-2 flex items-center">

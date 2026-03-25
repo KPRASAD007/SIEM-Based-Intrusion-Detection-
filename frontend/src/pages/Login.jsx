@@ -15,7 +15,7 @@ export default function Login({ onLogin }) {
     setError('');
 
     try {
-      const endpoint = isRegistering ? 'http://localhost:8000/api/auth/register' : 'http://localhost:8000/api/auth/login';
+      const endpoint = isRegistering ? `http://${window.location.hostname}:8080/api/auth/register` : `http://${window.location.hostname}:8080/api/auth/login`;
       const payload = isRegistering 
         ? { username, password, alert_email: email } 
         : { username, password };

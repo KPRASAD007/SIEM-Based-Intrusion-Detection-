@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, CheckCircle, Clock, X, AlertTriangle, Activity, Lock, Search, Filter, Globe, Database, ShieldCheck, ShieldX, Zap } from 'lucide-react';
+import { ShieldAlert, CheckCircle, Clock, X, AlertTriangle, Activity, Lock, Search, Filter, Globe, Database, ShieldCheck, ShieldX, Zap, RefreshCw } from 'lucide-react';
 
 export default function AlertsCenter() {
   const [allAlerts, setAllAlerts] = useState([]);
@@ -14,8 +14,9 @@ export default function AlertsCenter() {
   const [soarSuccess, setSoarSuccess] = useState({}); // {actionName: msg}
   const [soarError, setSoarError] = useState(null);
 
-  useEffect(() => {
-    fetch('http://localhost:8000/api/alerts')
+  const fetchAlerts = () => {
+    setLoading(true);
+    fetch(`http://${window.location.hostname}:8080/api/alerts`)
       .then(res => res.json())
       .then(data => {
         setAllAlerts(data);
@@ -25,9 +26,13 @@ export default function AlertsCenter() {
         console.error("Error fetching alerts:", err);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchAlerts();
 
     // Real-time alert updates
-    const ws = new WebSocket('ws://localhost:8000/api/logs/ws');
+    const ws = new WebSocket(`ws://${window.location.hostname}:8080/api/logs/ws`);
     ws.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
@@ -43,7 +48,7 @@ export default function AlertsCenter() {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/alerts/${id}/status?status=${newStatus}`, {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/alerts/${id}/status?status=${newStatus}`, {
         method: 'PUT'
       });
       if (res.ok) {
@@ -69,7 +74,7 @@ export default function AlertsCenter() {
     setIntelError(null);
     setIntelData(null);
     try {
-      const res = await fetch(`http://localhost:8000/api/intel/lookup/${encodeURIComponent(ip)}`);
+      const res = await fetch(`http://${window.location.hostname}:8080/api/intel/lookup/${encodeURIComponent(ip)}`);
       if (res.ok) {
         const data = await res.json();
         setIntelData(data);
@@ -94,7 +99,7 @@ export default function AlertsCenter() {
     
     try {
       const endpoint = action === 'quarantine' ? `quarantine/${encodeURIComponent(target)}` : `ban-ip/${encodeURIComponent(target)}`;
-      const res = await fetch(`http://localhost:8000/api/soar/${endpoint}`, { 
+      const res = await fetch(`http://${window.location.hostname}:8080/api/soar/${endpoint}`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -137,6 +142,9 @@ export default function AlertsCenter() {
           <h2 className="text-2xl font-bold text-soc-text">Alerts Center</h2>
           <p className="text-sm text-soc-muted mt-1">Review and triage security detections</p>
         </div>
+        <button onClick={fetchAlerts} className="flex items-center px-4 py-2 bg-soc-panel border border-soc-border rounded hover:border-soc-primary hover:text-soc-primary transition-colors text-sm">
+          <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} /> Refresh Alerts
+        </button>
       </div>
 
       <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 bg-soc-panel p-4 rounded-lg border border-soc-border shadow-lg">

@@ -15,7 +15,7 @@ export default function RulesEngine() {
   }, []);
 
   const fetchRules = () => {
-    fetch('http://localhost:8000/api/rules')
+    fetch(`http://${window.location.hostname}:8080/api/rules`)
       .then(res => res.json())
       .then(data => {
         setRules(data);
@@ -25,19 +25,19 @@ export default function RulesEngine() {
 
   const toggleRule = (id, e) => {
     e.stopPropagation();
-    fetch(`http://localhost:8000/api/rules/${id}/toggle`, { method: 'PUT' })
+    fetch(`http://${window.location.hostname}:8080/api/rules/${id}/toggle`, { method: 'PUT' })
       .then(() => fetchRules());
   };
 
   const deleteRule = (id, e) => {
     e.stopPropagation();
-    fetch(`http://localhost:8000/api/rules/${id}`, { method: 'DELETE' })
+    fetch(`http://${window.location.hostname}:8080/api/rules/${id}`, { method: 'DELETE' })
       .then(() => fetchRules());
   };
 
   const handleCreateRule = (e) => {
     e.preventDefault();
-    fetch('http://localhost:8000/api/rules', {
+    fetch(`http://${window.location.hostname}:8080/api/rules`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newRule)

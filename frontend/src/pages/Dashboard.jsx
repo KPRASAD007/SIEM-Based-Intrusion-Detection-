@@ -13,8 +13,8 @@ export default function Dashboard() {
     const fetchStats = async () => {
       try {
         const [alertsRes, logsRes] = await Promise.all([
-          fetch('http://localhost:8000/api/alerts'),
-          fetch('http://localhost:8000/api/logs?limit=100')
+          fetch(`http://${window.location.hostname}:8080/api/alerts`),
+          fetch(`http://${window.location.hostname}:8080/api/logs?limit=100`)
         ]);
         const alertsData = await alertsRes.json();
         const logsData = await logsRes.json();

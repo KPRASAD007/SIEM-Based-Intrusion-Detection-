@@ -1,132 +1,119 @@
 import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import os
 import logging
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime
 from ..models.schemas import AlertModel
 
-# Mock logger for local testing if SMTP is not configured
+# Configuration
 logger = logging.getLogger("email_service")
 logging.basicConfig(level=logging.INFO)
 
-SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.ethereal.email")
+SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER", "") # e.g. Ethereal username
-SMTP_PASS = os.getenv("SMTP_PASS", "") # e.g. Ethereal password
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@cyberdetect.local")
+SMTP_USER = os.getenv("SMTP_USER", "krishnaprasadt004@gmail.com")
+SMTP_PASS = os.getenv("SMTP_PASS", "ornmeufhfzhgudcg")
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "krishnaprasadt004@gmail.com")
 
-async def send_alert_email(alert: AlertModel, db):
+def send_alert_email(alert: AlertModel, db=None):
     """
-    Sends an email notification based on alert severity.
-    Critical/High alerts get an immediate 'URGENT' email.
+    Sends a beautifully formatted security alert email.
+    Universal: Sends for ALL alerts to ensure the lab user sees every event.
     """
-    
-    # Priority logic
-    priority_flag = "Normal"
-    subject_prefix = "[CyberDetect SOC] Alert Triggered"
+    logger.info(f"Initiating email dispatch for alert: {alert.rule_name}")
+
+    # Determine Priority & Styling
+    subject_prefix = "[CyberDetect SOC] Alert"
+    theme_color = "#3b82f6" # Default blue
     
     if alert.severity == "critical":
-        priority_flag = "High"
-        subject_prefix = "[URGENT] CRITICAL SECURITY ALERT"
+        subject_prefix = "[URGENT] CRITICAL SECURITY BREACH"
+        theme_color = "#991b1b" # Dark red
     elif alert.severity == "high":
-        priority_flag = "High"
-        subject_prefix = "[URGENT] HIGH SECURITY ALERT"
-    
-    # Do not email for low/informational unless requested
-    if alert.severity in ["low", "info"]:
-        return
-        
-    subject = f"{subject_prefix} - {alert.rule_name}"
-    
-    html_content = f"""
+        subject_prefix = "[ALERT] HIGH SEVERITY EVENT"
+        theme_color = "#ef4444" # Red
+    elif alert.severity == "medium":
+        theme_color = "#f59e0b" # Orange
+
+    subject = f"{subject_prefix}: {alert.rule_name}"
+
+    # Format Timestamp
+    t = alert.triggered_time
+    if isinstance(t, str):
+        try:
+            t = datetime.fromisoformat(t.replace('Z', '+00:00'))
+        except:
+            t = datetime.utcnow()
+    display_time = t.strftime('%Y-%m-%d %H:%M:%S UTC')
+
+    # Build HTML Template
+    html_report = f"""
     <html>
-      <body style="font-family: Arial, sans-serif; color: #333;">
-        <h2 style="color: {'#991B1B' if alert.severity == 'critical' else '#EF4444' if alert.severity == 'high' else '#F59E0B'}">
-          {subject_prefix}
-        </h2>
-        <p>A new security alert has been triggered in the <strong>CyberDetect Lab</strong> environment.</p>
-        
-        <table style="border-collapse: collapse; width: 100%; max-width: 600px; margin-top: 20px;">
-          <tr style="background-color: #f8f9fa;">
-            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Rule Name:</strong></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">{alert.rule_name}</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Severity:</strong></td>
-            <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; text-transform: uppercase;">{alert.severity}</td>
-          </tr>
-          <tr style="background-color: #f8f9fa;">
-            <td style="padding: 10px; border: 1px solid #ddd;"><strong>MITRE ATT&CK:</strong></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">{alert.mitre_attack_id}</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Source IP:</strong></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">{alert.source_ip or 'N/A'}</td>
-          </tr>
-          <tr style="background-color: #f8f9fa;">
-            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Affected Host:</strong></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">{alert.affected_host or 'N/A'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Time Triggered:</strong></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">{alert.triggered_time.strftime('%Y-%m-%d %H:%M:%S UTC')}</td>
-          </tr>
-        </table>
-        
-        <p style="margin-top: 30px;">
-          <a href="{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/alerts" 
-             style="background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-            Investigate in SOC Dashboard
-          </a>
-        </p>
-        
-        <p style="margin-top: 40px; font-size: 12px; color: #777;">
-          This is an automated message from the CyberDetect Detection Engine.<br>
-          Please do not reply directly to this email.
-        </p>
+      <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; background-color: #f8fafc; padding: 20px; line-height: 1.5;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+          <div style="background-color: {theme_color}; padding: 25px; color: #ffffff; text-align: center;">
+            <h1 style="margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800;">{subject_prefix}</h1>
+          </div>
+          <div style="padding: 30px;">
+            <p style="margin-top: 0; font-size: 14px; color: #475569;">A security detection rule has been triggered in the <strong>CyberDetect Laboratory</strong>.</p>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 25px 0;">
+              <tr>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 11px; width: 140px; font-weight: bold; text-transform: uppercase;">Detection Rule</td>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: 600; color: #0f172a;">{alert.rule_name}</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase;">Confidence Level</td>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: 800; color: {theme_color};">{alert.severity.upper()}</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase;">Target Host</td>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-family: 'Courier New', Courier, monospace; color: #0f172a; font-size: 13px;">{alert.affected_host or 'Local Endpoint'}</td>
+              </tr>
+               <tr>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase;">MITRE Tactic</td>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #0f172a;">{alert.mitre_attack_id or 'General Behavioral'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase;">Detection Time</td>
+                <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; color: #0f172a;">{display_time}</td>
+              </tr>
+            </table>
+            
+            <div style="margin-top: 30px; padding: 20px; background-color: #f1f5f9; border-left: 4px solid {theme_color}; border-radius: 4px; font-size: 13px; color: #334155;">
+              <strong style="color: {theme_color};">Analyst Note:</strong> This telemetry was forwarded in real-time. Please review the process ancestry and network connections in the <strong>Case Management</strong> module.
+            </div>
+          </div>
+          <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="margin: 0; font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">&copy; 2024 CyberDetect Lab • SOC Autonomous Reporting</p>
+          </div>
+        </div>
       </body>
     </html>
     """
 
-    # Determine recipients by querying all users with a configured alert_email
-    recipients = []
-    cursor = db.users.find({"alert_email": {"$exists": True, "$ne": ""}})
-    async for user in cursor:
-        recipients.append(user["alert_email"])
-        
-    if not recipients:
-        recipients.append(ADMIN_EMAIL)
-
-    for target_email in recipients:
+    try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
-        msg["From"] = "soc@cyberdetect.local"
-        msg["To"] = target_email
+        msg["From"] = f"CyberDetect SOC <{SMTP_USER}>"
+        msg["To"] = ADMIN_EMAIL
         
-        # Priority headers
-        if priority_flag == "High":
+        # Priority Headers for Email Clients
+        if alert.severity in ["critical", "high"]:
             msg['X-Priority'] = '1 (Highest)'
-            msg['X-MSMail-Priority'] = 'High'
             msg['Importance'] = 'High'
 
-        msg.attach(MIMEText(html_content, "html"))
+        msg.attach(MIMEText(html_report, "html"))
 
-        if not SMTP_USER or not SMTP_PASS:
-             logger.info("================ EMAIL DISPATCH MOCK ================")
-             logger.info(f"To: {target_email}")
-             logger.info(f"Subject: {subject}")
-             logger.info(f"Priority: {priority_flag}")
-             logger.info("Body preview: A new security alert has been triggered...")
-             logger.info("=====================================================")
-             logger.info("(SMTP Credentials missing, outputting to console instead)")
-             continue
-
-        try:
-            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        # Transmission
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.set_debuglevel(0)
             server.starttls()
             server.login(SMTP_USER, SMTP_PASS)
             server.send_message(msg)
-            server.quit()
-            logger.info(f"Successfully sent alert email to {target_email}")
-        except Exception as e:
-            logger.error(f"Failed to send email to {target_email}: {e}")
+            
+        logger.info(f"SUCCESS: Alert email for '{alert.rule_name}' sent to {ADMIN_EMAIL}")
+
+    except Exception as e:
+        logger.error(f"CRITICAL SMTP FAILURE: Could not dispatch alert email. Error: {str(e)}")
