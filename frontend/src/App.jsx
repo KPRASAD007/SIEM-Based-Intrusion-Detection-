@@ -122,71 +122,74 @@ function App() {
     return <Login onLogin={(username) => { setIsAuthenticated(true); setCurrentUser(username); }} />;
   }
 
+  const logoUrl = `http://${window.location.hostname}:8080/api/download/logo.png`;
+
   return (
     <Router>
-      <div className="flex h-screen bg-soc-bg text-soc-text font-sans overflow-hidden">
-        {/* Sidebar */}
-        <div className={`fixed lg:relative left-0 top-0 h-full bg-soc-panel border-r border-soc-border flex flex-col shadow-2xl z-[100] transition-all duration-300 ease-in-out overflow-hidden ${isSidebarVisible ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}`}>
-          {isSidebarVisible && (
-            <>
-              <div className="p-6 flex items-center mb-4 transition-opacity duration-200">
-                <div className="w-8 h-8 rounded bg-gradient-to-br from-soc-primary to-blue-600 flex items-center justify-center mr-3 shadow-lg shadow-soc-primary/20">
-                  <Shield size={18} className="text-white" />
-                </div>
-                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-soc-text to-soc-muted">
-                  CyberDetect
-                </h1>
-              </div>
-              <nav className="flex-1 px-4 space-y-1">
-                <SidebarItem to="/" icon={LayoutDashboard} label="Dashboard" />
-                <SidebarItem to="/logs" icon={Database} label="Log Explorer" />
-                <SidebarItem to="/alerts" icon={Activity} label="Alerts Center" />
-                <SidebarItem to="/incidents" icon={Briefcase} label="Case Management" />
-                <SidebarItem to="/sensors" icon={Globe} label="Remote Sensors" />
-                <SidebarItem to="/web" icon={Eye} label="Web Surveillance" />
-                <div className="pt-4 mt-4 border-t border-soc-border">
-                  <p className="px-4 text-xs font-semibold text-soc-muted/50 uppercase tracking-wider mb-2">Simulate & Rules</p>
-                  <SidebarItem to="/rules" icon={Settings} label="Detection Rules" />
-                  <SidebarItem to="/mitre" icon={Target} label="MITRE ATT&CK" />
-                  <SidebarItem to="/simulator" icon={Shield} label="Attack Simulator" />
-                  <SidebarItem to="/docs" icon={FileText} label="Documentation" />
-                </div>
-              </nav>
-              <div className="p-4 border-t border-soc-border text-xs text-soc-muted text-center">
-                v1.0.0 SOC Environment
-              </div>
-            </>
-          )}
+      <div className="flex h-screen bg-soc-bg text-soc-text font-sans overflow-hidden scanline">
+        <div className={`fixed lg:relative left-0 top-0 h-full bg-soc-panel border-r border-soc-border flex flex-col shadow-2xl z-[100] transition-all duration-300 ease-in-out ${isSidebarVisible ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}`}>
+          <div className="p-6 flex items-center space-x-3 mb-4">
+             <img src={logoUrl} alt="Logo" className="w-10 h-10 border-2 border-soc-primary rounded-lg shadow-lg" />
+             <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-soc-primary to-accent uppercase tracking-tighter">
+                Detect Lab
+             </h1>
+          </div>
+          <nav className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
+            <SidebarItem to="/" icon={LayoutDashboard} label="Command Center" />
+            <SidebarItem to="/logs" icon={Database} label="Log Analyzer" />
+            <SidebarItem to="/alerts" icon={Activity} label="Threat Alerts" />
+            <SidebarItem to="/incidents" icon={Briefcase} label="Case Manager" />
+            <div className="block h-px bg-soc-border my-4 mx-2 opacity-50" />
+            <SidebarItem to="/sensors" icon={Globe} label="Remote Agents" />
+            <SidebarItem to="/web" icon={Eye} label="Web Intercept" />
+            <div className="pt-4">
+              <p className="px-4 text-[10px] font-bold text-soc-muted uppercase tracking-[0.2em] mb-2 opacity-50">Operations</p>
+              <SidebarItem to="/rules" icon={Settings} label="Detection Rules" />
+              <SidebarItem to="/mitre" icon={Target} label="ATT&CK Matrix" />
+              <SidebarItem to="/simulator" icon={Shield} label="SIMULATION" />
+              <SidebarItem to="/docs" icon={FileText} label="Lab Docs" />
+            </div>
+          </nav>
+          <div className="p-4 border-t border-soc-border bg-soc-bg/50 flex flex-col items-center">
+             <div className="flex items-center space-x-2 text-[10px] font-mono text-soc-primary animate-pulse">
+                <div className="w-1.5 h-1.5 rounded-full bg-soc-primary"></div>
+                <span>CORE_SYSTEM_READY</span>
+             </div>
+             <p className="text-[10px] text-soc-muted mt-1 uppercase opacity-30">Build v2.1.0-STABLE</p>
+          </div>
         </div>
         
         {/* Main Content */}
         <div className="flex-1 flex flex-col relative w-full min-w-0">
-          {/* Topbar */}
-          <header className="h-16 bg-soc-panel/80 backdrop-blur-md border-b border-soc-border flex items-center justify-between px-8 absolute top-0 w-full z-[110]">
+          <header className="h-14 bg-soc-bg/50 backdrop-blur-xl border-b border-soc-border flex items-center justify-between px-8 z-[110]">
             <div className="flex items-center">
               <button 
                 onClick={() => setIsSidebarVisible(!isSidebarVisible)}
-                className="mr-4 p-2 text-soc-muted hover:bg-soc-border hover:text-white rounded-lg transition-all"
-                title={isSidebarVisible ? "Hide Sidebar" : "Show Sidebar"}
+                className="mr-6 p-2 text-soc-muted hover:bg-soc-border hover:text-soc-primary rounded transition-all"
               >
-                <LayoutDashboard size={20} className={isSidebarVisible ? "" : "text-soc-primary animate-pulse"} />
+                <LayoutDashboard size={18} />
               </button>
-              <span className="font-medium text-soc-text">Security Operations Center</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-soc-muted text-right">
-                <div className="font-medium text-soc-success flex items-center justify-end">
-                  <div className="w-2 h-2 rounded-full bg-soc-success mr-2 animate-pulse"></div>
-                   Connection Active
-                </div>
+              <div className="flex items-center space-x-2 text-[11px] font-bold text-soc-muted uppercase tracking-widest">
+                 <Shield size={14} className="text-soc-primary" />
+                 <span>Security Operations & Research Intelligence Environment</span>
               </div>
-              <div className="w-8 h-8 rounded-full bg-soc-border overflow-hidden border border-soc-border cursor-pointer hover:ring-2 hover:ring-soc-primary transition-all" onClick={() => setShowProfileMenu(!showProfileMenu)}>
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Analyst" alt="User" />
+            </div>
+            
+            <div className="flex items-center space-x-6">
+              <div className="hidden md:flex flex-col items-end">
+                  <div className="flex items-center space-x-2">
+                     <span className="text-[10px] font-bold text-soc-primary uppercase animate-pulse">Live</span>
+                     <span className="text-[10px] font-bold text-soc-text">SYSLOG_MONITOR</span>
+                  </div>
+                  <div className="text-[9px] text-soc-muted font-mono">{new Date().toISOString()}</div>
+              </div>
+              <div className="w-8 h-8 rounded border border-soc-primary/50 overflow-hidden cursor-pointer hover:scale-110 transition-transform shadow-lg" onClick={() => setShowProfileMenu(!showProfileMenu)}>
+                <img src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentUser || 'admin'}`} alt="User" />
               </div>
             </div>
           </header>
           
-          <main className="flex-1 overflow-auto bg-soc-bg p-8 pt-24 custom-scrollbar">
+          <main className="flex-1 overflow-auto bg-gradient-to-tr from-soc-bg to-[#0b0e14] p-6 lg:p-10 custom-scrollbar relative">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/logs" element={<LogManagement />} />
@@ -201,57 +204,53 @@ function App() {
             </Routes>
           </main>
           
-          {/* Profile Modal Overlay */}
           {showProfileMenu && (
-            <div className="absolute top-16 right-8 w-80 bg-soc-panel border border-soc-border rounded-lg shadow-2xl z-50 overflow-hidden transform transition-all">
-              <div className="p-4 border-b border-soc-border bg-gradient-to-r from-soc-bg to-soc-panel flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-soc-border overflow-hidden border border-soc-border">
-                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Analyst" alt="User" />
+             <div className="absolute top-14 right-8 w-72 bg-soc-panel border border-soc-border rounded-b-lg shadow-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 duration-300">
+                <div className="p-5 border-b border-soc-border bg-soc-bg/40">
+                   <p className="text-xs font-bold text-soc-primary uppercase mb-1">Authenticated Analyst</p>
+                   <p className="text-lg font-bold text-white tracking-tight">{currentUser || 'SYSTEM_ROOT'}</p>
                 </div>
-                <div>
-                  <p className="font-bold text-soc-text">{currentUser || 'SOC Admin'}</p>
-                  <p className="text-xs text-soc-success">Online & Authenticated</p>
+                <div className="p-5 space-y-4">
+                   <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-soc-muted uppercase tracking-wider">Alert Routing Endpoint</label>
+                      <input 
+                        type="email" 
+                        value={alertEmail}
+                        onChange={(e) => setAlertEmail(e.target.value)}
+                        className="w-full bg-soc-bg border border-soc-border rounded p-2 text-xs text-soc-text focus:border-soc-primary outline-none transition-all"
+                      />
+                   </div>
+                   <button 
+                     onClick={saveProfile}
+                     disabled={savingEmail}
+                     className="w-full bg-soc-primary/10 hover:bg-soc-primary text-soc-primary hover:text-white border border-soc-primary/30 py-2 rounded text-[10px] font-bold uppercase transition-all"
+                   >
+                     {savingEmail ? 'COMMITTING...' : 'SYNC PREFERENCES'}
+                   </button>
+                   {emailStatus && <p className="text-[10px] text-center text-soc-primary">{emailStatus}</p>}
                 </div>
-              </div>
-              <div className="p-4">
-                <h4 className="text-sm font-semibold text-soc-muted mb-3 uppercase tracking-wider">Notification Settings</h4>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-soc-text mb-1">Critical Alert Email Recipient</label>
-                    <input 
-                      type="email" 
-                      value={alertEmail}
-                      onChange={(e) => setAlertEmail(e.target.value)}
-                      placeholder="admin@cyberdetect.local"
-                      className="w-full bg-soc-bg border border-soc-border rounded px-3 py-2 text-sm text-soc-text focus:outline-none focus:border-soc-primary transition-colors"
-                    />
-                  </div>
-                  <button 
-                    onClick={saveProfile}
-                    disabled={savingEmail}
-                    className="w-full bg-soc-primary hover:bg-blue-600 text-white font-medium py-2 rounded text-sm transition-colors"
-                  >
-                    {savingEmail ? 'Saving...' : 'Save Preferences'}
-                  </button>
-                  {emailStatus && <p className={`text-xs text-center mt-2 ${emailStatus.includes('success') ? 'text-soc-success' : 'text-soc-danger'}`}>{emailStatus}</p>}
-                </div>
-              </div>
-            </div>
+             </div>
           )}
 
-          {/* Live Alerts Toast Container */}
-          <div className="fixed bottom-6 right-6 z-50 flex flex-col space-y-3">
+          {/* Live Alerts Stream (Toasts) */}
+          <div className="fixed bottom-10 right-10 z-[120] flex flex-col space-y-4">
              {liveAlerts.map(alert => (
-               <div key={alert._id} className="bg-soc-panel border-l-4 border-soc-danger text-soc-text p-4 rounded shadow-2xl w-80 flex items-start justify-between animate-toast">
-                 <div className="flex items-start">
-                   <Bell size={18} className="text-soc-danger mr-3 mt-1" />
+               <div key={alert._id || alert.id} className="bg-soc-panel border-l-4 border-soc-critical text-soc-text p-5 rounded shadow-[0_0_30px_rgba(239,68,68,0.15)] w-80 flex items-start justify-between group animate-toast overflow-hidden relative">
+                 <div className="absolute top-0 right-0 w-16 h-16 bg-soc-critical/5 rounded-full -mr-8 -mt-8"></div>
+                 <div className="flex items-start z-10">
+                   <div className="p-2 bg-soc-critical/20 rounded-lg mr-4 mt-1 border border-soc-critical/30">
+                      <Bell size={18} className="text-soc-critical" />
+                   </div>
                    <div>
-                     <h4 className="font-bold text-sm">New Alert Detected</h4>
-                     <p className="text-xs text-soc-muted mt-1">{alert.rule_name}</p>
-                     <p className="text-xs text-soc-danger font-bold mt-1 uppercase">{alert.severity}</p>
+                     <h4 className="font-black text-[11px] uppercase tracking-[0.2em] text-soc-critical mb-1">Security Alert</h4>
+                     <p className="text-xs font-bold text-white mb-2 leading-tight">{alert.rule_name}</p>
+                     <div className="flex items-center space-x-2">
+                         <span className="text-[10px] font-mono text-soc-muted">HOST:</span>
+                         <span className="text-[10px] font-mono text-white bg-soc-bg px-1.5 py-0.5 rounded">{alert.affected_host || 'WS-99'}</span>
+                     </div>
                    </div>
                  </div>
-                 <button onClick={() => dismissAlert(alert._id)} className="text-soc-muted hover:text-white">
+                 <button onClick={() => dismissAlert(alert._id || alert.id)} className="text-soc-muted hover:text-white transition-colors">
                    <X size={16} />
                  </button>
                </div>

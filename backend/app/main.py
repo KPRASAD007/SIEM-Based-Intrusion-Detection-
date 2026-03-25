@@ -71,9 +71,39 @@ async def startup_db_client():
             "description": "Detection of LSASS process access commonly used for credential harvesting.",
             "field": "process_name",
             "operator": "equals",
-            "value": "procdump.exe",
+            "value": "lsass.exe",
             "severity": "critical",
             "mitre_attack_id": "T1003",
+            "is_active": True
+        },
+        {
+            "name": "Suspicious Network Connection: C2",
+            "description": "Outbound connection to known C2 infrastructure detected.",
+            "field": "ip_address",
+            "operator": "contains",
+            "value": "45.33.22.11",
+            "severity": "critical",
+            "mitre_attack_id": "T1105",
+            "is_active": True
+        },
+        {
+            "name": "Persistence: Scheduled Task Creation",
+            "description": "schtasks.exe used to create a recurring task for persistence.",
+            "field": "process_name",
+            "operator": "equals",
+            "value": "schtasks.exe",
+            "severity": "high",
+            "mitre_attack_id": "T1053.005",
+            "is_active": True
+        },
+        {
+            "name": "Defense Evasion: Event Log Clearing",
+            "description": "wevtutil.exe used to clear security event logs.",
+            "field": "process_name",
+            "operator": "equals",
+            "value": "wevtutil.exe",
+            "severity": "critical",
+            "mitre_attack_id": "T1070.001",
             "is_active": True
         }
     ])

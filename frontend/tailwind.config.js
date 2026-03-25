@@ -8,16 +8,28 @@ export default {
     extend: {
       colors: {
         soc: {
-          bg: '#0F172A',      // slate-900
-          panel: '#1E293B',   // slate-800
-          border: '#334155',  // slate-700
-          text: '#F8FAFC',    // slate-50
-          muted: '#94A3B8',   // slate-400
-          primary: '#3B82F6', // blue-500
-          success: '#10B981', // emerald-500
-          warning: '#F59E0B', // amber-500
-          danger: '#EF4444',  // red-500
-          critical: '#991B1B' // red-800
+          bg: '#020617',      
+          panel: '#0f172a',   
+          border: '#1e293b',  
+          hover: '#1e2030',   
+          text: '#f8fafc',
+          muted: '#94a3b8',
+          primary: '#10b981', 
+          secondary: '#3b82f6', 
+          critical: '#ef4444', 
+          warning: '#f59e0b',
+          hacker: '#00ff41',    
+          accent: '#c084fc'    
+        }
+      },
+      animation: {
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'glow-green': 'glow-green 2s ease-in-out infinite alternate',
+      },
+      keyframes: {
+        'glow-green': {
+          '0%': { boxShadow: '0 0 5px rgba(16, 185, 129, 0.2)' },
+          '100%': { boxShadow: '0 0 15px rgba(16, 185, 129, 0.6)' }
         }
       }
     },

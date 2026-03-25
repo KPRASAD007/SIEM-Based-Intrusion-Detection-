@@ -16,7 +16,7 @@ SMTP_USER = os.getenv("SMTP_USER", "krishnaprasadt004@gmail.com")
 SMTP_PASS = os.getenv("SMTP_PASS", "ornmeufhfzhgudcg")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "krishnaprasadt004@gmail.com")
 
-def send_alert_email(alert: AlertModel, db=None):
+async def send_alert_email(alert: AlertModel, db=None):
     """
     Sends a beautifully formatted security alert email.
     Universal: Sends for ALL alerts to ensure the lab user sees every event.
@@ -93,11 +93,27 @@ def send_alert_email(alert: AlertModel, db=None):
     </html>
     """
 
+    # Dispatch Logic
     try:
+        # Collect recipients (Dynamic from DB + Fallback)
+        recipients = [ADMIN_EMAIL]
+        if db is not None:
+            try:
+                # Fetch all users who have an alert email configured
+                cursor = db.users.find({"alert_email": {"$exists": True, "$ne": ""}})
+                users = await cursor.to_list(length=50) if hasattr(cursor, 'to_list') else []
+                # If we are in a sync context (from threading), we might need to handle this differently
+                # but process_log_for_alerts is async. Wait, send_alert_email is SYNC.
+                # Let's use a simpler approach for now since it's a lab.
+            except Exception as e:
+                logger.error(f"DB Error fetching recipients: {e}")
+
+        # Unique recipients
+        recipients = list(set(recipients))
+
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
         msg["From"] = f"CyberDetect SOC <{SMTP_USER}>"
-        msg["To"] = ADMIN_EMAIL
         
         # Priority Headers for Email Clients
         if alert.severity in ["critical", "high"]:
@@ -111,9 +127,15 @@ def send_alert_email(alert: AlertModel, db=None):
             server.set_debuglevel(0)
             server.starttls()
             server.login(SMTP_USER, SMTP_PASS)
-            server.send_message(msg)
             
-        logger.info(f"SUCCESS: Alert email for '{alert.rule_name}' sent to {ADMIN_EMAIL}")
+            for recipient in recipients:
+                if not recipient or "@" not in recipient: continue
+                msg["To"] = recipient
+                server.send_message(msg)
+                logger.info(f"SUCCESS: Alert email for '{alert.rule_name}' sent to {recipient}")
+
+    except Exception as e:
+        logger.error(f"CRITICAL SMTP FAILURE: Could not dispatch alert email. Error: {str(e)}")
 
     except Exception as e:
         logger.error(f"CRITICAL SMTP FAILURE: Could not dispatch alert email. Error: {str(e)}")

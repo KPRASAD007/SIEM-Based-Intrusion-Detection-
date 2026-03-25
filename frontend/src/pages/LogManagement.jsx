@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, RefreshCw } from 'lucide-react';
+import { Search, Filter, Download, RefreshCw, Database, X, Globe, Activity, Scan } from 'lucide-react';
 
 export default function LogManagement() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedLog, setSelectedLog] = useState(null);
+  const [enriching, setEnriching] = useState(false);
+  const [intel, setIntel] = useState(null);
 
   const fetchLogs = () => {
     setLoading(true);
@@ -24,18 +27,12 @@ export default function LogManagement() {
 
   const exportLogsToJSON = () => {
     if (logs.length === 0) return;
-    
-    // Create a Blob from the JSON data
     const jsonString = JSON.stringify(logs, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
-    
-    // Create a temporary DOM element to trigger the download
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = `soc_logs_export_${new Date().toISOString().slice(0, 10)}.json`;
-    
-    // Append -> click -> remove
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -43,80 +40,93 @@ export default function LogManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-soc-border pb-6">
         <div>
-          <h2 className="text-2xl font-bold text-soc-text">Log Explorer</h2>
-          <p className="text-sm text-soc-muted mt-1">Search and filter ingested security logs</p>
+           <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic flex items-center">
+             <Database className="mr-3 text-soc-primary" /> LOG_ANALYZER_V2
+           </h2>
+           <p className="text-[10px] font-bold text-soc-muted tracking-[0.3em] mt-2">MULTIDIMENSIONAL SECURITY TELEMETRY EXPLORER</p>
         </div>
-        <div className="flex space-x-3">
-          <button onClick={fetchLogs} className="flex items-center px-4 py-2 bg-soc-panel border border-soc-border rounded hover:border-soc-primary hover:text-soc-primary transition-colors text-sm">
-            <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} /> Refresh
+        <div className="flex flex-wrap items-center gap-3">
+          <button onClick={fetchLogs} className="flex items-center px-4 py-2.5 bg-soc-panel/60 border border-soc-border rounded-xl hover:border-soc-primary hover:text-soc-primary hover:shadow-[0_0_15px_rgba(16,185,129,0.15)] transition-all text-xs font-bold uppercase tracking-widest">
+            <RefreshCw size={14} className={`mr-2.5 ${loading ? 'animate-spin' : ''}`} /> Sync_Nodes
           </button>
-          <button className="flex items-center px-4 py-2 bg-soc-panel border border-soc-border rounded hover:bg-soc-border transition-colors text-sm">
-            <Filter size={16} className="mr-2" /> Filter
-          </button>
+          
           <button 
             onClick={exportLogsToJSON}
             disabled={logs.length === 0}
-            className={`flex items-center px-4 py-2 rounded transition-colors text-sm shadow-lg ${logs.length === 0 ? 'bg-soc-border text-soc-muted cursor-not-allowed shadow-none' : 'bg-soc-primary text-white hover:bg-blue-600 shadow-soc-primary/20'}`}
+            className={`flex items-center px-6 py-2.5 rounded-xl transition-all text-xs font-black uppercase tracking-widest shadow-xl border ${logs.length === 0 ? 'bg-soc-bg border-soc-border text-soc-muted cursor-not-allowed opacity-30' : 'bg-soc-primary border-soc-primary/20 text-soc-bg hover:bg-soc-hacker hover:shadow-[0_0_25px_rgba(16,185,129,0.3)]'}`}
           >
-            <Download size={16} className="mr-2" /> {logs.length === 0 ? 'No Data to Export' : 'Export JSON'}
+            <Download size={14} className="mr-2.5" /> Data_Export
           </button>
         </div>
       </div>
 
-      <div className="bg-soc-panel border border-soc-border rounded-lg shadow-lg overflow-hidden">
-        <div className="p-4 border-b border-soc-border flex items-center bg-soc-bg/50">
-          <Search size={20} className="text-soc-muted mr-3" />
+      <div className="bg-soc-panel/30 backdrop-blur-xl border border-soc-border rounded-2xl shadow-2xl overflow-hidden relative">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-soc-primary via-soc-secondary to-accent opacity-30"></div>
+        
+        <div className="p-6 border-b border-soc-border/50 flex items-center bg-soc-bg/40 group">
+          <Search size={18} className="text-soc-primary group-focus-within:animate-pulse transition-all mr-4" />
           <input 
             type="text" 
-            placeholder="Search logs (e.g., process_name:powershell.exe)..." 
-            className="w-full bg-transparent border-none outline-none text-soc-text placeholder-soc-muted"
+            placeholder="FILTER_STREAM: Enter host_identifier, process_string, or source_ipv4..." 
+            className="w-full bg-transparent border-none outline-none text-sm font-bold text-white placeholder:text-soc-muted/40 uppercase tracking-widest"
           />
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-soc-bg text-soc-muted border-b border-soc-border">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left text-xs whitespace-nowrap border-collapse">
+            <thead className="bg-soc-bg/80 text-soc-primary uppercase tracking-widest border-b border-soc-border">
               <tr>
-                <th className="px-6 py-4 font-medium">Timestamp</th>
-                <th className="px-6 py-4 font-medium">Event ID</th>
-                <th className="px-6 py-4 font-medium">Computer</th>
-                <th className="px-6 py-4 font-medium">Process</th>
-                <th className="px-6 py-4 font-medium">User</th>
-                <th className="px-6 py-4 font-medium">Source IP</th>
-                <th className="px-6 py-4 font-medium">Event Type</th>
-                <th className="px-6 py-4 font-medium">Severity</th>
+                <th className="px-6 py-5 font-black italic">Timestamp_UTC</th>
+                <th className="px-6 py-5 font-black italic">ID</th>
+                <th className="px-6 py-5 font-black italic">Target_Host</th>
+                <th className="px-6 py-5 font-black italic">Process_ID</th>
+                <th className="px-6 py-5 font-black italic">Subject</th>
+                <th className="px-6 py-5 font-black italic">Vector_IP</th>
+                <th className="px-6 py-5 font-black italic">Classification</th>
+                <th className="px-6 py-5 font-black italic">Severity</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-soc-border">
+            <tbody className="divide-y divide-soc-border/30 bg-soc-bg/20">
               {loading ? (
-                <tr><td colSpan="8" className="px-6 py-8 text-center text-soc-muted">Loading logs...</td></tr>
+                <tr><td colSpan="8" className="px-6 py-24 text-center">
+                   <div className="flex flex-col items-center">
+                      <div className="w-12 h-12 border-4 border-soc-primary/10 border-t-soc-primary rounded-full animate-spin mb-4"></div>
+                      <p className="text-[10px] font-bold text-soc-primary tracking-[0.4em] uppercase animate-pulse">Initializing_Data_Payload...</p>
+                   </div>
+                </td></tr>
               ) : logs.length === 0 ? (
-                <tr><td colSpan="8" className="px-6 py-8 text-center text-soc-muted">No logs found in the database. Run the simulator to generate some.</td></tr>
+                <tr><td colSpan="8" className="px-6 py-24 text-center font-mono opacity-40 uppercase tracking-widest italic text-xs">NO_EVENTS_REGISTERED_IN_BUFFER</td></tr>
               ) : (
                 logs.map(log => {
-                  // Ensure UTC parsing for correct local time mapping
-                  const d = new Date(log.timestamp.endsWith('Z') ? log.timestamp : log.timestamp + 'Z');
-                  const timeString = d.toLocaleString(undefined, {
-                    year: 'numeric', month: 'short', day: 'numeric', 
-                    hour: '2-digit', minute: '2-digit', second: '2-digit'
-                  });
+                  const timeStr = log.timestamp ? log.timestamp : new Date().toISOString();
+                  const d = new Date(timeStr.endsWith('Z') ? timeStr : timeStr + 'Z');
+                  const timeString = d.toLocaleString(undefined, { 
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                    year: 'numeric', month: '2-digit', day: '2-digit'
+                  }).replace(',', '');
+                  
                   return (
-                    <tr key={log.id} className="hover:bg-soc-bg/40 cursor-pointer transition-colors">
-                      <td className="px-6 py-4 text-soc-muted font-mono text-xs whitespace-nowrap">{timeString}</td>
-                      <td className="px-6 py-4">{log.event_id || '-'}</td>
-                      <td className="px-6 py-4 text-soc-text">{log.details?.host || log.details?.Computer || '-'}</td>
-                      <td className="px-6 py-4">{log.process_name || '-'}</td>
-                      <td className="px-6 py-4">{log.user || '-'}</td>
-                      <td className="px-6 py-4 text-blue-400 font-mono">{log.ip_address || '-'}</td>
-                      <td className="px-6 py-4">{log.event_type || '-'}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded text-xs font-medium bg-soc-bg border border-soc-border
-                          ${log.severity?.toLowerCase() === 'high' || log.severity?.toLowerCase() === 'critical' ? 'text-soc-danger border-soc-danger/30' : 
-                            log.severity?.toLowerCase() === 'medium' ? 'text-soc-warning border-soc-warning/30' : 'text-soc-muted'}`}>
-                          {log.severity ? log.severity.toUpperCase() : 'LOW'}
+                    <tr 
+                      key={log.id} 
+                      onClick={() => { setSelectedLog(log); setIntel(null); }}
+                      className="hover:bg-soc-primary/5 cursor-pointer transition-all border-l-2 border-l-transparent hover:border-l-soc-primary"
+                    >
+                      <td className="px-6 py-4 text-soc-muted font-mono">{timeString}</td>
+                      <td className="px-6 py-4 text-white font-mono">{log.event_id || '000'}</td>
+                      <td className="px-6 py-4 font-black tracking-tight">{log.details?.host || log.details?.Computer || 'NULL'}</td>
+                      <td className="px-6 py-4 font-mono text-soc-primary opacity-80">{log.process_name || '-'}</td>
+                      <td className="px-6 py-4 font-bold">{log.user || '-'}</td>
+                      <td className="px-6 py-4 text-soc-secondary font-mono bg-soc-secondary/5 border border-soc-secondary/10 rounded px-2 py-0.5 mx-1">{log.ip_address || '::1'}</td>
+                      <td className="px-6 py-4 opacity-70 uppercase font-black text-[9px] tracking-widest">{log.event_type || 'GENERAL'}</td>
+                      <td className="px-6 py-4 text-right">
+                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border
+                          ${(log.severity || '').toLowerCase() === 'critical' || (log.severity || '').toLowerCase() === 'high' ? 'bg-soc-critical/10 text-soc-critical border-soc-critical/40 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 
+                            (log.severity || '').toLowerCase() === 'medium' ? 'bg-soc-warning/10 text-soc-warning border-soc-warning/40' : 
+                            'bg-soc-primary/10 text-soc-primary border-soc-primary/40'}`}>
+                          {log.severity ? log.severity.toUpperCase() : 'LOW_LEVEL'}
                         </span>
                       </td>
                     </tr>
@@ -126,7 +136,106 @@ export default function LogManagement() {
             </tbody>
           </table>
         </div>
+        
+        <div className="p-4 bg-soc-bg/80 border-t border-soc-border flex items-center justify-between">
+           <div className="text-[9px] font-mono text-soc-muted uppercase flex items-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-soc-primary mr-2"></div>
+              Live // Total_Records: {logs.length}
+           </div>
+           <div className="flex items-center space-x-4 opacity-40">
+              <div className="h-1 w-20 bg-soc-border rounded-full overflow-hidden">
+                 <div className="h-full bg-soc-primary w-1/3"></div>
+              </div>
+              <span className="text-[8px] font-black text-white uppercase italic">Memory_Usage: 14%</span>
+           </div>
+        </div>
       </div>
+
+      {/* Log Detail & Enrichment Modal */}
+      {selectedLog && (
+        <div className="fixed inset-0 z-[200] bg-soc-bg/95 backdrop-blur-3xl flex items-center justify-center p-4 lg:p-12 animate-in fade-in zoom-in duration-300">
+           <div className="bg-soc-panel border-2 border-soc-border rounded-[2.5rem] shadow-[0_0_100px_rgba(0,0,0,0.8)] w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden relative">
+              <div className="absolute top-0 right-0 p-8 z-10">
+                 <button onClick={() => setSelectedLog(null)} className="p-3 bg-soc-bg/80 border border-soc-border rounded-xl hover:border-white transition-all">
+                    <X size={20} className="text-white" />
+                 </button>
+              </div>
+
+              <div className="p-10 border-b-2 border-soc-border bg-soc-bg/40">
+                 <p className="text-soc-primary font-black text-[10px] uppercase tracking-[0.4em] mb-2 italic">Detailed_Telemetry_Inspect</p>
+                 <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase">{selectedLog.process_name || 'System_Event'}</h2>
+                 <p className="text-[10px] text-soc-muted font-mono mt-1">UUID: {selectedLog.id} | SOURCE: {selectedLog.details?.host || 'Internal'}</p>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
+                 <div className="grid grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                       <p className="text-[9px] font-black text-soc-muted uppercase tracking-widest italic">Signal_Vector</p>
+                       <p className="text-lg font-black text-soc-secondary font-mono">{selectedLog.ip_address || '::1'}</p>
+                    </div>
+                    <div className="space-y-2">
+                       <p className="text-[9px] font-black text-soc-muted uppercase tracking-widest italic">Payload_Digest</p>
+                       <p className="text-sm font-bold text-white truncate px-4 py-2 bg-soc-bg rounded-lg border border-soc-border">{selectedLog.command_line || 'SHLRUN_INTERNAL'}</p>
+                    </div>
+                 </div>
+
+                 <div className="bg-soc-bg/40 border border-soc-border rounded-2xl p-8 space-y-6">
+                    <div className="flex items-center justify-between">
+                       <h4 className="text-[11px] font-black text-white uppercase tracking-widest italic flex items-center">
+                          <RefreshCw size={16} className={`mr-3 text-soc-primary ${enriching ? 'animate-spin' : ''}`} /> Cyber_Intel_Verification
+                       </h4>
+                       <button 
+                          onClick={async () => {
+                             if (!selectedLog.ip_address) return;
+                             setEnriching(true);
+                             try {
+                                const res = await fetch(`http://${window.location.hostname}:8080/api/intel/lookup/${encodeURIComponent(selectedLog.ip_address)}`);
+                                if (res.ok) setIntel(await res.json());
+                             } catch(err) { console.error(err); }
+                             setEnriching(false);
+                          }}
+                          disabled={enriching || !selectedLog.ip_address}
+                          className="px-6 py-2 bg-soc-primary/10 text-soc-primary border border-soc-primary/30 rounded-xl hover:bg-soc-primary hover:text-soc-bg transition-all text-[10px] font-black uppercase tracking-widest disabled:opacity-30"
+                       >
+                          ENRICH_WITH_CYBER_INTEL
+                       </button>
+                    </div>
+
+                    {intel ? (
+                       <div className="grid grid-cols-2 gap-8 pt-4 border-t border-soc-border animate-in slide-in-from-top-4">
+                          <div className="space-y-1">
+                             <p className="text-[9px] font-black text-soc-muted uppercase">Verdict</p>
+                             <p className={`text-xl font-black italic ${intel.verdict === 'CRITICAL RISK' ? 'text-soc-critical' : 'text-soc-warning'}`}>{intel.verdict}</p>
+                          </div>
+                          <div className="space-y-1">
+                             <p className="text-[9px] font-black text-soc-muted uppercase">Global_Origin</p>
+                             <p className="text-lg font-black text-white italic">{intel.geodata.city}, {intel.geodata.country}</p>
+                          </div>
+                       </div>
+                    ) : (
+                       <p className="text-[10px] text-soc-muted italic opacity-50 text-center py-4">NO_INTEL_ENRICHMENT_DATA_STREAMED. RUN_VERIFICATION_PROTOCOL ABOVE.</p>
+                    )}
+                 </div>
+
+                 <div className="space-y-4">
+                    <p className="text-[9px] font-black text-soc-muted uppercase tracking-widest italic">Raw_Telemetry_JSON</p>
+                    <pre className="p-6 bg-black/40 border border-soc-border rounded-[1.5rem] font-mono text-[11px] text-soc-primary/80 overflow-x-auto">
+                       {JSON.stringify(selectedLog, null, 2)}
+                    </pre>
+                 </div>
+              </div>
+
+              <div className="p-8 bg-soc-bg border-t border-soc-border flex items-center justify-end">
+                 <button 
+                   onClick={() => setSelectedLog(null)}
+                   className="px-10 py-3 bg-soc-primary text-soc-bg rounded-xl text-xs font-black uppercase tracking-widest hover:bg-soc-hacker transition-all italic shadow-2xl"
+                 >
+                    CLOSE_COMMIT
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,72 @@
+# Remote Windows Forwarder Agent
+Write-Host "[+] Initializing Remote Windows Forwarder..." -ForegroundColor Green
+
+if (-not $s) {
+    $s = "localhost"
+}
+$siemUrl = "http://${s}:8080/api/logs"
+
+Write-Host "[+] Target SIEM: $siemUrl" -ForegroundColor Cyan
+
+function Send-Log ($event_id, $severity, $message_text, $proc="AgentDaemon.exe") {
+    # Fallback to 127.0.0.1 if IP lookup fails
+    $ip = "127.0.0.1"
+    try {
+        $ip = (Test-Connection -ComputerName (hostname) -Count 1 -ErrorAction Stop).IPV4Address.IPAddressToString
+    } catch {}
+
+    $payload = @{
+        timestamp = (Get-Date).ToUniversalTime().ToString("o")
+        event_id = $event_id
+        process_name = $proc
+        user = [Environment]::UserName
+        ip_address = $ip
+        severity = $severity
+        details = @{
+            source = "Remote Windows Forwarder"
+            host = [Environment]::MachineName
+            message = $message_text
+        }
+    } | ConvertTo-Json -Depth 5 -Compress
+    
+    try {
+        Invoke-RestMethod -Uri $siemUrl -Method Post -Body $payload -ContentType "application/json" -ErrorAction SilentlyContinue | Out-Null
+    } catch {
+        # Silent fail to keep agent running
+    }
+}
+
+# 1. Send Initial Heartbeat
+Send-Log "HEARTBEAT-001" "low" "Agent initialized successfully"
+Write-Host "[*] Heartbeat sent. Agent is now active." -ForegroundColor Yellow
+
+$lastTime = Get-Date
+
+# 2. Main Event Loop
+while ($true) {
+    Start-Sleep -Seconds 10
+    
+    # Heartbeat to keep the node active in the UI
+    Send-Log "HEARTBEAT-001" "low" "Telemetry ping" "AgentKernel.sys"
+    Write-Host "[*] Heartbeat ping sent." -ForegroundColor DarkGray
+    
+    # Pull the latest Windows Event from Application log to show real telemetry
+    try {
+        $logs = Get-WinEvent -FilterHashtable @{LogName='Application'; StartTime=$lastTime} -MaxEvents 5 -ErrorAction SilentlyContinue
+        $lastTime = Get-Date
+        
+        if ($logs) {
+            foreach ($log in $logs) {
+                # Map Windows Event levels to our severity
+                $sev = "low"
+                if ($log.LevelDisplayName -match "Error|Critical") { $sev = "high" }
+                elseif ($log.LevelDisplayName -match "Warning") { $sev = "medium" }
+                
+                Send-Log $log.Id.ToString() $sev $log.Message "svchost.exe"
+                Write-Host "[!] Forwarded Event $($log.Id)" -ForegroundColor Magenta
+            }
+        }
+    } catch {
+        # Ignore errors if no permission
+    }
+}

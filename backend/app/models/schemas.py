@@ -1,23 +1,24 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Any, Dict
-from datetime import datetime
+from datetime import datetime, timezone
 
 class LogModel(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
     id: Optional[str] = Field(alias="_id", default=None)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     event_id: str
     process_name: Optional[str] = None
     user: Optional[str] = None
     ip_address: Optional[str] = None
-    event_type: str
+    event_type: str = "sysmon"
     severity: str = "low"
-    raw_data: str # json string
+    raw_data: str = ""
     details: Dict[str, Any] = Field(default_factory=dict)
 
-    class Config:
-        allow_population_by_field_name = True
-
 class RuleModel(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     id: Optional[str] = Field(alias="_id", default=None)
     name: str
     description: str
@@ -27,11 +28,10 @@ class RuleModel(BaseModel):
     severity: str # low, medium, high, critical
     mitre_attack_id: str
     is_active: bool = True
-    
-    class Config:
-        allow_population_by_field_name = True
 
 class AlertModel(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     id: Optional[str] = Field(alias="_id", default=None)
     rule_id: Optional[str] = None
     rule_name: str
@@ -39,16 +39,15 @@ class AlertModel(BaseModel):
     mitre_attack_id: str
     affected_host: Optional[str] = None
     source_ip: Optional[str] = None
-    triggered_time: datetime = Field(default_factory=datetime.utcnow)
+    triggered_time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     matching_logs: int = 1
     status: str = "new" # new, investigating, resolved, false_positive
     log_ids: List[str] = Field(default_factory=list)
     threat_intel: Optional[Dict[str, Any]] = None # enrichment
 
-    class Config:
-        allow_population_by_field_name = True
-
 class IncidentModel(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     id: Optional[str] = Field(alias="_id", default=None)
     case_id: str
     title: str
@@ -57,8 +56,5 @@ class IncidentModel(BaseModel):
     severity: str
     alerts_linked: List[str] = Field(default_factory=list)
     notes: List[Dict[str, Any]] = Field(default_factory=list) # {timestamp, author, content}
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-
-    class Config:
-        allow_population_by_field_name = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

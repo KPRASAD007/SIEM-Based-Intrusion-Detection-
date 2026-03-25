@@ -1,0 +1,21 @@
+﻿
+C:\Users\user\Documents\project\frontend\src\components\KillChainVisualization.jsx
+  303:14  error  Unknown property 'jsx' found  react/no-unknown-property
+
+C:\Users\user\Documents\project\frontend\src\pages\AlertsCenter.jsx
+  219:22  error  'Target' is not defined     react/jsx-no-undef
+  332:34  error  'Scan' is not defined       react/jsx-no-undef
+  411:47  error  'soakError' is not defined  no-undef
+
+C:\Users\user\Documents\project\frontend\src\pages\RemoteSensors.jsx
+  305:34  error  Empty block statement  no-empty
+
+C:\Users\user\Documents\project\frontend\src\pages\RulesEngine.jsx
+  162:39  error  'FileText' is not defined  react/jsx-no-undef
+  247:19  error  'X' is not defined         react/jsx-no-undef
+
+C:\Users\user\Documents\project\frontend\src\pages\WebSurveillance.jsx
+  132:34  error  Empty block statement  no-empty
+
+Γ£û 8 problems (8 errors, 0 warnings)
+

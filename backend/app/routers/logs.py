@@ -54,14 +54,13 @@ async def process_log_for_alerts(log_dict: Dict[str, Any], db, background_tasks:
                 "data": alert_dict
             })
             
-            # Trigger Email Notification for High/Critical alerts in Background (SO IT DOESN'T SLOW DOWN THE SIEM)
+            # Trigger Email Notification for High/Critical alerts in Background
             if background_tasks:
                 background_tasks.add_task(send_alert_email, alert, db)
             else:
                 # Fallback for Splunk/Caldera or manual calls where BackgroundTasks may be missing
-                import threading
-                thread = threading.Thread(target=send_alert_email, args=(alert, db))
-                thread.start()
+                import asyncio
+                asyncio.create_task(send_alert_email(alert, db))
             
             # Auto-escalate High/Critical alerts to Active Cases (Incidents)
             if alert_dict.get("severity", "").lower() in ["high", "critical"]:

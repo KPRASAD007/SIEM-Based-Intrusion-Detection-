@@ -39,38 +39,54 @@ export default function Login({ onLogin }) {
     }
   };
 
+  const heroUrl = `http://${window.location.hostname}:8080/api/download/hero.png`;
+  const logoUrl = `http://${window.location.hostname}:8080/api/download/logo.png`;
+
   return (
-    <div className="min-h-screen bg-soc-bg flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto rounded-xl bg-gradient-to-br from-soc-primary to-blue-600 flex items-center justify-center mb-4 shadow-lg shadow-soc-primary/20">
-            <Shield size={32} className="text-white" />
+    <div className="min-h-screen bg-soc-bg flex items-center justify-center p-4 relative overflow-hidden font-sans">
+      {/* Cinematic Hero Background */}
+      <div 
+        className="absolute inset-0 z-0 bg-cover bg-center brightness-[0.2] scale-105"
+        style={{ backgroundImage: `url(${heroUrl})` }}
+      ></div>
+      
+      {/* Animated Scanline overlay */}
+      <div className="absolute inset-0 z-10 opacity-20 pointer-events-none scanline"></div>
+
+      <div className="max-w-md w-full z-20 animate-in fade-in zoom-in duration-700">
+        <div className="text-center mb-10">
+          <div className="w-20 h-20 mx-auto mb-6 relative group">
+             <div className="absolute inset-0 bg-soc-primary blur-2xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
+             <img src={logoUrl} alt="CyberDetect Logo" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)] border-2 border-soc-primary/30 rounded-2xl p-2 bg-soc-panel/80" />
           </div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-soc-muted">
-            CyberDetect Lab
+          <h1 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white via-soc-primary to-accent tracking-tighter uppercase italic">
+            CyberDetect
           </h1>
-          <p className="text-soc-muted mt-2">Security Operations Center Authentication</p>
+          <p className="text-soc-muted mt-3 text-xs font-bold uppercase tracking-[0.3em] opacity-70">Secured Laboratory Environment</p>
         </div>
 
-        <div className="bg-soc-panel border border-soc-border rounded-xl shadow-2xl overflow-hidden p-8">
+        <div className="bg-soc-panel/80 backdrop-blur-xl border border-soc-primary/20 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden p-10 relative">
+          <div className="absolute top-0 left-0 w-1 h-full bg-soc-primary"></div>
+          
           {error && (
-            <div className="bg-soc-danger/20 border-l-4 border-soc-danger p-4 mb-6 rounded text-sm text-soc-text">
+            <div className="bg-soc-critical/10 border border-soc-critical/30 p-4 mb-8 rounded-lg text-xs font-bold text-soc-critical uppercase tracking-wider flex items-center">
+              <Shield size={16} className="mr-3 shrink-0" />
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-soc-muted mb-2">Username</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User size={18} className="text-soc-muted" />
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-soc-primary uppercase tracking-widest ml-1">Identity Provider</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-soc-primary text-soc-muted">
+                  <User size={18} />
                 </div>
                 <input
                   type="text"
                   required
-                  className="w-full pl-10 pr-3 py-2 bg-soc-bg border border-soc-border rounded-lg text-soc-text focus:outline-none focus:border-soc-primary focus:ring-1 focus:ring-soc-primary transition-colors"
-                  placeholder="admin"
+                  className="w-full pl-12 pr-4 py-3 bg-soc-bg/50 border border-soc-border rounded-xl text-sm text-white focus:outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/30 focus:bg-soc-bg"
+                  placeholder="USERNAME"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
@@ -78,35 +94,34 @@ export default function Login({ onLogin }) {
             </div>
 
             {isRegistering && (
-              <div>
-                <label className="block text-sm font-medium text-soc-muted mb-2">Alert Notification Email</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                     <span className="text-soc-muted font-bold text-lg leading-none mt-1">@</span>
+              <div className="space-y-2 animate-in slide-in-from-top-2">
+                <label className="text-[10px] font-bold text-soc-primary uppercase tracking-widest ml-1">Intel Alerting Endpoint</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-soc-muted group-focus-within:text-soc-primary">
+                     <span className="font-bold text-lg">@</span>
                   </div>
                   <input
                     type="email"
                     required={isRegistering}
-                    className="w-full pl-10 pr-3 py-2 bg-soc-bg border border-soc-border rounded-lg text-soc-text focus:outline-none focus:border-soc-primary focus:ring-1 focus:ring-soc-primary transition-colors"
+                    className="w-full pl-12 pr-4 py-3 bg-soc-bg/50 border border-soc-border rounded-xl text-sm text-white focus:outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/30"
                     placeholder="analyst@domain.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-                <p className="text-xs text-soc-muted mt-1">Critical alerts will be routed here instantly.</p>
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-soc-muted mb-2">Password</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock size={18} className="text-soc-muted" />
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-soc-primary uppercase tracking-widest ml-1">Access Key</label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-soc-muted group-focus-within:text-soc-primary">
+                  <Lock size={18} />
                 </div>
                 <input
                   type="password"
                   required
-                  className="w-full pl-10 pr-3 py-2 bg-soc-bg border border-soc-border rounded-lg text-soc-text focus:outline-none focus:border-soc-primary focus:ring-1 focus:ring-soc-primary transition-colors"
+                  className="w-full pl-12 pr-4 py-3 bg-soc-bg/50 border border-soc-border rounded-xl text-sm text-white focus:outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/30"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -117,29 +132,31 @@ export default function Login({ onLogin }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 bg-soc-primary hover:bg-blue-600 text-white rounded-lg font-medium shadow-lg shadow-soc-primary/20 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-soc-primary focus:ring-offset-soc-panel disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+              className="w-full py-4 px-4 bg-soc-primary hover:bg-soc-hacker text-soc-bg rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all hover:shadow-[0_0_40px_rgba(16,185,129,0.4)] disabled:opacity-50 flex justify-center items-center mt-4"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <div className="w-5 h-5 border-2 border-soc-bg/30 border-t-soc-bg rounded-full animate-spin"></div>
               ) : (
-                isRegistering ? 'Register Analyst Profile' : 'Authenticate to SOC'
+                isRegistering ? 'Initialize Profile' : 'Access Control Center'
               )}
             </button>
             
-            <div className="text-center mt-4">
+            <div className="text-center pt-2">
                <button 
                   type="button" 
                   onClick={() => { setIsRegistering(!isRegistering); setError(''); }} 
-                  className="text-sm text-soc-primary/80 hover:text-soc-primary hover:underline transition-colors"
+                  className="text-[10px] font-bold text-soc-muted hover:text-soc-primary uppercase tracking-widest transition-colors"
                >
-                 {isRegistering ? 'Already have an account? Log in' : 'New Analyst? Register to receive alerts.'}
+                 {isRegistering ? '« Back to Logon' : 'New Identity? Request Credentials'}
                </button>
             </div>
           </form>
 
           {!isRegistering && (
-            <div className="mt-6 text-center text-sm text-soc-muted">
-              <p>Use <span className="text-soc-text font-mono bg-soc-bg px-2 py-1 rounded">admin</span> / <span className="text-soc-text font-mono bg-soc-bg px-2 py-1 rounded">admin</span> for lab access.</p>
+            <div className="mt-8 pt-6 border-t border-soc-border/50 text-center">
+              <p className="text-[9px] font-mono text-soc-muted uppercase opacity-50">
+                Authorized Lab Access Only. Log: <span className="text-soc-primary">admin</span> / <span className="text-soc-primary">admin</span>
+              </p>
             </div>
           )}
         </div>

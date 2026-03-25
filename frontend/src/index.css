@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,16 +7,63 @@
 @layer base {
   body {
     @apply bg-soc-bg text-soc-text antialiased;
+    font-family: 'Rajdhani', sans-serif;
+  }
+  
+  code, pre {
+    font-family: 'JetBrains Mono', monospace !important;
+  }
+}
+
+@layer utilities {
+  .bg-glass {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  }
+  
+  .border-glow {
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-soc-bg;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-soc-border rounded-full hover:bg-soc-primary/50 transition-colors;
   }
 }
 
 @keyframes toastFade {
-  0% { opacity: 0; transform: translateY(20px) scale(0.9); }
-  5% { opacity: 1; transform: translateY(0) scale(1); }
+  0% { opacity: 0; transform: translateY(20px) scale(0.9) rotate3d(1, 0, 0, 30deg); }
+  5% { opacity: 1; transform: translateY(0) scale(1) rotate3d(0, 0, 0, 0deg); }
   95% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(-10px) scale(0.95); }
 }
 
 .animate-toast {
-  animation: toastFade 5.5s ease-in-out forwards;
+  animation: toastFade 5.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Scanline Effect */
+.scanline::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.05));
+  z-index: 2;
+  background-size: 100% 4px, 3px 100%;
+  pointer-events: none;
 }

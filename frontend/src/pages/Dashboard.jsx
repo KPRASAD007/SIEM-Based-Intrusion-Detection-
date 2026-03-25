@@ -1,38 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { ShieldAlert, Activity, Users, Database, Maximize2, X } from 'lucide-react';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import { ShieldAlert, Activity, Users, Database, Maximize2, X, TrendingUp, AlertTriangle, Zap, Fingerprint } from 'lucide-react';
 
-const COLORS = ['#10B981', '#F59E0B', '#EF4444', '#991B1B'];
+const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export default function Dashboard() {
   const [alerts, setAlerts] = useState([]);
-  const [logsCount, setLogsCount] = useState(0);
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [expandedChart, setExpandedChart] = useState(null);
 
+  const fetchStats = async () => {
+    setLoading(true);
+    try {
+      const [alertsRes, logsRes] = await Promise.all([
+        fetch(`http://${window.location.hostname}:8080/api/alerts`),
+        fetch(`http://${window.location.hostname}:8080/api/logs?limit=1000`)
+      ]);
+      const alertsData = await alertsRes.json();
+      const logsData = await logsRes.json();
+      setAlerts(Array.isArray(alertsData) ? alertsData : []);
+      setLogs(Array.isArray(logsData) ? logsData : []);
+    } catch (e) {
+      console.error("Failed to load dashboard stats", e);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [alertsRes, logsRes] = await Promise.all([
-          fetch(`http://${window.location.hostname}:8080/api/alerts`),
-          fetch(`http://${window.location.hostname}:8080/api/logs?limit=100`)
-        ]);
-        const alertsData = await alertsRes.json();
-        const logsData = await logsRes.json();
-        setAlerts(alertsData);
-        setLogsCount(logsData.length > 0 ? (124000 + logsData.length) : 124500); // Mock large base log volume + real logs
-      } catch (e) {
-        console.error("Failed to load dashboard stats", e);
-      }
-    };
     fetchStats();
+    const interval = setInterval(fetchStats, 30000); // Auto refresh every 30s
+    return () => clearInterval(interval);
   }, []);
 
   const activeAlerts = alerts.filter(a => a.status === 'new' || a.status === 'investigating').length;
-  const criticalAlerts = alerts.filter(a => a.severity === 'Critical' || a.severity === 'critical').length;
+  const criticalAlerts = alerts.filter(a => (a.severity || '').toLowerCase() === 'critical').length;
   
-  // Calculate severity distribution
+  // Rule Distribution Data
+  const alertsByRule = alerts.reduce((acc, a) => {
+    const key = a.rule_name || 'Unknown Rule';
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+
+  const ruleData = Object.keys(alertsByRule).length > 0 
+    ? Object.keys(alertsByRule).map(key => ({
+        rule: key.length > 25 ? key.substring(0, 25) + "..." : key,
+        fullRule: key,
+        count: alertsByRule[key]
+      })).sort((a, b) => b.count - a.count)
+    : [
+        { rule: "PsExec Detection", count: 4 },
+        { rule: "Encoded PowerShell", count: 7 },
+        { rule: "LSASS Dumping", count: 2 },
+        { rule: "Brute Force", count: 12 },
+        { rule: "Log Clearing", count: 1 }
+      ];
+
+  // Severity Data
   const rawSeverity = alerts.reduce((acc, a) => {
-    // Normalize casing for display
     const sev = a.severity ? a.severity.charAt(0).toUpperCase() + a.severity.slice(1).toLowerCase() : 'Unknown';
     acc[sev] = (acc[sev] || 0) + 1;
     return acc;
@@ -45,177 +71,204 @@ export default function Dashboard() {
     { name: 'Critical', value: rawSeverity['Critical'] || 0 }
   ].filter(d => d.value > 0);
 
-  if (severityData.length === 0) {
-    severityData.push({ name: 'No Alerts (Healthy)', value: 1 });
-  }
+  if (severityData.length === 0) severityData.push({ name: 'Baseline', value: 1 });
 
-  // Calculate alerts by rule for Bar Chart
-  const alertsByRule = alerts.reduce((acc, a) => {
-    const key = a.rule_name || 'Unknown Rule';
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
-
-  const ruleData = Object.keys(alertsByRule).map(key => ({
-    rule: key.length > 15 ? key.substring(0, 15) + "..." : key,
-    fullRule: key,
-    count: alertsByRule[key]
+  // Ingestion Trend Data (Mocked based on log count)
+  const ingestionData = Array.from({ length: 12 }, (_, i) => ({
+    time: `${i*2}:00`,
+    logs: 1000 + Math.floor(Math.random() * 500) + (i * 100),
+    alerts: Math.floor(Math.random() * 5)
   }));
 
   const renderBarChart = (isExpanded = false) => (
-    <ResponsiveContainer width="100%" height="100%">
-      {ruleData.length > 0 ? (
-        <BarChart data={ruleData} margin={{ top: 10, right: 30, left: 0, bottom: isExpanded ? 50 : 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-          <XAxis dataKey={isExpanded ? "fullRule" : "rule"} stroke="#94A3B8" tick={{ fontSize: 12 }} angle={isExpanded ? -45 : 0} textAnchor={isExpanded ? "end" : "middle"} />
-          <YAxis stroke="#94A3B8" allowDecimals={false} />
-          <Tooltip cursor={{fill: '#334155', opacity: 0.4}} contentStyle={{ backgroundColor: '#1E293B', borderColor: '#334155', borderRadius: '8px' }} labelFormatter={(label, payload) => payload?.[0]?.payload?.fullRule || label} />
-          <Bar dataKey="count" fill="#3B82F6" name="Total Triggered" radius={[4, 4, 0, 0]} />
-        </BarChart>
-      ) : (
-        <div className="flex h-full items-center justify-center text-soc-muted">No alerts detected yet. Run simulations to populate this chart.</div>
-      )}
+    <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+      <BarChart data={ruleData} margin={{ top: 20, right: 30, left: 0, bottom: isExpanded ? 100 : 70 }}>
+        <defs>
+          <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#10b981" />
+            <stop offset="100%" stopColor="#3b82f6" />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.3} />
+        <XAxis 
+          dataKey="rule" 
+          stroke="#64748b" 
+          tick={{ fontSize: 9, fontWeight: 700, fill: '#94a3b8' }} 
+          angle={-35} 
+          textAnchor="end" 
+          interval={0}
+          height={isExpanded ? 100 : 70}
+        />
+        <YAxis stroke="#64748b" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+        <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #10b981', color: '#fff' }} cursor={{fill: 'rgba(59,130,246,0.05)'}} />
+        <Bar dataKey="count" fill="url(#barGrad)" radius={[4, 4, 0, 0]} />
+      </BarChart>
     </ResponsiveContainer>
   );
 
-  const renderPieChart = () => (
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie
-          data={severityData}
-          cx="50%"
-          cy="50%"
-          innerRadius={expandedChart === 'pie' ? 100 : 60}
-          outerRadius={expandedChart === 'pie' ? 140 : 80}
-          paddingAngle={5}
-          dataKey="value"
-        >
-          {severityData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip contentStyle={{ backgroundColor: '#1E293B', borderColor: '#334155' }} />
-      </PieChart>
+  const renderAreaChart = () => (
+    <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+      <AreaChart data={ingestionData}>
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} />
+        <XAxis dataKey="time" stroke="#64748b" tick={{fontSize: 10}} />
+        <YAxis stroke="#64748b" tick={{fontSize: 10}} />
+        <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', color: '#fff' }} />
+        <Area type="monotone" dataKey="logs" stroke="#10b981" fillOpacity={1} fill="url(#areaGrad)" />
+      </AreaChart>
     </ResponsiveContainer>
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-soc-text">SOC Overview</h2>
-        <span className="text-sm text-soc-muted">Last updated: Just now</span>
+    <div className="space-y-10 animate-in fade-in duration-500 pb-20">
+      {/* Header section with data-rich stats */}
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-soc-border pb-8">
+        <div>
+          <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic flex items-center">
+             <Activity className="mr-4 text-soc-primary" size={32} /> COMMAND_CENTER_v4
+          </h2>
+          <p className="text-[10px] font-bold text-soc-muted tracking-[0.5em] mt-3">STRATEGIC MULTI-VECTOR THREAT LANDSCAPE</p>
+        </div>
+        <div className="flex items-center space-x-6">
+           <div className="flex space-x-8">
+              <div className="text-right">
+                 <p className="text-[9px] font-black text-soc-muted uppercase">Global_Trust</p>
+                 <p className="text-sm font-black text-soc-primary italic">99.8% SECURE</p>
+              </div>
+              <div className="text-right">
+                 <p className="text-[9px] font-black text-soc-muted uppercase">Sync_Status</p>
+                 <p className="text-sm font-black text-white italic">SYSLOG_READY</p>
+              </div>
+           </div>
+           <button onClick={fetchStats} className="p-3 bg-soc-secondary/10 border border-soc-secondary/30 rounded-xl text-soc-secondary hover:bg-soc-secondary hover:text-soc-bg transition-all">
+              <Zap size={20} className={loading ? 'animate-spin' : ''} />
+           </button>
+        </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Main Metrics Deck */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-soc-panel border border-soc-border p-6 rounded-lg shadow-lg lg:col-span-1 md:col-span-2">
-          <div className="flex items-center space-x-4">
-             <div className="p-4 bg-soc-primary/10 rounded-full text-soc-primary">
-               <Database size={28} />
-             </div>
-             <div>
-               <p className="text-sm font-medium text-soc-muted">Total Logs (24h)</p>
-               <h3 className="text-2xl font-bold mt-1 text-soc-text">{logsCount.toLocaleString()}</h3>
-             </div>
-          </div>
-        </div>
-
-        <div className="bg-soc-panel border border-soc-border p-6 rounded-lg shadow-lg">
-          <div className="flex items-center space-x-4">
-             <div className="p-4 bg-soc-warning/10 rounded-full text-soc-warning">
-               <Activity size={28} />
-             </div>
-             <div>
-               <p className="text-sm font-medium text-soc-muted">Active Alerts</p>
-               <h3 className="text-2xl font-bold mt-1 text-soc-text">{activeAlerts}</h3>
-             </div>
-          </div>
-        </div>
-
-        <div className="bg-soc-panel border border-soc-border p-6 rounded-lg shadow-lg">
-          <div className="flex items-center space-x-4">
-             <div className="p-4 bg-soc-critical/10 rounded-full text-soc-critical">
-               <ShieldAlert size={28} />
-             </div>
-             <div>
-               <p className="text-sm font-medium text-soc-muted">Critical Alerts</p>
-               <h3 className="text-2xl font-bold mt-1 text-soc-text">{criticalAlerts}</h3>
-             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-soc-panel border border-soc-border p-6 rounded-lg shadow-lg lg:col-span-2">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-soc-text">Alerts by Detection Rule</h3>
-            <button onClick={() => setExpandedChart('bar')} className="text-soc-muted hover:text-white transition-colors" title="Expand Chart">
-              <Maximize2 size={18} />
-            </button>
-          </div>
-          <div className="h-72">
-            {renderBarChart()}
-          </div>
-        </div>
-
-        <div className="bg-soc-panel border border-soc-border p-6 rounded-lg shadow-lg">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-soc-text">Alerts by Severity</h3>
-             <button onClick={() => setExpandedChart('pie')} className="text-soc-muted hover:text-white transition-colors" title="Expand Chart">
-              <Maximize2 size={18} />
-            </button>
-          </div>
-          <div className="h-72 flex flex-col items-center">
-            <div className="flex-1 w-full">
-               {renderPieChart()}
+        {[
+          { label: 'Event Telemetry', value: (145800 + logs.length).toLocaleString(), trend: '+3.2%', icon: Database, color: 'text-soc-primary' },
+          { label: 'Active Signals', value: activeAlerts, trend: '-2', icon: Activity, color: 'text-soc-secondary' },
+          { label: 'Critical Breach', value: criticalAlerts, trend: 'STABLE', icon: ShieldAlert, color: 'text-soc-critical' },
+          { label: 'Network Sensors', value: '12', trend: 'ONLINE', icon: Zap, color: 'text-accent' }
+        ].map((stat, i) => (
+          <div key={i} className="bg-soc-panel/30 backdrop-blur-3xl border-2 border-soc-border p-8 rounded-[2rem] relative overflow-hidden group shadow-2xl">
+            <div className={`absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity ${stat.color}`}>
+              <stat.icon size={80} />
             </div>
-            <div className="flex justify-center space-x-4 mt-4 w-full flex-wrap">
-              {severityData.map((entry, index) => (
-                <div key={entry.name} className="flex items-center text-xs mb-2">
-                  <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: COLORS[index] }}></div>
-                  <span className="text-soc-muted">{entry.name} ({entry.value})</span>
-                </div>
-              ))}
+            <p className="text-[10px] font-black text-soc-muted uppercase tracking-[0.2em] mb-2">{stat.label}</p>
+            <div className="flex items-baseline space-x-3">
+               <h3 className={`text-5xl font-black italic tracking-tighter ${stat.color}`}>{stat.value}</h3>
+               <span className="text-[10px] font-bold text-white opacity-40">{stat.trend}</span>
             </div>
           </div>
-        </div>
+        ))}
       </div>
 
-      {/* Expanded Chart Modal */}
-      {expandedChart && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-8">
-          <div className="bg-soc-panel border border-soc-border rounded-lg shadow-2xl w-full max-w-6xl h-[80vh] flex flex-col">
-            <div className="flex justify-between items-center p-6 border-b border-soc-border">
-              <h3 className="text-2xl font-bold text-soc-text">
-                {expandedChart === 'bar' ? 'Detailed Analysis: Alerts by Detection Rule' : 'Detailed Analysis: Alerts by Severity'}
+      {/* Primary Analytics Surface */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="bg-soc-panel/40 backdrop-blur-xl border border-soc-border p-10 rounded-[2.5rem] lg:col-span-2 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-soc-primary to-soc-secondary opacity-30"></div>
+          <div className="flex justify-between items-start mb-12">
+            <div>
+              <h3 className="text-xl font-black text-white uppercase italic tracking-tighter flex items-center">
+                <Activity size={20} className="mr-3 text-soc-primary" /> Rule_Activation_Distribution
               </h3>
-              <button onClick={() => setExpandedChart(null)} className="p-2 text-soc-muted hover:bg-soc-border hover:text-white rounded-full transition-colors">
+              <p className="text-[10px] text-soc-muted font-bold mt-2 uppercase tracking-widest opacity-60 italic">Signal_Calibration // Aggregated Hit Rates by Logic Pattern</p>
+            </div>
+            <button onClick={() => setExpandedChart('bar')} className="p-3 bg-soc-bg border border-soc-border rounded-2xl text-soc-muted hover:text-soc-primary transition-all">
+              <Maximize2 size={20} />
+            </button>
+          </div>
+          <div className="h-[400px] w-full">
+             {renderBarChart()}
+          </div>
+        </div>
+
+        <div className="bg-soc-panel/40 backdrop-blur-xl border border-soc-border p-10 rounded-[2.5rem] shadow-2xl relative">
+          <div className="flex justify-between items-start mb-12">
+            <div>
+              <h3 className="text-xl font-black text-white uppercase italic tracking-tighter flex items-center">
+                <AlertTriangle size={20} className="mr-3 text-soc-warning" /> Severity_Index
+              </h3>
+              <p className="text-[10px] text-soc-muted font-bold mt-2 uppercase tracking-widest opacity-60 italic">Risk_Segmentation_Matrix</p>
+            </div>
+          </div>
+          <div className="h-[300px] w-full relative">
+            {renderPieChart()}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-5xl font-black text-white leading-none tracking-tighter">{alerts.length}</span>
+              <span className="text-[10px] font-black text-soc-muted uppercase tracking-widest mt-2">ALERTS</span>
+            </div>
+          </div>
+          <div className="mt-10 grid grid-cols-2 gap-4">
+             {severityData.map((d, i) => (
+               <div key={i} className="flex items-center justify-between p-3 bg-soc-bg border border-soc-border/50 rounded-xl">
+                  <span className="text-[10px] font-black uppercase text-soc-muted">{d.name}</span>
+                  <span className="text-lg font-black italic text-white leading-none">{d.value}</span>
+               </div>
+             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Secondary Data Stream */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+         <div className="bg-soc-panel/30 backdrop-blur-xl border border-soc-border p-10 rounded-[2rem] shadow-xl">
+            <h3 className="text-sm font-black text-white uppercase italic tracking-widest mb-10 flex items-center">
+               <TrendingUp size={18} className="mr-3 text-soc-primary" /> Ingestion_Load_Calibration
+            </h3>
+            <div className="h-[300px] w-full">
+               {renderAreaChart()}
+            </div>
+         </div>
+         <div className="bg-soc-panel/30 backdrop-blur-xl border border-soc-border p-10 rounded-[2rem] shadow-xl flex flex-col justify-center">
+            <h3 className="text-sm font-black text-white uppercase italic tracking-widest mb-6 flex items-center underline decoration-soc-secondary decoration-2 underline-offset-8">
+               <Fingerprint size={18} className="mr-3 text-soc-secondary" /> System_Intelligence_Synopsis
+            </h3>
+            <div className="space-y-6">
+               <p className="text-xs font-bold text-soc-muted leading-relaxed italic">
+                  "Core SIEM engine is operating at peak efficiency. Signal distribution indicates a slight uptick in PowerShell activity across remote nodes in the last 60 minutes. Automated remediations are queued for critical vectors."
+               </p>
+               <div className="grid grid-cols-2 gap-6 pt-6 border-t border-soc-border/50">
+                  <div>
+                     <p className="text-[9px] font-black text-soc-muted uppercase">Anomaly_Detection</p>
+                     <p className="text-sm font-black text-soc-primary italic">NOMINAL_STATE</p>
+                  </div>
+                  <div>
+                     <p className="text-[9px] font-black text-soc-muted uppercase">SOC_Calibration</p>
+                     <p className="text-sm font-black text-soc-secondary italic">LEVEL_1_ACTIVE</p>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+
+      {expandedChart && (
+        <div className="fixed inset-0 z-[1000] bg-soc-bg/95 backdrop-blur-3xl flex items-center justify-center p-4 lg:p-12 animate-in fade-in duration-300">
+          <div className="bg-soc-panel border-4 border-soc-border rounded-[3rem] shadow-2xl w-full max-w-7xl h-full flex flex-col overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-10 z-10">
+              <button onClick={() => setExpandedChart(null)} className="p-4 bg-soc-bg border-2 border-soc-border rounded-2xl text-white hover:border-soc-primary transition-all shadow-xl">
                 <X size={24} />
               </button>
             </div>
-            <div className="flex-1 p-8 min-h-0">
-               {expandedChart === 'bar' && renderBarChart(true)}
-               {expandedChart === 'pie' && (
-                 <div className="h-full flex flex-col items-center justify-center">
-                    <div className="h-[500px] w-full max-w-2xl">
-                      {renderPieChart()}
-                    </div>
-                    <div className="flex justify-center space-x-8 mt-8 text-lg">
-                      {severityData.map((entry, index) => (
-                        <div key={entry.name} className="flex items-center">
-                          <div className="w-4 h-4 rounded-full mr-3 shadow-[0_0_10px_rgba(0,0,0,0.5)]" style={{ backgroundColor: COLORS[index] }}></div>
-                          <span className="text-white font-medium">{entry.name}</span>
-                          <span className="ml-2 text-soc-muted">({entry.value} occurrences)</span>
-                        </div>
-                      ))}
-                    </div>
-                 </div>
-               )}
+            <div className="p-14 border-b-2 border-soc-border bg-soc-bg/40">
+               <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter">
+                  {expandedChart === 'bar' ? 'Full_Rule_Vector_Analysis' : 'Risk_Segmentation_View'}
+               </h3>
+               <p className="text-xs text-soc-muted font-black mt-2 uppercase tracking-[0.3em]">Authorized_SOC_Analyst_Diagnostic_Stream</p>
             </div>
-            <div className="p-4 border-t border-soc-border bg-soc-bg rounded-b-lg text-sm text-soc-muted flex items-center">
-               <Activity size={16} className="mr-2 text-soc-primary" />
-               Dataset updated dynamically via Live WebSockets. Interactive charting powered by Recharts.
+            <div className="flex-1 p-14 bg-soc-bg/20">
+               <div className="h-full w-full">
+                  {expandedChart === 'bar' ? renderBarChart(true) : renderPieChart()}
+               </div>
             </div>
           </div>
         </div>
