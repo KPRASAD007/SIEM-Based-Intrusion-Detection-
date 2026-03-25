@@ -68,30 +68,49 @@ function App() {
   };
 
   useEffect(() => {
-    // Connect to WebSocket purely for live toast notifications
-    const ws = new WebSocket(`ws://${window.location.hostname}:8080/api/logs/ws`);
-    
-    ws.onopen = () => console.log("Connected to SOC real-time stream");
-    
-    ws.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        if (payload.type === 'NEW_ALERT') {
-           const newAlert = payload.data;
-           setLiveAlerts(prev => [newAlert, ...prev].slice(0, 3)); // Display last 3
-           
-           // Auto-dismiss the alert after 5.5 seconds
-           setTimeout(() => {
-             setLiveAlerts(currentAlerts => currentAlerts.filter(a => a._id !== newAlert._id));
-           }, 5500);
+    let ws;
+    let reconnectTimer;
+
+    const connectWebSocket = () => {
+      ws = new WebSocket(`ws://${window.location.hostname}:8080/api/logs/ws`);
+      
+      ws.onopen = () => {
+        console.log("Connected to SOC real-time stream");
+        clearTimeout(reconnectTimer);
+      };
+      
+      ws.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload.type === 'NEW_ALERT') {
+             const newAlert = payload.data;
+             setLiveAlerts(prev => [newAlert, ...prev].slice(0, 3));
+             
+             setTimeout(() => {
+               setLiveAlerts(current => current.filter(a => (a._id || a.id) !== (newAlert._id || newAlert.id)));
+             }, 5500);
+          }
+        } catch (e) {
+          console.error("Failed to parse websocket message", e);
         }
-      } catch (e) {
-        console.error("Failed to parse websocket message", e);
-      }
+      };
+
+      ws.onclose = () => {
+        console.log("SOC stream disconnected. Reconnecting in 3s...");
+        reconnectTimer = setTimeout(connectWebSocket, 3000);
+      };
+
+      ws.onerror = (err) => {
+        console.error("WebSocket error:", err);
+        ws.close();
+      };
     };
 
+    connectWebSocket();
+
     return () => {
-      ws.close();
+      if (ws) ws.close();
+      clearTimeout(reconnectTimer);
     };
   }, []);
 

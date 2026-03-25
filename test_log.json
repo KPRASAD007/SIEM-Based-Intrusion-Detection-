@@ -1,0 +1,10 @@
+{
+  "event_id": "DEBUG-1",
+  "process_name": "vssadmin.exe",
+  "event_type": "Data Destruction",
+  "severity": "high",
+  "raw_data": "manual debug log",
+  "details": {
+    "host": "DEBUG-HOST"
+  }
+}
