@@ -72,8 +72,8 @@ export default function RemoteSensors() {
       {/* Sensor Grid Architecture */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="bg-soc-panel/30 backdrop-blur-3xl border-2 border-soc-border rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-br from-soc-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <div className="absolute -top-12 -right-12 p-4 opacity-5 group-hover:opacity-10 transition-opacity rotate-12">
+          <div className="absolute inset-0 bg-gradient-to-br from-soc-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+          <div className="absolute -top-12 -right-12 p-4 opacity-5 group-hover:opacity-10 transition-opacity rotate-12 pointer-events-none">
             <Network size={200} />
           </div>
           

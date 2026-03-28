@@ -20,3 +20,12 @@ dist-ssr/
 # OS
 .DS_Store
 Thumbs.db
+# Scratch & Logs
+check_*.py
+rules_*.json
+test_*.json
+test_api.py
+mongo_test.py
+openapi_check.json
+backend_errors.log
+app/main_debug.py

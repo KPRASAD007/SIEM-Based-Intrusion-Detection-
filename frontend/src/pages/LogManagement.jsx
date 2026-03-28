@@ -7,16 +7,41 @@ export default function LogManagement() {
   const [selectedLog, setSelectedLog] = useState(null);
   const [enriching, setEnriching] = useState(false);
   const [intel, setIntel] = useState(null);
+  const [query, setQuery] = useState('');
+  const [viewMode, setViewMode] = useState('raw'); // 'raw' or 'stats'
+  const [statsData, setStatsData] = useState([]);
 
-  const fetchLogs = () => {
+  const fetchLogs = (searchQuery = '') => {
     setLoading(true);
-    fetch(`http://${window.location.hostname}:8080/api/logs`)
+    let url = `http://${window.location.hostname}:8080/api/logs`;
+    
+    // Simple Splunk-style pipe detection
+    if (searchQuery) {
+      if (searchQuery.includes('| stats')) {
+        const fieldMatch = searchQuery.match(/by\s+(\w+)/);
+        const field = fieldMatch ? fieldMatch[1] : 'ip_address';
+        url = `http://${window.location.hostname}:8080/api/search/stats?query=${encodeURIComponent(searchQuery.split('|')[0].trim())}&field=${field}`;
+        setViewMode('stats');
+      } else {
+        url = `http://${window.location.hostname}:8080/api/search?query=${encodeURIComponent(searchQuery)}`;
+        setViewMode('raw');
+      }
+    } else {
+      setViewMode('raw');
+    }
+
+    fetch(url)
       .then(res => res.json())
       .then(data => {
-        setLogs(data);
+        if (searchQuery.includes('| stats')) {
+          setStatsData(data);
+        } else {
+          setLogs(data);
+        }
         setLoading(false);
       })
       .catch(err => {
+        console.error("Fetch error:", err);
         setLoading(false);
       });
   };
@@ -67,74 +92,120 @@ export default function LogManagement() {
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-soc-primary via-soc-secondary to-accent opacity-30"></div>
         
         <div className="p-6 border-b border-soc-border/50 flex items-center bg-soc-bg/40 group">
-          <Search size={18} className="text-soc-primary group-focus-within:animate-pulse transition-all mr-4" />
-          <input 
-            type="text" 
-            placeholder="FILTER_STREAM: Enter host_identifier, process_string, or source_ipv4..." 
-            className="w-full bg-transparent border-none outline-none text-sm font-bold text-white placeholder:text-soc-muted/40 uppercase tracking-widest"
-          />
+          <div className="flex items-center flex-1">
+            <Search size={18} className="text-soc-primary group-focus-within:animate-pulse transition-all mr-4" />
+            <input 
+              type="text" 
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') fetchLogs(query); }}
+              placeholder="FILTER_STREAM: Enter host, process, or SPL: index=* ' Failed SSH' | stats count by ip_address" 
+              className="w-full bg-transparent border-none outline-none text-sm font-bold text-white placeholder:text-soc-muted/40 uppercase tracking-widest"
+            />
+          </div>
+          {viewMode === 'stats' && (
+            <button 
+              onClick={() => { setQuery(''); setViewMode('raw'); fetchLogs(); }}
+              className="text-[10px] font-black text-soc-critical hover:text-white transition-all uppercase px-4"
+            >
+              Clear_Stats_View [X]
+            </button>
+          )}
         </div>
 
         <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left text-xs whitespace-nowrap border-collapse">
-            <thead className="bg-soc-bg/80 text-soc-primary uppercase tracking-widest border-b border-soc-border">
-              <tr>
-                <th className="px-6 py-5 font-black italic">Timestamp_UTC</th>
-                <th className="px-6 py-5 font-black italic">ID</th>
-                <th className="px-6 py-5 font-black italic">Target_Host</th>
-                <th className="px-6 py-5 font-black italic">Process_ID</th>
-                <th className="px-6 py-5 font-black italic">Subject</th>
-                <th className="px-6 py-5 font-black italic">Vector_IP</th>
-                <th className="px-6 py-5 font-black italic">Classification</th>
-                <th className="px-6 py-5 font-black italic">Severity</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-soc-border/30 bg-soc-bg/20">
-              {loading ? (
-                <tr><td colSpan="8" className="px-6 py-24 text-center">
-                   <div className="flex flex-col items-center">
-                      <div className="w-12 h-12 border-4 border-soc-primary/10 border-t-soc-primary rounded-full animate-spin mb-4"></div>
-                      <p className="text-[10px] font-bold text-soc-primary tracking-[0.4em] uppercase animate-pulse">Initializing_Data_Payload...</p>
+          {viewMode === 'stats' ? (
+            <div className="p-10 animate-in slide-in-from-bottom-4 duration-500">
+               <div className="flex items-center mb-8">
+                  <Activity className="text-soc-secondary mr-4" />
+                  <div>
+                    <h3 className="text-xl font-black text-white italic tracking-tighter uppercase">Aggregation_Results</h3>
+                    <p className="text-[9px] font-bold text-soc-muted tracking-[0.2em] mt-1 italic">TOP_RESULTS_BY_COUNT_METRIC</p>
+                  </div>
+               </div>
+               
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 {statsData.map((stat, idx) => (
+                   <div key={idx} className="bg-soc-bg/60 border border-soc-border rounded-2xl p-6 hover:border-soc-secondary transition-all group">
+                     <div className="flex justify-between items-start mb-4">
+                        <span className="text-[10px] font-mono text-soc-muted uppercase">Entity_Identifier</span>
+                        <span className="px-2 py-1 bg-soc-secondary/10 text-soc-secondary text-[10px] font-black rounded border border-soc-secondary/20 tracking-tighter">SCORE_RANK: #{idx+1}</span>
+                     </div>
+                     <p className="text-lg font-black text-white font-mono break-all group-hover:text-soc-secondary transition-colors">{stat.value || 'N/A'}</p>
+                     <div className="mt-6 flex items-end justify-between">
+                        <div className="h-2 flex-1 bg-soc-border rounded-full mr-6 overflow-hidden">
+                           <div className="h-full bg-soc-secondary" style={{ width: `${Math.min(100, (stat.count / statsData[0]?.count) * 100)}%` }}></div>
+                        </div>
+                        <span className="text-2xl font-black text-soc-secondary italic">{stat.count} <span className="text-[10px] font-bold text-soc-muted uppercase not-italic">HITs</span></span>
+                     </div>
                    </div>
-                </td></tr>
-              ) : logs.length === 0 ? (
-                <tr><td colSpan="8" className="px-6 py-24 text-center font-mono opacity-40 uppercase tracking-widest italic text-xs">NO_EVENTS_REGISTERED_IN_BUFFER</td></tr>
-              ) : (
-                logs.map(log => {
-                  const timeStr = log.timestamp ? log.timestamp : new Date().toISOString();
-                  const d = new Date(timeStr.endsWith('Z') ? timeStr : timeStr + 'Z');
-                  const timeString = d.toLocaleString(undefined, { 
-                    hour: '2-digit', minute: '2-digit', second: '2-digit',
-                    year: 'numeric', month: '2-digit', day: '2-digit'
-                  }).replace(',', '');
-                  
-                  return (
-                    <tr 
-                      key={log.id} 
-                      onClick={() => { setSelectedLog(log); setIntel(null); }}
-                      className="hover:bg-soc-primary/5 cursor-pointer transition-all border-l-2 border-l-transparent hover:border-l-soc-primary"
-                    >
-                      <td className="px-6 py-4 text-soc-muted font-mono">{timeString}</td>
-                      <td className="px-6 py-4 text-white font-mono">{log.event_id || '000'}</td>
-                      <td className="px-6 py-4 font-black tracking-tight">{log.details?.host || log.details?.Computer || 'NULL'}</td>
-                      <td className="px-6 py-4 font-mono text-soc-primary opacity-80">{log.process_name || '-'}</td>
-                      <td className="px-6 py-4 font-bold">{log.user || '-'}</td>
-                      <td className="px-6 py-4 text-soc-secondary font-mono bg-soc-secondary/5 border border-soc-secondary/10 rounded px-2 py-0.5 mx-1">{log.ip_address || '::1'}</td>
-                      <td className="px-6 py-4 opacity-70 uppercase font-black text-[9px] tracking-widest">{log.event_type || 'GENERAL'}</td>
-                      <td className="px-6 py-4 text-right">
-                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border
-                          ${(log.severity || '').toLowerCase() === 'critical' || (log.severity || '').toLowerCase() === 'high' ? 'bg-soc-critical/10 text-soc-critical border-soc-critical/40 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 
-                            (log.severity || '').toLowerCase() === 'medium' ? 'bg-soc-warning/10 text-soc-warning border-soc-warning/40' : 
-                            'bg-soc-primary/10 text-soc-primary border-soc-primary/40'}`}>
-                          {log.severity ? log.severity.toUpperCase() : 'LOW_LEVEL'}
-                        </span>
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
+                 ))}
+                 {statsData.length === 0 && (
+                   <p className="col-span-full text-center py-10 text-soc-muted italic uppercase text-xs">NO_STATISTICAL_MATCHES_FOUND</p>
+                 )}
+               </div>
+            </div>
+          ) : (
+            <table className="w-full text-left text-xs whitespace-nowrap border-collapse">
+              <thead className="bg-soc-bg/80 text-soc-primary uppercase tracking-widest border-b border-soc-border">
+                <tr>
+                  <th className="px-6 py-5 font-black italic">Timestamp_UTC</th>
+                  <th className="px-6 py-5 font-black italic">ID</th>
+                  <th className="px-6 py-5 font-black italic">Target_Host</th>
+                  <th className="px-6 py-5 font-black italic">Process_ID</th>
+                  <th className="px-6 py-5 font-black italic">Subject</th>
+                  <th className="px-6 py-5 font-black italic">Vector_IP</th>
+                  <th className="px-6 py-5 font-black italic">Classification</th>
+                  <th className="px-6 py-5 font-black italic">Severity</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-soc-border/30 bg-soc-bg/20">
+                {loading ? (
+                  <tr><td colSpan="8" className="px-6 py-24 text-center">
+                    <div className="flex flex-col items-center">
+                        <div className="w-12 h-12 border-4 border-soc-primary/10 border-t-soc-primary rounded-full animate-spin mb-4"></div>
+                        <p className="text-[10px] font-bold text-soc-primary tracking-[0.4em] uppercase animate-pulse">Initializing_Data_Payload...</p>
+                    </div>
+                  </td></tr>
+                ) : logs.length === 0 ? (
+                  <tr><td colSpan="8" className="px-6 py-24 text-center font-mono opacity-40 uppercase tracking-widest italic text-xs">NO_EVENTS_REGISTERED_IN_BUFFER</td></tr>
+                ) : (
+                  logs.map(log => {
+                    const timeStr = log.timestamp ? log.timestamp : new Date().toISOString();
+                    const d = new Date(timeStr.endsWith('Z') ? timeStr : timeStr + 'Z');
+                    const timeString = d.toLocaleString(undefined, { 
+                      hour: '2-digit', minute: '2-digit', second: '2-digit',
+                      year: 'numeric', month: '2-digit', day: '2-digit'
+                    }).replace(',', '');
+                    
+                    return (
+                      <tr 
+                        key={log.id} 
+                        onClick={() => { setSelectedLog(log); setIntel(null); }}
+                        className="hover:bg-soc-primary/5 cursor-pointer transition-all border-l-2 border-l-transparent hover:border-l-soc-primary"
+                      >
+                        <td className="px-6 py-4 text-soc-muted font-mono">{timeString}</td>
+                        <td className="px-6 py-4 text-white font-mono">{log.event_id || '000'}</td>
+                        <td className="px-6 py-4 font-black tracking-tight">{log.details?.host || log.details?.Computer || 'NULL'}</td>
+                        <td className="px-6 py-4 font-mono text-soc-primary opacity-80">{log.process_name || '-'}</td>
+                        <td className="px-6 py-4 font-bold">{log.user || '-'}</td>
+                        <td className="px-6 py-4 text-soc-secondary font-mono bg-soc-secondary/5 border border-soc-secondary/10 rounded px-2 py-0.5 mx-1">{log.ip_address || '::1'}</td>
+                        <td className="px-6 py-4 opacity-70 uppercase font-black text-[9px] tracking-widest">{log.event_type || 'GENERAL'}</td>
+                        <td className="px-6 py-4 text-right">
+                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border
+                            ${(log.severity || '').toLowerCase() === 'critical' || (log.severity || '').toLowerCase() === 'high' ? 'bg-soc-critical/10 text-soc-critical border-soc-critical/40 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 
+                              (log.severity || '').toLowerCase() === 'medium' ? 'bg-soc-warning/10 text-soc-warning border-soc-warning/40' : 
+                              'bg-soc-primary/10 text-soc-primary border-soc-primary/40'}`}>
+                            {log.severity ? log.severity.toUpperCase() : 'LOW_LEVEL'}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
         
         <div className="p-4 bg-soc-bg/80 border-t border-soc-border flex items-center justify-between">

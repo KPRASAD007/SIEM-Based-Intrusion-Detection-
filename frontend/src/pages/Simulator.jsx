@@ -13,6 +13,10 @@ export default function Simulator() {
       .then(data => {
         setScenarios(data);
         setLoading(false);
+      })
+      .catch(err => {
+        console.error("SIMULATOR_SYNC_FAILURE:", err);
+        setLoading(false); // Clear loading even on error
       });
   }, []);
 

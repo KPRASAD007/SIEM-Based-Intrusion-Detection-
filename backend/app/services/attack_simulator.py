@@ -22,6 +22,7 @@ class AttackSimulator:
             {"id": "t1105", "name": "Suspicious File Download via Certutil", "mitre": "T1105"},
             {"id": "t1041", "name": "Data Exfiltration Simulation", "mitre": "T1041"},
             {"id": "t1486", "name": "Ransomware File Encryption Behavior", "mitre": "T1486"},
+            {"id": "ssh_brute_force", "name": "SSH Brute Force Attack", "mitre": "T1110.001"},
         ]
 
     def _generate_base_log(self) -> Dict[str, Any]:
@@ -189,6 +190,45 @@ class AttackSimulator:
                 }
             })
              logs.append(base_log)
+        elif scenario_id == "ssh_brute_force":
+            attacker_ip = "45.132.89.201"
+            targets = ["production-server-01", "api-gateway-us-east", "db-cluster-node-3"]
+            
+            # Step 1 & 2: Search Failed Logins (Multiple Attempts)
+            for _ in range(12):
+                host = random.choice(targets)
+                log = self._generate_base_log()
+                log.update({
+                    "event_id": "4625", # Consistent with other brute force logic
+                    "event_type": "ssh_auth_failure",
+                    "process_name": "sshd",
+                    "user": random.choice(["root", "admin", "ubuntu", "user"]),
+                    "ip_address": attacker_ip,
+                    "severity": "medium",
+                    "details": {
+                        "message": f"Failed SSH Login: Invalid password for user {random.choice(['root','admin'])} from {attacker_ip}",
+                        "host": host,
+                        "port": 22
+                    }
+                })
+                logs.append(log)
+                
+            # Final Successful Login
+            success_log = self._generate_base_log()
+            success_log.update({
+                "event_id": "4624",
+                "event_type": "ssh_auth_success",
+                "process_name": "sshd",
+                "user": "root",
+                "ip_address": attacker_ip,
+                "severity": "critical",
+                "details": {
+                    "message": f"SSH Login: Accepted password for root from {attacker_ip} port 22 ssh2",
+                    "host": "production-server-01",
+                    "port": 22
+                }
+            })
+            logs.append(success_log)
         # Add basic stubs for any undefined ones just in case
         else:
              base_log.update({

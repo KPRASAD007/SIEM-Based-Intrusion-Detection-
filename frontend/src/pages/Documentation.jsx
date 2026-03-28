@@ -14,7 +14,7 @@ export default function Documentation() {
 
       <div className="grid grid-cols-1 gap-10">
         <div className="bg-soc-panel/30 backdrop-blur-3xl border-2 border-soc-border rounded-[3rem] p-12 shadow-[0_0_60px_rgba(0,0,0,0.4)] relative overflow-hidden group">
-           <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-10 transition-opacity">
+           <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
               <Server size={180} />
            </div>
            
@@ -62,12 +62,25 @@ export default function Documentation() {
             </section>
 
             <section className="space-y-6">
-              <h3 className="text-2xl font-black text-white italic tracking-tighter border-l-4 border-soc-secondary pl-6 uppercase flex items-center">
-                <CheckCircle className="mr-4 text-soc-secondary" size={24}/> THREAT_INTEL_LAYER
+              <h3 className="text-2xl font-black text-white italic tracking-tighter border-l-4 border-soc-primary pl-6 uppercase flex items-center">
+                <Database className="mr-4 text-soc-primary" size={24}/> SIEM_HUNTER: SPLUNK_SEARCH
               </h3>
               <p className="text-base text-soc-muted font-bold italic leading-relaxed pl-7 opacity-80">
-                Signals containing external IP identifiers are automatically routed through the Global Enrichment Layer. Integration with mock <strong className="text-soc-secondary">AbuseIPDB</strong> and <strong className="text-soc-secondary">OTX AlienVault</strong> sensors provides critical reputation scoring and malicious infrastructure context directly in the investigation docket.
+                The Log Analyzer now supports <strong className="text-soc-primary">Splunk-style Pipeline Queries (SPL)</strong>. Analysts can execute complex aggregations directly in the search bar to identify patterns like <span className="text-soc-warning">SSH Brute Force</span> or lateral movement spikes.
               </p>
+              <div className="pl-7 space-y-4">
+                <div className="bg-soc-panel/50 border border-soc-border rounded-2xl p-6 space-y-3 font-mono text-[11px]">
+                   <p className="text-soc-muted uppercase tracking-widest text-[9px] mb-2 font-black italic">Example_Hunter_Queries</p>
+                   <div className="flex items-center space-x-3 text-white bg-soc-bg/40 p-3 rounded-xl border border-soc-border">
+                      <span className="text-soc-primary font-black">❯</span>
+                      <span>index=* "Failed SSH" | stats count by ip_address</span>
+                   </div>
+                   <div className="flex items-center space-x-3 text-white bg-soc-bg/40 p-3 rounded-xl border border-soc-border">
+                      <span className="text-soc-primary font-black">❯</span>
+                      <span>index=auth process_name:sshd | stats count by user</span>
+                   </div>
+                </div>
+              </div>
             </section>
            </div>
         </div>

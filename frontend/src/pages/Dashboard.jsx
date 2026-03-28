@@ -242,33 +242,68 @@ export default function Dashboard() {
       </div>
 
       {/* Secondary Data Stream */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-         <div className="bg-soc-panel/30 backdrop-blur-xl border border-soc-border p-10 rounded-[2rem] shadow-xl">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+         <div className="bg-soc-panel/30 backdrop-blur-xl border border-soc-border p-10 rounded-[2rem] shadow-xl lg:col-span-1 flex flex-col justify-between">
             <h3 className="text-sm font-black text-white uppercase italic tracking-widest mb-10 flex items-center">
                <TrendingUp size={18} className="mr-3 text-soc-primary" /> Ingestion_Load_Calibration
             </h3>
-            <div className="h-[300px] w-full">
+            <div className="h-[250px] w-full">
                {renderAreaChart()}
             </div>
          </div>
-         <div className="bg-soc-panel/30 backdrop-blur-xl border border-soc-border p-10 rounded-[2rem] shadow-xl flex flex-col justify-center">
-            <h3 className="text-sm font-black text-white uppercase italic tracking-widest mb-6 flex items-center underline decoration-soc-secondary decoration-2 underline-offset-8">
-               <Fingerprint size={18} className="mr-3 text-soc-secondary" /> System_Intelligence_Synopsis
+         
+         <div className="bg-soc-panel/30 backdrop-blur-xl border border-soc-border p-10 rounded-[2rem] shadow-xl flex flex-col relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity rotate-12">
+               <Zap size={100} className="text-soc-warning" />
+            </div>
+            <h3 className="text-sm font-black text-white uppercase italic tracking-widest mb-6 flex items-center underline decoration-soc-warning decoration-2 underline-offset-8">
+               <Zap size={18} className="mr-3 text-soc-warning" /> Cyber_Deception_Health
             </h3>
-            <div className="space-y-6">
-               <p className="text-xs font-bold text-soc-muted leading-relaxed italic">
-                  "Core SIEM engine is operating at peak efficiency. Signal distribution indicates a slight uptick in PowerShell activity across remote nodes in the last 60 minutes. Automated remediations are queued for critical vectors."
-               </p>
-               <div className="grid grid-cols-2 gap-6 pt-6 border-t border-soc-border/50">
-                  <div>
-                     <p className="text-[9px] font-black text-soc-muted uppercase">Anomaly_Detection</p>
-                     <p className="text-sm font-black text-soc-primary italic">NOMINAL_STATE</p>
+            <div className="space-y-6 flex-1 flex flex-col justify-center">
+               <div className="flex items-center justify-between p-4 bg-soc-bg border border-soc-border rounded-2xl">
+                  <span className="text-[10px] font-black text-soc-muted uppercase">Active_Honey_Assets</span>
+                  <span className="text-xl font-black italic text-soc-primary leading-none">03</span>
+               </div>
+               <div className="flex items-center justify-between p-4 bg-soc-bg border border-soc-border rounded-2xl">
+                  <span className="text-[10px] font-black text-soc-muted uppercase">Breach_Triggers</span>
+                  <span className="text-xl font-black italic text-soc-critical leading-none">01</span>
+               </div>
+               <div className="p-4 bg-soc-warning/5 border border-soc-warning/20 rounded-2xl">
+                  <p className="text-[8px] font-black text-soc-warning uppercase tracking-widest mb-1">Status_Report</p>
+                  <p className="text-[10px] text-white font-bold italic opacity-60">SSH_JUMPBOX breached. Trace active.</p>
+               </div>
+            </div>
+         </div>
+
+         <div className="bg-soc-panel/30 backdrop-blur-xl border border-soc-border p-10 rounded-[2rem] shadow-xl flex flex-col relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+               <Fingerprint size={100} className="text-soc-secondary" />
+            </div>
+            <h3 className="text-sm font-black text-white uppercase italic tracking-widest mb-6 flex items-center underline decoration-soc-secondary decoration-2 underline-offset-8">
+               <Fingerprint size={18} className="mr-3 text-soc-secondary" /> Behavioral_Sync_Risk
+            </h3>
+            <div className="space-y-6 flex-1 flex flex-col justify-center">
+               <div className="flex items-center space-x-6">
+                  <div className="p-4 bg-soc-secondary/10 rounded-2xl border border-soc-secondary/20 text-soc-secondary">
+                     <Users size={24} />
                   </div>
                   <div>
-                     <p className="text-[9px] font-black text-soc-muted uppercase">SOC_Calibration</p>
-                     <p className="text-sm font-black text-soc-secondary italic">LEVEL_1_ACTIVE</p>
+                     <p className="text-[9px] font-black text-soc-muted uppercase tracking-widest">Global_Risk_Level</p>
+                     <p className="text-xl font-black text-white italic tracking-tighter uppercase">LOW_ANOMALY</p>
                   </div>
                </div>
+               <div className="space-y-2">
+                  <div className="flex items-center justify-between text-[8px] font-black text-soc-muted uppercase tracking-widest">
+                     <span>SUBJECT_DEVIATION_INDEX</span>
+                     <span className="text-soc-secondary">15%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-soc-bg rounded-full overflow-hidden border border-soc-border">
+                     <div className="h-full bg-soc-secondary w-[15%] shadow-glow"></div>
+                  </div>
+               </div>
+               <p className="text-[9px] font-bold text-soc-muted italic leading-relaxed opacity-60">
+                 "Nominal activity patterns detected across 92% of users. 03 entities marked for minor deviation monitoring."
+               </p>
             </div>
          </div>
       </div>

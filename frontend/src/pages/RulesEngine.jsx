@@ -5,6 +5,9 @@ export default function RulesEngine() {
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showSigmaModal, setShowSigmaModal] = useState(false);
+  const [sigmaContent, setSigmaContent] = useState('');
+  const [importingSigma, setImportingSigma] = useState(false);
   const [expandedRule, setExpandedRule] = useState(null);
   const [newRule, setNewRule] = useState({
     name: '', description: '', field: 'process_name', operator: 'equals', value: '', severity: 'high', mitre_attack_id: 'T1000'
@@ -46,6 +49,23 @@ export default function RulesEngine() {
       fetchRules();
     });
   };
+
+  const handleSigmaImport = (e) => {
+    e.preventDefault();
+    setImportingSigma(true);
+    fetch(`http://${window.location.hostname}:8080/api/sigma/convert?rule_yaml=${encodeURIComponent(sigmaContent)}`, {
+      method: 'POST'
+    }).then(res => res.json())
+      .then(() => {
+        setShowSigmaModal(false);
+        setSigmaContent('');
+        setImportingSigma(false);
+        fetchRules();
+      }).catch(err => {
+        console.error(err);
+        setImportingSigma(false);
+      });
+  };
   
   const toggleExpand = (id) => {
     if (expandedRule === id) {
@@ -64,12 +84,20 @@ export default function RulesEngine() {
            </h2>
            <p className="text-[10px] font-bold text-soc-muted tracking-[0.4em] mt-3">MANAGEMENT & ORCHESTRATION OF ADVERSARIAL SIGNAL LOGIC</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          className="px-8 py-3.5 bg-soc-primary text-soc-bg rounded-xl hover:bg-soc-hacker transition-all text-xs font-black uppercase tracking-widest shadow-[0_0_30px_rgba(16,185,129,0.3)] italic flex items-center self-start"
-        >
-          <Plus size={18} className="mr-2" /> INITIALIZE_NEW_RULE
-        </button>
+        <div className="flex space-x-4 self-start">
+           <button 
+             onClick={() => setShowSigmaModal(true)}
+             className="px-8 py-3.5 bg-soc-bg border-2 border-soc-border text-soc-muted hover:border-soc-primary hover:text-white transition-all text-xs font-black uppercase tracking-widest italic flex items-center shadow-xl"
+           >
+             <FileText size={18} className="mr-2" /> IMPORT_SIGMA
+           </button>
+           <button 
+             onClick={() => setShowModal(true)}
+             className="px-8 py-3.5 bg-soc-primary text-soc-bg rounded-xl hover:bg-soc-hacker transition-all text-xs font-black uppercase tracking-widest shadow-[0_0_30px_rgba(16,185,129,0.3)] italic flex items-center"
+           >
+             <Plus size={18} className="mr-2" /> INITIALIZE_NEW_RULE
+           </button>
+        </div>
       </div>
 
       <div className="bg-soc-panel/40 backdrop-blur-xl border-2 border-soc-border rounded-[2rem] shadow-2xl overflow-hidden relative">
@@ -158,7 +186,7 @@ export default function RulesEngine() {
                                  <Info size={16} className="mr-3" /> BEHAVIORAL_BREAKDOWN
                                </h4>
                                <div className="bg-soc-bg border-2 border-soc-border p-8 rounded-[1.5rem] relative overflow-hidden group/text">
-                                  <div className="absolute top-0 right-0 p-6 opacity-5 group-hover/text:opacity-20 transition-opacity">
+                                  <div className="absolute top-0 right-0 p-6 opacity-5 group-hover/text:opacity-20 transition-opacity pointer-events-none">
                                      <FileText size={80} />
                                   </div>
                                   <p className="text-sm text-soc-text font-bold italic leading-relaxed opacity-90">"{rule.description}"</p>
@@ -322,6 +350,53 @@ export default function RulesEngine() {
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-5 bg-soc-panel border-2 border-soc-border rounded-2xl text-xs font-black uppercase tracking-widest italic hover:border-white transition-all">ABORT_CHANGES</button>
                 <button type="submit" className="flex-1 py-5 bg-soc-primary text-soc-bg rounded-2xl text-xs font-black uppercase tracking-[0.3em] shadow-[0_0_40px_rgba(16,185,129,0.3)] hover:scale-[1.03] active:scale-95 transition-all italic">COMMIT_ENGINE_LOGIC</button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {showSigmaModal && (
+        <div className="fixed inset-0 bg-soc-bg/95 backdrop-blur-3xl flex items-center justify-center z-[200] p-4">
+          <div className="bg-soc-panel border-4 border-soc-border rounded-[3rem] p-12 w-full max-w-2xl shadow-[0_0_100px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in duration-300 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-2 h-full bg-soc-primary"></div>
+            <div className="flex items-center justify-between mb-12">
+               <div className="flex items-center space-x-4">
+                 <div className="p-4 bg-soc-primary/10 rounded-2xl text-soc-primary border-2 border-soc-primary/20 shadow-xl">
+                   <FileText size={28} />
+                 </div>
+                 <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase">SIGMA_CONVERTER_V1</h3>
+               </div>
+               <button onClick={() => setShowSigmaModal(false)} className="p-3 bg-soc-bg border-2 border-soc-border text-white rounded-2xl hover:border-soc-critical hover:text-soc-critical transition-all">
+                 <X size={24} />
+               </button>
+            </div>
+            <form onSubmit={handleSigmaImport} className="space-y-8">
+               <div className="space-y-3">
+                  <label className="text-[10px] font-black text-soc-muted uppercase tracking-[0.4em] ml-1">SIGMA_YAML_SOURCE</label>
+                  <textarea 
+                    required 
+                    className="w-full bg-soc-bg border-2 border-soc-border rounded-2xl p-6 text-[11px] font-mono text-soc-primary focus:outline-none focus:border-soc-primary transition-all min-h-[300px] resize-none scrollbar-hide" 
+                    placeholder="title: Suspicious Process Execution...
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    Image|ends_with: '\mimikatz.exe'
+  condition: selection"
+                    value={sigmaContent} 
+                    onChange={e => setSigmaContent(e.target.value)} 
+                  />
+               </div>
+               <div className="flex space-x-6">
+                 <button type="button" onClick={() => setShowSigmaModal(false)} className="flex-1 py-5 bg-soc-panel border-2 border-soc-border rounded-2xl text-xs font-black uppercase tracking-widest italic hover:border-white transition-all">ABORT</button>
+                 <button 
+                   type="submit" 
+                   disabled={importingSigma}
+                   className="flex-1 py-5 bg-soc-primary text-soc-bg rounded-2xl text-xs font-black uppercase tracking-[0.3em] shadow-[0_0_40px_rgba(16,185,129,0.3)] hover:scale-[1.03] active:scale-95 transition-all italic disabled:opacity-50"
+                 >
+                   {importingSigma ? 'CONVERTING...' : 'INITIALIZE_SIGMA_RULE'}
+                 </button>
+               </div>
             </form>
           </div>
         </div>

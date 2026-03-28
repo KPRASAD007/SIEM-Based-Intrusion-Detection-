@@ -93,8 +93,10 @@ export default function AlertsCenter() {
       setSoarError(`Invalid target for ${action}: No valid identifier found.`);
       return;
     }
-    setSoarRunning(prev => ({ ...prev, [action]: true }));
-    setSoarSuccess(prev => ({ ...prev, [action]: null }));
+    
+    const key = `${action}_${target}`;
+    setSoarRunning(prev => ({ ...prev, [key]: true }));
+    setSoarSuccess(prev => ({ ...prev, [key]: null }));
     setSoarError(null);
     
     try {
@@ -105,7 +107,7 @@ export default function AlertsCenter() {
       });
       if (res.ok) {
         const data = await res.json();
-        setSoarSuccess(prev => ({ ...prev, [action]: data.message }));
+        setSoarSuccess(prev => ({ ...prev, [key]: data.message }));
       } else {
         const errData = await res.json().catch(() => ({ detail: 'Unknown error' }));
         setSoarError(`SOAR Execution Failed: ${errData.detail || res.statusText}`);
@@ -114,7 +116,7 @@ export default function AlertsCenter() {
       console.error("SOAR action failed", err);
       setSoarError("Failed to connect to SOAR orchestration service.");
     }
-    setSoarRunning(prev => ({ ...prev, [action]: false }));
+    setSoarRunning(prev => ({ ...prev, [key]: false }));
   };
 
   const filteredAlerts = allAlerts.filter(a => {
@@ -195,7 +197,7 @@ export default function AlertsCenter() {
             <div key={alert.id} className="bg-soc-panel/40 backdrop-blur-lg border border-soc-border rounded-2xl p-6 flex flex-col lg:flex-row lg:items-center justify-between shadow-xl hover:bg-soc-bg/60 transition-all border-l-4 group relative overflow-hidden"
                  style={{ borderLeftColor: (alert.severity || '').toLowerCase() === 'critical' ? '#ef4444' : (alert.severity || '').toLowerCase() === 'high' ? '#f59e0b' : '#3b82f6' }}>
               
-              <div className="absolute top-0 right-0 w-32 h-32 bg-soc-primary opacity-0 group-hover:opacity-[0.03] rounded-full -mr-16 -mt-16 transition-opacity"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-soc-primary opacity-0 group-hover:opacity-[0.03] rounded-full -mr-16 -mt-16 transition-opacity pointer-events-none"></div>
               
               <div className="z-10 flex-1">
                 <div className="flex items-center space-x-3 mb-3">
@@ -387,28 +389,28 @@ export default function AlertsCenter() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
                         <button 
                           onClick={() => triggerSoarAction('quarantine', investigatingAlert.affected_host)}
-                          disabled={soarRunning['quarantine'] || soarSuccess['quarantine'] || !investigatingAlert.affected_host}
+                          disabled={soarRunning[`quarantine_${investigatingAlert.affected_host}`] || soarSuccess[`quarantine_${investigatingAlert.affected_host}`] || !investigatingAlert.affected_host}
                           className={`group p-4 rounded-2xl border transition-all text-[10px] font-black uppercase tracking-[0.2em] italic flex items-center justify-center
-                            ${soarSuccess['quarantine'] ? 'bg-soc-primary/10 text-soc-primary border-soc-primary/40' : 'bg-soc-bg border-soc-border text-soc-muted hover:border-soc-critical hover:text-white shadow-xl hover:shadow-[0_0_20px_rgba(239,68,68,0.2)]'}`}
+                            ${soarSuccess[`quarantine_${investigatingAlert.affected_host}`] ? 'bg-soc-primary/10 text-soc-primary border-soc-primary/40' : 'bg-soc-bg border-soc-border text-soc-muted hover:border-soc-critical hover:text-white shadow-xl hover:shadow-[0_0_20px_rgba(239,68,68,0.2)]'}`}
                         >
-                          {soarRunning['quarantine'] ? <Activity size={16} className="mr-3 animate-spin" /> : <Lock size={16} className="mr-3 group-hover:text-soc-critical" />}
-                          {soarRunning['quarantine'] ? 'INITIALIZING_ISOLATION...' : soarSuccess['quarantine'] ? 'HOST_IN_QUARANTINE' : 'Isolate_Affected_Host'}
+                          {soarRunning[`quarantine_${investigatingAlert.affected_host}`] ? <Activity size={16} className="mr-3 animate-spin" /> : <Lock size={16} className="mr-3 group-hover:text-soc-critical" />}
+                          {soarRunning[`quarantine_${investigatingAlert.affected_host}`] ? 'INITIALIZING_ISOLATION...' : soarSuccess[`quarantine_${investigatingAlert.affected_host}`] ? 'HOST_IN_QUARANTINE' : 'Isolate_Affected_Host'}
                         </button>
                         <button 
                           onClick={() => triggerSoarAction('ban-ip', investigatingAlert.source_ip)}
-                          disabled={soarRunning['ban-ip'] || soarSuccess['ban-ip'] || !investigatingAlert.source_ip}
+                          disabled={soarRunning[`ban-ip_${investigatingAlert.source_ip}`] || soarSuccess[`ban-ip_${investigatingAlert.source_ip}`] || !investigatingAlert.source_ip}
                           className={`group p-4 rounded-2xl border transition-all text-[10px] font-black uppercase tracking-[0.2em] italic flex items-center justify-center
-                            ${soarSuccess['ban-ip'] ? 'bg-soc-primary/10 text-soc-primary border-soc-primary/40' : 'bg-soc-bg border-soc-border text-soc-muted hover:border-soc-warning hover:text-white shadow-xl hover:shadow-[0_0_20px_rgba(245,158,11,0.2)]'}`}
+                            ${soarSuccess[`ban-ip_${investigatingAlert.source_ip}`] ? 'bg-soc-primary/10 text-soc-primary border-soc-primary/40' : 'bg-soc-bg border-soc-border text-soc-muted hover:border-soc-warning hover:text-white shadow-xl hover:shadow-[0_0_20px_rgba(245,158,11,0.2)]'}`}
                         >
-                          {soarRunning['ban-ip'] ? <Activity size={16} className="mr-3 animate-spin" /> : <Zap size={16} className="mr-3 group-hover:text-soc-warning" />}
-                          {soarRunning['ban-ip'] ? 'DROPPING_PACKETS...' : soarSuccess['ban-ip'] ? 'IP_BANNED_AT_FW' : 'Ban_Source_Vector_IP'}
+                          {soarRunning[`ban-ip_${investigatingAlert.source_ip}`] ? <Activity size={16} className="mr-3 animate-spin" /> : <Zap size={16} className="mr-3 group-hover:text-soc-warning" />}
+                          {soarRunning[`ban-ip_${investigatingAlert.source_ip}`] ? 'DROPPING_PACKETS...' : soarSuccess[`ban-ip_${investigatingAlert.source_ip}`] ? 'IP_BANNED_AT_FW' : 'Ban_Source_Vector_IP'}
                         </button>
                       </div>
                       
-                      {(soarSuccess['quarantine'] || soarSuccess['ban-ip'] || soarError) && (
+                      {(soarSuccess[`quarantine_${investigatingAlert.affected_host}`] || soarSuccess[`ban-ip_${investigatingAlert.source_ip}`] || soarError) && (
                         <div className={`mt-6 p-4 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-start animate-in fade-in slide-in-from-left-4 border shadow-xl ${soarError ? 'bg-soc-critical/5 text-soc-critical border-soc-critical/20' : 'bg-soc-primary/5 text-soc-primary border-soc-primary/20'}`}>
                            {soarError ? <ShieldX size={16} className="mr-4 shrink-0" /> : <ShieldCheck size={16} className="mr-4 shrink-0" />}
-                           <span>{soarError ? soarError : `SOAR_LOG_EVENT: ${soarSuccess['quarantine'] || soarSuccess['ban-ip']}`}</span>
+                           <span>{soarError ? soarError : `SOAR_LOG_EVENT: ${soarSuccess[`quarantine_${investigatingAlert.affected_host}`] || soarSuccess[`ban-ip_${investigatingAlert.source_ip}`]}`}</span>
                         </div>
                       )}
                     </div>

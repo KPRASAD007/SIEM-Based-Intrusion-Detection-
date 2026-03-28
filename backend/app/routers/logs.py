@@ -55,12 +55,13 @@ async def process_log_for_alerts(log_dict: Dict[str, Any], db, background_tasks:
             })
             
             # Trigger Email Notification for High/Critical alerts in Background
-            if background_tasks:
-                background_tasks.add_task(send_alert_email, alert, db)
-            else:
-                # Fallback for Splunk/Caldera or manual calls where BackgroundTasks may be missing
-                import asyncio
-                asyncio.create_task(send_alert_email(alert, db))
+            # if background_tasks:
+            #     background_tasks.add_task(send_alert_email, alert, db)
+            # else:
+            #     # Fallback for Splunk/Caldera or manual calls where BackgroundTasks may be missing
+            #     import asyncio
+            #     asyncio.create_task(send_alert_email(alert, db))
+            print(f"DEBUG: Email dispatch for alert {alert.rule_name} is currently bypassed.")
             
             # Auto-escalate High/Critical alerts to Active Cases (Incidents)
             if alert_dict.get("severity", "").lower() in ["high", "critical"]:

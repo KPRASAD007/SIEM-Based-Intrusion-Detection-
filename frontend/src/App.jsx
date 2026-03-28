@@ -11,7 +11,10 @@ import Documentation from './pages/Documentation';
 import Login from './pages/Login';
 import RemoteSensors from './pages/RemoteSensors';
 import WebSurveillance from './pages/WebSurveillance';
-import { Shield, LayoutDashboard, Database, Activity, Briefcase, Settings, FileText, Target, Bell, X, Globe, Eye } from 'lucide-react';
+import DeceptionOps from './pages/DeceptionOps';
+import BehavioralAnalytics from './pages/BehavioralAnalytics';
+import Forensics from './pages/Forensics';
+import { Shield, LayoutDashboard, Database, Activity, Briefcase, Settings, FileText, Target, Bell, X, Globe, Eye, Fingerprint, Ghost, Zap, Search, HardDrive, Terminal } from 'lucide-react';
 
 function SidebarItem({ to, icon: Icon, label }) {
   const location = useLocation();
@@ -140,8 +143,17 @@ function App() {
             <SidebarItem to="/alerts" icon={Activity} label="Threat Alerts" />
             <SidebarItem to="/incidents" icon={Briefcase} label="Case Manager" />
             <div className="block h-px bg-soc-border my-4 mx-2 opacity-50" />
+            
             <SidebarItem to="/sensors" icon={Globe} label="Remote Agents" />
-            <SidebarItem to="/web" icon={Eye} label="Web Intercept" />
+            
+            <div className="pt-4">
+              <p className="px-4 text-[10px] font-bold text-soc-secondary uppercase tracking-[0.2em] mb-2 opacity-50 italic underline decoration-soc-secondary">Advanced Intelligence</p>
+              <SidebarItem to="/deception" icon={Ghost} label="Deception Ops" />
+              <SidebarItem to="/behavior" icon={Fingerprint} label="Behavioral Sync" />
+              <SidebarItem to="/forensics" icon={Search} label="Artifact Sandbox" />
+              <SidebarItem to="/web" icon={Eye} label="Web Intercept" />
+            </div>
+
             <div className="pt-4">
               <p className="px-4 text-[10px] font-bold text-soc-muted uppercase tracking-[0.2em] mb-2 opacity-50">Operations</p>
               <SidebarItem to="/rules" icon={Settings} label="Detection Rules" />
@@ -196,6 +208,9 @@ function App() {
               <Route path="/alerts" element={<AlertsCenter />} />
               <Route path="/incidents" element={<Incidents />} />
               <Route path="/sensors" element={<RemoteSensors />} />
+              <Route path="/deception" element={<DeceptionOps />} />
+              <Route path="/behavior" element={<BehavioralAnalytics />} />
+              <Route path="/forensics" element={<Forensics />} />
               <Route path="/web" element={<WebSurveillance />} />
               <Route path="/rules" element={<RulesEngine />} />
               <Route path="/mitre" element={<MitreMapping />} />

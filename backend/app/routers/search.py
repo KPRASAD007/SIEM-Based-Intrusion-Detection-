@@ -48,3 +48,25 @@ async def threat_hunt(query: str, limit: int = 100, db=Depends(get_db)):
         log["id"] = str(log["_id"])
         log["_id"] = str(log["_id"])
     return logs
+
+@router.get("/stats")
+async def get_stats(query: str, field: str = "ip_address", db=Depends(get_db)):
+    """
+    Simulate 'stats count by field' logic from Splunk.
+    Example: index=* "sshd" | stats count by ip_address
+    """
+    mongo_filter = parse_query_to_mongo(query.split("|")[0].strip())
+    
+    pipeline = [
+        {"$match": mongo_filter},
+        {"$group": {"_id": f"${field}", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]
+    
+    cursor = db.logs.aggregate(pipeline)
+    results = await cursor.to_list(length=10)
+    
+    # Format for UI
+    formatted = [{"value": r["_id"], "count": r["count"]} for r in results]
+    return formatted

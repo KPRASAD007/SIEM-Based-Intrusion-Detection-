@@ -1,19 +1,26 @@
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
+import os
+import sys
 
-async def check():
-    client = AsyncIOMotorClient('mongodb://127.0.0.1:27017')
-    db = client['cyberdetect']
-    rules = await db.rules.find().to_list(100)
-    print(f"DEBUG: Found {len(rules)} rules.")
-    for r in rules:
-        print(f"Rule: {r.get('name')} | Active: {r.get('is_active')} | Value: {r.get('value')}")
+# Add the root directory to sys.path to allow absolute imports like `from backend.app...`
+sys.path.append(os.getcwd())
+
+from backend.app.database import connect_to_mongo, get_db
+
+async def check_db():
+    await connect_to_mongo()
+    db = get_db()
+    if db is None:
+        print("DB is None")
+        return
     
-    # Also check alerts
-    alerts = await db.alerts.find().sort("triggered_time", -1).limit(5).to_list(10)
-    print(f"DEBUG: Found {len(alerts)} alerts.")
-    for a in alerts:
-        print(f"Alert: {a.get('rule_name')} | Time: {a.get('triggered_time')}")
+    rules_count = await db.rules.count_documents({})
+    logs_count = await db.logs.count_documents({})
+    alerts_count = await db.alerts.count_documents({})
+    
+    print(f"Rules: {rules_count}")
+    print(f"Logs: {logs_count}")
+    print(f"Alerts: {alerts_count}")
 
 if __name__ == "__main__":
-    asyncio.run(check())
+    asyncio.run(check_db())
