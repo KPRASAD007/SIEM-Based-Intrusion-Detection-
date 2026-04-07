@@ -44,6 +44,7 @@ class AlertModel(BaseModel):
     status: str = "new" # new, investigating, resolved, false_positive
     log_ids: List[str] = Field(default_factory=list)
     threat_intel: Optional[Dict[str, Any]] = None # enrichment
+    detection_layer: Optional[str] = "HOST" # IDS, SIEM, DPI, HOST, NETWORK
 
 class IncidentModel(BaseModel):
     model_config = ConfigDict(populate_by_name=True)

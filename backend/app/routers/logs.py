@@ -15,7 +15,6 @@ async def process_log_for_alerts(log_dict: Dict[str, Any], db, background_tasks:
     # Fetch active rules
     rules_cursor = db.rules.find({"is_active": True})
     active_rules = await rules_cursor.to_list(length=100)
-    print(f"DEBUG: Processing log for alerts. Found {len(active_rules)} active rules. Log: {log_dict.get('process_name')}")
     
     import traceback
     try:
@@ -23,6 +22,18 @@ async def process_log_for_alerts(log_dict: Dict[str, Any], db, background_tasks:
         matched_rules = await detection_engine.evaluate_log(log_dict, active_rules)
         
         for rule in matched_rules:
+            # Identify Detection Layer
+            event_type = log_dict.get("event_type", "").lower()
+            layer = "HOST"
+            if "suricata" in event_type:
+                layer = "NETWORK/IDS"
+            if "DPI" in (rule.get("name") or ""):
+                layer = "NETWORK/DPI"
+            elif "auth_failure" in event_type or "security" in event_type:
+                layer = "HOST/SIEM"
+            elif "sysmon" in event_type:
+                layer = "HOST/SYSMON"
+
             # Create an alert
             alert = AlertModel(
                 rule_id=str(rule.get("_id")),
@@ -34,7 +45,8 @@ async def process_log_for_alerts(log_dict: Dict[str, Any], db, background_tasks:
                 triggered_time=datetime.utcnow(),
                 matching_logs=1,
                 log_ids=[str(log_dict.get("_id"))],
-                status="new"
+                status="new",
+                detection_layer=layer
             )
             
             # Enrichment (mocked here, can be extended in thread_intel service)

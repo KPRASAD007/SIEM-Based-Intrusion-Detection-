@@ -59,6 +59,36 @@ async def seed_rules(db=Depends(get_db)):
             "is_active": True
         },
         {
+            "name": "IDS: Network Port Scanning Detected",
+            "description": "Suricata alert for suspicious inbound scanning (ET SCAN).",
+            "field": "event_type",
+            "operator": "equals",
+            "value": "suricata",
+            "severity": "high",
+            "mitre_attack_id": "T1046",
+            "is_active": True
+        },
+        {
+            "name": "DPI: SSH Protocol Anomaly",
+            "description": "Deep Packet Inspection alert for invalid SSH handshake banner.",
+            "field": "signature",
+            "operator": "contains",
+            "value": "SSH invalid banner",
+            "severity": "critical",
+            "mitre_attack_id": "T1110",
+            "is_active": True
+        },
+        {
+            "name": "SIEM: SSH Brute Force (Host Layer)",
+            "description": "Wazuh/Wazuh-style detection of multiple failed SSH logins.",
+            "field": "event_type",
+            "operator": "equals",
+            "value": "ssh_auth_failure",
+            "severity": "medium",
+            "mitre_attack_id": "T1110.001",
+            "is_active": True
+        },
+        {
             "name": "Malicious PowerShell Execution",
             "description": "Encoded command line detected in PowerShell process.",
             "field": "process_name",
@@ -66,16 +96,6 @@ async def seed_rules(db=Depends(get_db)):
             "value": "powershell.exe",
             "severity": "critical",
             "mitre_attack_id": "T1059.001",
-            "is_active": True
-        },
-        {
-            "name": "Credential Dumping: LSASS",
-            "description": "Detection of LSASS process access commonly used for credential harvesting.",
-            "field": "process_name",
-            "operator": "equals",
-            "value": "procdump.exe",
-            "severity": "critical",
-            "mitre_attack_id": "T1003",
             "is_active": True
         }
     ]

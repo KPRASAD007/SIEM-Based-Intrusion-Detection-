@@ -199,7 +199,7 @@ export default function AlertsCenter() {
               
               <div className="absolute top-0 right-0 w-32 h-32 bg-soc-primary opacity-0 group-hover:opacity-[0.03] rounded-full -mr-16 -mt-16 transition-opacity pointer-events-none"></div>
               
-              <div className="z-10 flex-1">
+              <div className="relative z-10 flex-1">
                 <div className="flex items-center space-x-3 mb-3">
                   <span className={`px-2 py-0.5 rounded text-[9px] font-black tracking-widest uppercase border
                     ${(alert.severity || '').toLowerCase() === 'critical' ? 'text-soc-critical border-soc-critical/30 bg-soc-critical/5 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 
@@ -207,6 +207,16 @@ export default function AlertsCenter() {
                       'text-soc-secondary border-soc-secondary/30 bg-soc-secondary/5'}`}>
                     {(alert.severity || 'LOW').toUpperCase()}
                   </span>
+                  
+                  {alert.detection_layer && (
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-black tracking-widest uppercase border flex items-center
+                      ${alert.detection_layer.includes('NETWORK') ? 'text-soc-primary border-soc-primary/30 bg-soc-primary/5' : 
+                        alert.detection_layer.includes('DPI') ? 'text-accent border-accent/30 bg-accent/5' : 
+                        'text-soc-muted border-soc-border bg-soc-panel/30'}`}>
+                      <Zap size={10} className="mr-1.5" /> {alert.detection_layer}
+                    </span>
+                  )}
+
                   <p className="text-[10px] font-mono text-soc-muted opacity-60">ID://{alert.id?.slice(-8) || 'DET-UNK'}</p>
                 </div>
                 
@@ -234,7 +244,7 @@ export default function AlertsCenter() {
                 </div>
               </div>
 
-              <div className="mt-6 lg:mt-0 flex space-x-3 z-10 shrink-0">
+              <div className="mt-6 lg:mt-0 flex space-x-3 relative z-20 shrink-0">
                 <button 
                   onClick={() => startInvestigation(alert)}
                   className="flex-1 lg:flex-none px-6 py-2.5 bg-soc-bg border border-soc-border rounded-xl text-xs font-black uppercase tracking-widest hover:border-soc-primary hover:text-soc-primary transition-all shadow-xl italic"

@@ -11,6 +11,7 @@ export default function Forensics() {
 
   const executeCommand = (e) => {
     e.preventDefault();
+    if (!command) return;
     const newLogs = [...terminalLogs, ` analyst@soc:~$ ${command}`];
     
     // Simple mock responses
@@ -20,12 +21,33 @@ export default function Forensics() {
        newLogs.push("  system_root_administrator");
     } else if (command.includes('ls')) {
        newLogs.push("  dump_2026_03_25.pcap", "  malware_sample_hash.txt", "  syslog_export.csv");
+    } else if (command.includes('clear')) {
+       setTerminalLogs(["DETOTNATE_LAB_OS v2.1.0 Ready."]);
+       setCommand('');
+       return;
     } else {
        newLogs.push(`  Command '${command}' not found or permission denied.`);
     }
     
     setTerminalLogs(newLogs);
     setCommand('');
+  };
+
+  const detonateMalware = () => {
+    const steps = [
+      "UPLOAD: sample_3921.exe -> /tmp/sandbox_isolated",
+      "STATUS: Hooking API calls (Kernel32.dll, Ntdll.dll)...",
+      "BEHAVIOR: Attempting to modify HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      "NETWORK: Blocked C2 Connection to 103.221.x.x (Command & Control)",
+      "FILE: Dropped temp_file.vbs in AppData/Local",
+      "VERDICT: CRITICAL_MALWARE // RANSOMWARE_VARIANT_A1"
+    ];
+    
+    steps.forEach((step, i) => {
+      setTimeout(() => {
+        setTerminalLogs(prev => [...prev, ` [REPL-ANALYZER] ${step}`]);
+      }, i * 1000);
+    });
   };
 
   return (
@@ -127,13 +149,15 @@ export default function Forensics() {
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-soc-panel border-2 border-soc-border p-6 rounded-3xl flex items-center space-x-4">
-                 <div className="p-3 bg-soc-critical/10 border border-soc-critical/20 rounded-2xl text-soc-critical">
+              <div 
+                onClick={detonateMalware}
+                className="bg-soc-panel border-2 border-soc-border p-6 rounded-3xl flex items-center space-x-4 hover:border-soc-critical cursor-pointer transition-all group shadow-xl">
+                 <div className="p-3 bg-soc-critical/10 border border-soc-critical/20 rounded-2xl text-soc-critical group-hover:bg-soc-critical group-hover:text-soc-bg transition-all">
                     <AlertCircle size={24} />
                  </div>
                  <div>
-                    <p className="text-[10px] font-black text-soc-muted uppercase tracking-widest">Quick_Action</p>
-                    <p className="text-sm font-black text-white italic tracking-tighter uppercase">DUMP_MEMORY_STACK</p>
+                    <p className="text-[10px] font-black text-soc-muted uppercase tracking-widest">Sandbox_Action</p>
+                    <p className="text-sm font-black text-white italic tracking-tighter uppercase">DETONATE_MALWARE</p>
                  </div>
               </div>
               <div className="bg-soc-panel border-2 border-soc-border p-6 rounded-3xl flex items-center space-x-4 hover:border-accent cursor-pointer transition-all group">
