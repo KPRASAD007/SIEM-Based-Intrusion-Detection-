@@ -139,26 +139,31 @@ export default function AlertsCenter() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-soc-border pb-6">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b-2 border-soc-critical/20 pb-8 relative z-10">
+        <div className="absolute -bottom-[2px] left-0 w-32 h-[2px] bg-soc-critical shadow-[0_0_15px_rgba(255,0,60,0.8)]"></div>
         <div>
-           <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic flex items-center">
-             <ShieldAlert className="mr-3 text-soc-critical" /> THREAT_ALERTS_V2
+           <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-soc-critical to-soc-bg tracking-[0.2em] uppercase italic flex items-center">
+             <ShieldAlert className="mr-4 text-soc-critical drop-shadow-[0_0_10px_rgba(255,0,60,0.8)] animate-pulse" size={36} /> ACTIVE_THREAT_INTERCEPT
            </h2>
-           <p className="text-[10px] font-bold text-soc-muted tracking-[0.3em] mt-2">ACTIVE INTRUSION DETECTION & TELEMETRY STREAM</p>
+           <p className="text-[10px] font-bold text-soc-secondary tracking-[0.4em] mt-3 flex items-center">
+             <span className="w-2 h-2 bg-soc-critical rounded-full inline-block mr-2 animate-ping"></span> INTRUSION DETECTION & TELEMETRY STREAM
+           </p>
         </div>
-        <button onClick={fetchAlerts} className="flex items-center px-4 py-2.5 bg-soc-panel/60 border border-soc-border rounded-xl hover:border-soc-primary hover:text-soc-primary hover:shadow-[0_0_15px_rgba(16,185,129,0.15)] transition-all text-xs font-bold uppercase tracking-widest self-start">
-          <RefreshCw size={14} className={`mr-2.5 ${loading ? 'animate-spin' : ''}`} /> Sync_Detections
+        <button onClick={fetchAlerts} className="flex items-center px-6 py-3 bg-soc-critical/5 border2 border-soc-critical/30 rounded-xl hover:bg-soc-critical/20 hover:text-white transition-all text-xs font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,0,60,0.2)]">
+          <RefreshCw size={14} className={`mr-2.5 ${loading ? 'animate-spin text-soc-critical' : 'text-soc-critical'}`} /> Sync_Detections
         </button>
       </div>
 
-      <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 bg-soc-panel/40 backdrop-blur-xl p-5 rounded-2xl border border-soc-border shadow-2xl">
-        <div className="flex items-center mr-4">
-            <Filter size={16} className="text-soc-primary mr-3" />
-            <span className="text-[10px] font-black text-white uppercase tracking-widest">Filter_Engage:</span>
+      <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 bg-[#050510]/80 backdrop-blur-3xl p-6 border border-soc-critical/20 shadow-[0_0_30px_rgba(255,0,60,0.05)] clip-path-cyber relative z-10 w-full lg:w-2/3">
+        <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-soc-critical/30"></div>
+        <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-soc-critical/30"></div>
+        <div className="flex items-center mr-4 shrink-0">
+            <Filter size={16} className="text-soc-critical mr-3 drop-shadow-[0_0_5px_rgba(255,0,60,0.8)]" />
+            <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Filter_Engage:</span>
         </div>
         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
           <select 
-            className="bg-soc-bg/80 border border-soc-border rounded-xl px-4 py-2 text-xs font-bold text-soc-text outline-none transition-all hover:border-soc-primary focus:border-soc-primary cursor-pointer uppercase tracking-widest italic"
+            className="bg-soc-bg border border-soc-critical/20 px-4 py-2 text-[10px] font-black text-soc-text outline-none transition-all hover:border-soc-critical focus:border-soc-critical cursor-pointer uppercase tracking-[0.2em] italic focus:shadow-[0_0_15px_rgba(255,0,60,0.2)]"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -168,7 +173,7 @@ export default function AlertsCenter() {
             <option value="false_positive">FALSE_POSITIVES</option>
           </select>
           <select 
-            className="bg-soc-bg/80 border border-soc-border rounded-xl px-4 py-2 text-xs font-bold text-soc-text outline-none transition-all hover:border-soc-primary focus:border-soc-primary cursor-pointer uppercase tracking-widest italic"
+            className="bg-soc-bg border border-soc-critical/20 px-4 py-2 text-[10px] font-black text-soc-text outline-none transition-all hover:border-soc-critical focus:border-soc-critical cursor-pointer uppercase tracking-[0.2em] italic focus:shadow-[0_0_15px_rgba(255,0,60,0.2)]"
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value)}
           >
@@ -194,17 +199,17 @@ export default function AlertsCenter() {
            </div>
         ) : (
           filteredAlerts.map(alert => (
-            <div key={alert.id} className="bg-soc-panel/40 backdrop-blur-lg border border-soc-border rounded-2xl p-6 flex flex-col lg:flex-row lg:items-center justify-between shadow-xl hover:bg-soc-bg/60 transition-all border-l-4 group relative overflow-hidden"
-                 style={{ borderLeftColor: (alert.severity || '').toLowerCase() === 'critical' ? '#ef4444' : (alert.severity || '').toLowerCase() === 'high' ? '#f59e0b' : '#3b82f6' }}>
+            <div key={alert.id} className="bg-[#050510]/80 backdrop-blur-3xl border border-soc-border/50 p-6 flex flex-col lg:flex-row lg:items-center justify-between shadow-[0_0_20px_rgba(0,0,0,0.5)] hover:shadow-[0_0_40px_rgba(255,0,60,0.1)] transition-all group relative overflow-hidden clip-path-cyber"
+                 style={{ borderLeftColor: (alert.severity || '').toLowerCase() === 'critical' ? '#ef4444' : (alert.severity || '').toLowerCase() === 'high' ? '#f59e0b' : '#3b82f6', borderLeftWidth: '4px' }}>
               
-              <div className="absolute top-0 right-0 w-32 h-32 bg-soc-primary opacity-0 group-hover:opacity-[0.03] rounded-full -mr-16 -mt-16 transition-opacity pointer-events-none"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-soc-critical opacity-0 group-hover:opacity-10 rounded-full -mr-16 -mt-16 transition-all duration-700 pointer-events-none group-hover:scale-150"></div>
               
               <div className="relative z-10 flex-1">
-                <div className="flex items-center space-x-3 mb-3">
-                  <span className={`px-2 py-0.5 rounded text-[9px] font-black tracking-widest uppercase border
-                    ${(alert.severity || '').toLowerCase() === 'critical' ? 'text-soc-critical border-soc-critical/30 bg-soc-critical/5 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 
-                      (alert.severity || '').toLowerCase() === 'high' ? 'text-soc-warning border-soc-warning/30 bg-soc-warning/5' : 
-                      'text-soc-secondary border-soc-secondary/30 bg-soc-secondary/5'}`}>
+                <div className="flex items-center space-x-4 mb-4">
+                  <span className={`px-2 py-0.5 text-[9px] font-black tracking-widest uppercase border
+                    ${(alert.severity || '').toLowerCase() === 'critical' ? 'text-soc-critical border-soc-critical bg-soc-critical/5 shadow-[0_0_10px_rgba(239,68,68,0.4)]' : 
+                      (alert.severity || '').toLowerCase() === 'high' ? 'text-soc-warning border-soc-warning bg-soc-warning/5 drop-shadow-[0_0_5px_rgba(245,158,11,0.5)]' : 
+                      'text-soc-secondary border-soc-secondary bg-soc-secondary/5 drop-shadow-[0_0_5px_rgba(0,243,255,0.5)]'}`}>
                     {(alert.severity || 'LOW').toUpperCase()}
                   </span>
                   

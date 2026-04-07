@@ -29,6 +29,21 @@
     text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
   }
   
+  .shadow-glow {
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.4), inset 0 0 10px rgba(0, 243, 255, 0.1);
+  }
+
+  .clip-path-cyber {
+    clip-path: polygon(
+      0 0,
+      calc(100% - 20px) 0,
+      100% 20px,
+      100% 100%,
+      20px 100%,
+      0 calc(100% - 20px)
+    );
+  }
+  
   .border-glow {
     box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
   }

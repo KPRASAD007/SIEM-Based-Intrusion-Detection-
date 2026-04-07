@@ -22,10 +22,10 @@ function SidebarItem({ to, icon: Icon, label }) {
   const isActive = location.pathname === to;
   
   return (
-    <Link to={to} className={`flex items-center px-4 py-3 rounded-lg transition-all duration-300 mb-1 group relative overflow-hidden ${isActive ? 'bg-soc-primary/10 text-soc-primary shadow-[inset_4px_0_0_0_#10b981]' : 'text-soc-muted hover:bg-soc-border hover:text-white'}`}>
-      <div className={`absolute top-0 left-0 w-full h-full bg-gradient-to-r from-soc-primary/20 to-transparent -translate-x-full transition-transform duration-500 ease-out ${isActive ? 'translate-x-0' : 'group-hover:translate-x-0'} opacity-0 group-hover:opacity-100`}></div>
-      <Icon size={20} className={`mr-3 relative z-10 transition-transform ${isActive ? 'scale-110' : 'group-hover:scale-110 text-soc-muted group-hover:text-soc-primary'}`} />
-      <span className="font-bold relative z-10 tracking-wide">{label}</span>
+    <Link to={to} className={`flex items-center px-4 py-4 rounded-3xl transition-all duration-500 mb-2 relative overflow-hidden group/item ${isActive ? 'bg-soc-primary/20 shadow-[inset_0_0_20px_rgba(0,243,255,0.4)] border border-soc-primary/30' : 'hover:bg-soc-primary/5 border border-transparent hover:border-soc-primary/10'}`}>
+      <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 rounded-r-full bg-soc-primary transition-all duration-300 ${isActive ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full group-hover/item:opacity-50 group-hover/item:translate-x-0'}`}></div>
+      <Icon size={24} className={`min-w-[24px] ml-1 transition-all duration-500 ${isActive ? 'text-soc-primary drop-shadow-[0_0_8px_rgba(0,243,255,0.8)] scale-110' : 'text-soc-muted group-hover/item:text-white group-hover/item:scale-110'}`} />
+      <span className="font-bold relative z-10 tracking-[0.2em] ml-6 opacity-0 translate-x-4 group-hover/sidebar:opacity-100 group-hover/sidebar:translate-x-0 transition-all duration-500 whitespace-nowrap text-xs uppercase">{label}</span>
     </Link>
   );
 }
@@ -131,80 +131,64 @@ function App() {
 
   return (
     <Router>
-      <div className="flex h-screen bg-soc-bg text-soc-text font-sans overflow-hidden scanline">
-        <div className={`fixed lg:relative left-0 top-0 h-full bg-soc-panel border-r border-soc-border flex flex-col shadow-2xl z-[100] transition-all duration-300 ease-in-out ${isSidebarVisible ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}`}>
-          <div className="p-6 flex items-center space-x-3 mb-4">
-             <img src={logoUrl} alt="Logo" className="w-10 h-10 border-2 border-soc-primary rounded-lg shadow-lg" />
-             <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-soc-primary to-accent uppercase tracking-tighter">
-                Detect Lab
-             </h1>
-          </div>
-          <nav className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
-            <SidebarItem to="/" icon={Zap} label="SOC Briefing" />
-            <SidebarItem to="/dashboard" icon={LayoutDashboard} label="Command Center" />
-            <SidebarItem to="/logs" icon={Database} label="Log Analyzer" />
-            <SidebarItem to="/alerts" icon={Activity} label="Threat Alerts" />
-            <SidebarItem to="/incidents" icon={Briefcase} label="Case Manager" />
-            <div className="block h-px bg-soc-border my-4 mx-2 opacity-50" />
-            
-            <SidebarItem to="/sensors" icon={Globe} label="Remote Agents" />
-            
-            <div className="pt-4">
-              <p className="px-4 text-[10px] font-bold text-soc-secondary uppercase tracking-[0.2em] mb-2 opacity-50 italic underline decoration-soc-secondary">Advanced Intelligence</p>
-              <SidebarItem to="/deception" icon={Ghost} label="Deception Ops" />
-              <SidebarItem to="/behavior" icon={Fingerprint} label="Behavioral Sync" />
-              <SidebarItem to="/forensics" icon={Search} label="Artifact Sandbox" />
-              <SidebarItem to="/web" icon={Eye} label="Web Intercept" />
-            </div>
+      <div className="flex h-screen bg-soc-bg text-soc-text font-orbitron overflow-hidden scanline relative selection:bg-soc-primary selection:text-soc-bg">
+        {/* Global Deep Space / Grid Background */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,243,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.015)_1px,transparent_1px)] bg-[size:30px_30px] pointer-events-none z-0"></div>
+        <div className="absolute top-[-20%] right-[-10%] w-[1000px] h-[1000px] bg-soc-secondary/5 rounded-full blur-[150px] pointer-events-none z-0 mix-blend-screen animate-pulse-slow"></div>
+        <div className="absolute bottom-[-20%] left-[-10%] w-[800px] h-[800px] bg-soc-primary/5 rounded-full blur-[120px] pointer-events-none z-0 mix-blend-screen animate-pulse"></div>
 
-            <div className="pt-4">
-              <p className="px-4 text-[10px] font-bold text-soc-muted uppercase tracking-[0.2em] mb-2 opacity-50">Operations</p>
-              <SidebarItem to="/rules" icon={Settings} label="Detection Rules" />
-              <SidebarItem to="/mitre" icon={Target} label="ATT&CK Matrix" />
-              <SidebarItem to="/simulator" icon={Shield} label="SIMULATION" />
-              <SidebarItem to="/docs" icon={FileText} label="Lab Docs" />
-            </div>
-          </nav>
-          <div className="p-4 border-t border-soc-border bg-soc-bg/50 flex flex-col items-center">
-             <div className="flex items-center space-x-2 text-[10px] font-mono text-soc-primary animate-pulse">
-                <div className="w-1.5 h-1.5 rounded-full bg-soc-primary"></div>
-                <span>CORE_SYSTEM_READY</span>
+        {/* Floating Expandable HUD Side-Dock */}
+        <div className="fixed left-6 top-6 bottom-6 w-24 hover:w-80 bg-soc-panel/40 backdrop-blur-3xl border border-soc-primary/20 rounded-[3rem] shadow-[0_0_50px_rgba(0,243,255,0.1),inset_0_0_20px_rgba(0,243,255,0.05)] z-[100] transition-all duration-[600ms] ease-[cubic-bezier(0.23,1,0.32,1)] flex flex-col group/sidebar overflow-hidden">
+          
+          <div className="p-8 flex items-center justify-center group-hover/sidebar:justify-start relative">
+             <div className="w-10 h-10 border-2 border-soc-primary shadow-[0_0_15px_rgba(0,243,255,0.6)] rounded-xl flex items-center justify-center shrink-0 bg-soc-bg">
+                <Shield size={20} className="text-soc-primary" />
              </div>
-             <p className="text-[10px] text-soc-muted mt-1 uppercase opacity-30">Build v2.1.0-STABLE</p>
+             <div className="absolute left-24 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                <h1 className="text-xl font-black text-white tracking-[0.3em] uppercase">CYBER<span className="text-soc-primary">DETECT</span></h1>
+             </div>
           </div>
+
+          <nav className="flex-1 px-4 pb-4 overflow-y-auto custom-scrollbar">
+            <SidebarItem to="/" icon={Zap} label="Briefing" />
+            <SidebarItem to="/dashboard" icon={LayoutDashboard} label="Command" />
+            <SidebarItem to="/logs" icon={Database} label="Telemetry" />
+            <SidebarItem to="/alerts" icon={Activity} label="Threats" />
+            
+            <div className="my-4 mx-4 h-px bg-gradient-to-r from-transparent via-soc-primary/30 to-transparent"></div>
+            
+            <SidebarItem to="/sensors" icon={Globe} label="Agents" />
+            <SidebarItem to="/deception" icon={Ghost} label="Deception" />
+            <SidebarItem to="/behavior" icon={Fingerprint} label="Behavioral" />
+            <SidebarItem to="/forensics" icon={Search} label="Sandbox" />
+            <SidebarItem to="/incidents" icon={Briefcase} label="Cases" />
+            
+            <div className="my-4 mx-4 h-px bg-gradient-to-r from-transparent via-soc-primary/30 to-transparent"></div>
+            
+            <SidebarItem to="/rules" icon={Settings} label="Rules" />
+            <SidebarItem to="/simulator" icon={Target} label="Simulate" />
+          </nav>
         </div>
         
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col relative w-full min-w-0">
-          <header className="h-14 bg-soc-panel/80 backdrop-blur-3xl border-b border-soc-primary/20 shadow-[0_4px_30px_rgba(16,185,129,0.05)] flex items-center justify-between px-8 z-[110]">
-            <div className="flex items-center">
-              <button 
-                onClick={() => setIsSidebarVisible(!isSidebarVisible)}
-                className="mr-6 p-2 text-soc-primary/70 hover:bg-soc-primary/10 hover:text-soc-primary rounded transition-all shadow-[inset_0_0_10px_rgba(16,185,129,0)] hover:shadow-[inset_0_0_10px_rgba(16,185,129,0.2)]"
-              >
-                <LayoutDashboard size={18} />
-              </button>
-              <div className="flex items-center space-x-2 text-[11px] font-bold text-soc-muted uppercase tracking-widest">
-                 <Shield size={14} className="text-soc-primary" />
-                 <span>Security Operations & Research Intelligence Environment</span>
-              </div>
-            </div>
-            
+        {/* Main Content Area (Pushed over to avoid floating dock) */}
+        <div className="flex-1 flex flex-col relative w-full h-full pl-36 pt-6 pr-6 pb-6 min-w-0 z-10 transition-all duration-500">
+          
+          {/* Floating Top Nav Pill */}
+          <header className="absolute top-6 right-6 h-16 bg-soc-panel/30 backdrop-blur-2xl border border-soc-primary/30 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.5)] flex items-center justify-end px-6 z-[110]">
             <div className="flex items-center space-x-6">
               <div className="hidden md:flex flex-col items-end">
                   <div className="flex items-center space-x-2">
-                     <span className="text-[10px] font-bold text-soc-primary uppercase animate-pulse">Live</span>
-                     <span className="text-[10px] font-bold text-soc-text">SYSLOG_MONITOR</span>
+                     <span className="text-[9px] font-black text-soc-secondary uppercase animate-ping absolute">LIVE</span>
+                     <span className="text-[9px] font-black text-soc-primary uppercase relative">LIVE STRM</span>
                   </div>
-                  <div className="text-[9px] text-soc-muted font-mono">{new Date().toISOString()}</div>
               </div>
-              <div className="w-8 h-8 rounded border border-soc-primary/50 overflow-hidden cursor-pointer hover:scale-110 transition-transform shadow-lg" onClick={() => setShowProfileMenu(!showProfileMenu)}>
-                <img src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentUser || 'admin'}`} alt="User" />
+              <div className="w-10 h-10 rounded-full border-2 border-soc-primary shadow-[0_0_10px_rgba(0,243,255,0.4)] overflow-hidden cursor-pointer hover:border-white transition-all bg-soc-bg flex items-center justify-center p-1" onClick={() => setShowProfileMenu(!showProfileMenu)}>
+                <img src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentUser || 'admin'}`} alt="User" className="w-full h-full object-cover rounded-full" />
               </div>
             </div>
           </header>
           
-          <main className="flex-1 overflow-auto bg-gradient-to-tr from-soc-bg to-[#0b0e14] p-6 lg:p-10 custom-scrollbar relative">
+          <main className="flex-1 overflow-auto bg-transparent custom-scrollbar relative rounded-[3rem] border border-soc-primary/10 shadow-[inner_0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-sm p-8">
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/dashboard" element={<Dashboard />} />
@@ -252,20 +236,32 @@ function App() {
           )}
 
           {/* Live Alerts Stream (Toasts) */}
-          <div className="fixed bottom-10 right-10 z-[120] flex flex-col space-y-4">
+           <div className="fixed bottom-10 right-10 z-[120] flex flex-col space-y-4">
              {liveAlerts.map(alert => (
-               <div key={alert._id || alert.id} className="bg-soc-panel border-l-4 border-soc-critical text-soc-text p-5 rounded shadow-[0_0_30px_rgba(239,68,68,0.15)] w-80 flex items-start justify-between group animate-toast overflow-hidden relative">
-                 <div className="absolute top-0 right-0 w-16 h-16 bg-soc-critical/5 rounded-full -mr-8 -mt-8"></div>
-                 <div className="flex items-start z-10">
-                   <div className="p-2 bg-soc-critical/20 rounded-lg mr-4 mt-1 border border-soc-critical/30">
-                      <Bell size={18} className="text-soc-critical" />
+               <div key={alert._id || alert.id} className="bg-[#050510]/95 backdrop-blur-xl border border-soc-critical/50 p-6 rounded-2xl shadow-[0_0_50px_rgba(239,68,68,0.3)] w-96 flex items-start justify-between group animate-toast overflow-hidden relative group font-orbitron">
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-soc-critical opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
+                 <div className="absolute top-0 left-0 w-1 h-full bg-soc-critical"></div>
+                 
+                 <div className="flex items-start z-10 w-full">
+                   <div className="p-3 bg-soc-critical/10 rounded-2xl border border-soc-critical/50 mr-5 shrink-0 mt-1">
+                      <Bell size={24} className="text-soc-critical animate-bounce" />
                    </div>
-                   <div>
-                     <h4 className="font-black text-[11px] uppercase tracking-[0.2em] text-soc-critical mb-1">Security Alert</h4>
-                     <p className="text-xs font-bold text-white mb-2 leading-tight">{alert.rule_name}</p>
-                     <div className="flex items-center space-x-2">
-                         <span className="text-[10px] font-mono text-soc-muted">HOST:</span>
-                         <span className="text-[10px] font-mono text-white bg-soc-bg px-1.5 py-0.5 rounded">{alert.affected_host || 'WS-99'}</span>
+                   <div className="flex-1">
+                     <div className="flex justify-between items-center mb-1">
+                        <h4 className="font-black text-[10px] uppercase tracking-[0.4em] text-soc-critical">THREAT_DETECTED</h4>
+                        <button onClick={() => dismissAlert(alert._id || alert.id)} className="text-soc-muted hover:text-white transition-colors">
+                          <X size={16} />
+                        </button>
+                     </div>
+                     <p className="text-sm font-black text-white mb-3 italic uppercase">{alert.rule_name}</p>
+                     
+                     <div className="grid grid-cols-2 gap-2 mt-2 pt-3 border-t border-soc-border/50">
+                        <div className="flex items-center text-[9px] font-mono text-soc-muted">
+                           <span className="text-white bg-soc-bg border border-soc-border px-1.5 py-0.5 rounded mr-2 break-all">{alert.affected_host || 'UNK'}</span>
+                        </div>
+                        <div className="flex items-center text-[9px] font-mono text-soc-secondary justify-end">
+                           <Shield size={10} className="mr-1" /> MITRE_{alert.mitre_attack_id || 'XXX'}
+                        </div>
                      </div>
                    </div>
                  </div>
