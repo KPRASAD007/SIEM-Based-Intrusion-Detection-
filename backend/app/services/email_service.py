@@ -13,9 +13,9 @@ logging.basicConfig(level=logging.INFO)
 
 SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER", "krishnaprasadt004@gmail.com")
+SMTP_USER = os.getenv("SMTP_USER", "kichuvalorant@gmail.com")
 SMTP_PASS = os.getenv("SMTP_PASS", "ornmeufhfzhgudcg")
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "krishnaprasadt004@gmail.com")
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "kichuvalorant@gmail.com")
 
 def _transmit_email(subject, html_body, recipients, severity):
     """Blocking SMTP transmission logic called in a separate thread."""
