@@ -53,7 +53,7 @@
   animation: toastFade 5.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Scanline Effect */
+/* Animated Scanline Effect */
 .scanline::after {
   content: " ";
   display: block;
@@ -62,8 +62,28 @@
   left: 0;
   bottom: 0;
   right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.05));
-  z-index: 2;
-  background-size: 100% 4px, 3px 100%;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(16, 185, 129, 0.03) 50%);
+  z-index: 9999;
+  background-size: 100% 4px;
+  pointer-events: none;
+  animation: scanline 10s linear infinite;
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* Authentic CRT screen edge vignette */
+.scanline::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.6) 100%);
+  z-index: 9998;
   pointer-events: none;
 }

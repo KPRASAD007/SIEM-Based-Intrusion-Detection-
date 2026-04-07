@@ -35,6 +35,26 @@ def parse_query_to_mongo(query_string: str) -> Dict[str, Any]:
                 
     return mongo_query
 
+@router.get("/topology")
+async def get_system_topology(db=Depends(get_db)):
+    try:
+        # Get extremely basic fast counts for the hero page
+        total_logs = await db.logs.count_documents({})
+        total_alerts = await db.alerts.count_documents({})
+        
+        # Approximate "active sensors" safely without aggregate if possible, or just a mock/simple distinct
+        sensors = await db.logs.distinct("ip_address")
+        sensor_count = len(sensors) if sensors else 1
+        
+        return {
+            "total_logs": total_logs,
+            "total_alerts": total_alerts,
+            "sensors": sensor_count,
+            "status": "online"
+        }
+    except Exception as e:
+        return {"total_logs": "APP_ERR", "total_alerts": "APP_ERR", "sensors": "APP_ERR"}
+
 @router.get("")
 async def threat_hunt(query: str, limit: int = 100, db=Depends(get_db)):
     try:

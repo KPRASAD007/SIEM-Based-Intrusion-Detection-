@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
+import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import LogManagement from './pages/LogManagement';
 import AlertsCenter from './pages/AlertsCenter';
@@ -138,7 +139,8 @@ function App() {
              </h1>
           </div>
           <nav className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
-            <SidebarItem to="/" icon={LayoutDashboard} label="Command Center" />
+            <SidebarItem to="/" icon={Zap} label="SOC Briefing" />
+            <SidebarItem to="/dashboard" icon={LayoutDashboard} label="Command Center" />
             <SidebarItem to="/logs" icon={Database} label="Log Analyzer" />
             <SidebarItem to="/alerts" icon={Activity} label="Threat Alerts" />
             <SidebarItem to="/incidents" icon={Briefcase} label="Case Manager" />
@@ -203,7 +205,8 @@ function App() {
           
           <main className="flex-1 overflow-auto bg-gradient-to-tr from-soc-bg to-[#0b0e14] p-6 lg:p-10 custom-scrollbar relative">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/" element={<Landing />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/logs" element={<LogManagement />} />
               <Route path="/alerts" element={<AlertsCenter />} />
               <Route path="/incidents" element={<Incidents />} />
