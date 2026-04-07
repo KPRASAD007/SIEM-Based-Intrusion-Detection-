@@ -47,7 +47,17 @@ async def chat_with_oracle(payload: dict, db = Depends(get_db)):
         response_text = "I am monitoring the deception grid. Our deployed honey-tokens and mock servers remain undetected. Adversary traversal into the mirage network is being actively tracked."
         action_taken = "DECEPTION_GRID_VERIFIED"
         
-    # 5. Clear / Reset
+    # 5. Email / Notification Dispatch
+    elif "email" in message or "mail" in message or "notify" in message or "alert team" in message:
+        response_text = "Alert dispatch protocol initiated. I have compiled the current threat matrix and forwarded a high-priority briefing to all registered Level-5 SOC operators' secure mailboxes."
+        action_taken = "SMTP_DISPATCH_COMPLETE"
+        
+    # 6. Guide / Help / Documentation
+    elif "guide" in message or "help" in message or "how to" in message or "explain" in message:
+        response_text = "I can guide you through the facility. \n1. [SIMULATOR]: Use this to launch controlled AI attacks against our sensors.\n2. [DECEPTION OPS]: Deploy fake honey-tokens to trap adversaries.\n3. [THREAT ALERTS]: Review live intrusion signals.\n4. [COMMAND CENTER]: View macroscopic threat telemetry.\nWhat system would you like to initialize?"
+        action_taken = "DOCUMENTATION_PULLED"
+        
+    # 7. Clear / Reset
     elif "clear" in message or "reset" in message:
         response_text = "Flushing local memory buffers and resetting interface protocols. Standing by for new directives."
         action_taken = "SYSTEM_RESET"
