@@ -22,13 +22,14 @@ export default function Landing() {
   }, []);
 
   useEffect(() => {
-    fetch(`http://${window.location.hostname}:8080/api/search/topology`)
+    fetch(`http://127.0.0.1:8080/api/search/topology`)
       .then(res => res.json())
       .then(data => setStats(data))
       .catch(err => console.error(err));
       
     // Connect to Websocket for Live Terminal Streaming on Hero Page
-    const ws = new WebSocket(`ws://${window.location.hostname}:8080/api/logs/ws`);
+    const ws = new WebSocket(`ws://127.0.0.1:8080/api/logs/ws`);
+
     ws.onmessage = (event) => {
         try {
            const payload = JSON.parse(event.data);
@@ -53,24 +54,31 @@ export default function Landing() {
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-20 relative">
-      {/* Background Matrix/Data Net Effect */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.03)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0"></div>
-      
+      {/* Background Neural Matrix Effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-soc-primary/5 via-soc-secondary/5 to-soc-primary/5 animate-neural-pulse pointer-events-none z-0"></div>
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,243,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none z-0"></div>
+
       {/* Hero Section */}
-      <div className="relative border-y-2 border-soc-border py-16 overflow-hidden bg-soc-panel/60 shadow-[inset_0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-3xl z-10 w-full rounded-2xl">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-soc-primary/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen mix-blend-screen animate-pulse-slow"></div>
+      <div className="relative border-y border-soc-primary/20 py-20 overflow-hidden bg-[#050510]/40 backdrop-blur-3xl z-10 w-full rounded-[4rem] shadow-[0_0_100px_rgba(0,0,0,0.5),inset_0_0_50px_rgba(0,243,255,0.05)]">
+        {/* Rotating Tactical HUD Rings */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] border border-soc-primary/10 rounded-full animate-hud-rotate pointer-events-none"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] border border-soc-secondary/5 rounded-full animate-[hud-rotate_30s_linear_infinite_reverse] pointer-events-none"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-soc-primary/5 rounded-full blur-[120px] pointer-events-none mix-blend-screen animate-pulse-slow"></div>
         
-        <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto space-y-8">
-           <div className="flex items-center space-x-3 bg-soc-bg border border-soc-border p-2 pr-6 rounded-full shadow-2xl">
-              <div className="w-10 h-10 rounded-full bg-soc-primary flex items-center justify-center animate-pulse">
-                 <Terminal size={18} className="text-soc-bg" />
+        <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto space-y-10">
+           <div className="flex items-center space-x-4 bg-soc-bg/80 border border-soc-primary/30 p-2 pr-8 rounded-full shadow-[0_0_30px_rgba(0,243,255,0.1)]">
+              <div className="w-12 h-12 rounded-full bg-soc-primary/20 border border-soc-primary flex items-center justify-center animate-pulse">
+                 <Terminal size={22} className="text-soc-primary shadow-[0_0_10px_currentColor]" />
               </div>
-              <span className="font-mono text-[10px] text-soc-primary uppercase tracking-[0.3em] font-black">{typedText}<span className="inline-block w-2.5 h-3.5 bg-soc-primary animate-ping ml-1 opacity-80"></span></span>
+              <span className="font-mono text-[11px] text-soc-primary uppercase tracking-[0.4em] font-black">{typedText}<span className="inline-block w-3 h-4 bg-soc-primary animate-ping ml-1 opacity-80"></span></span>
            </div>
            
-           <h1 className="text-6xl md:text-8xl font-black text-white italic tracking-tighter uppercase leading-[0.85]">
-              CYBERDETECT <span className="text-transparent bg-clip-text bg-gradient-to-r from-soc-primary to-soc-secondary">LAB v2</span>
+           <h1 className="text-7xl md:text-9xl font-black text-white italic tracking-tighter uppercase leading-[0.8] animate-text-flicker">
+              CYBER<span className="text-transparent bg-clip-text bg-gradient-to-r from-soc-primary via-white to-soc-secondary">DETECT</span>
+              <br/>
+              <span className="text-4xl md:text-5xl opacity-40">LAB_SYSTEM_v2</span>
            </h1>
+
            
            <p className="text-soc-muted text-sm tracking-[0.2em] uppercase font-mono max-w-3xl leading-relaxed">
              Next-Gen Security Information & Event Management (SIEM). Architected for Real-Time Threat Hunting, Zero-Trust Telemetry Ingestion, and Automated AI Defenses.

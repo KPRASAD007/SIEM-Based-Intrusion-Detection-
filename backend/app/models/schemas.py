@@ -59,3 +59,6 @@ class IncidentModel(BaseModel):
     notes: List[Dict[str, Any]] = Field(default_factory=list) # {timestamp, author, content}
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class OracleRequest(BaseModel):
+    message: str

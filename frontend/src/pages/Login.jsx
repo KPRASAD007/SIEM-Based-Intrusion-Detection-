@@ -18,10 +18,11 @@ export default function Login({ onLogin }) {
     setError('');
 
     try {
-      const endpoint = isRegistering ? `http://${window.location.hostname}:8080/api/auth/register` : `http://${window.location.hostname}:8080/api/auth/login`;
+      const endpoint = isRegistering ? `http://127.0.0.1:8080/api/auth/register` : `http://127.0.0.1:8080/api/auth/login`;
       const payload = isRegistering 
         ? { username, password, alert_email: email, admin_key: adminKey } 
         : { username, password };
+
 
 
       const response = await fetch(endpoint, {
@@ -35,16 +36,18 @@ export default function Login({ onLogin }) {
         throw new Error(errData.detail || (isRegistering ? 'Registration failed' : 'Invalid credentials'));
       }
 
+      // Success Path: Zero-Latency Handover
+      setLoading(false);
       onLogin(username);
     } catch (err) {
-      setError(err.message);
-    } finally {
       setLoading(false);
+      setError(err.message);
     }
   };
 
-  const heroUrl = `http://${window.location.hostname}:8080/api/download/hero.png`;
-  const logoUrl = `http://${window.location.hostname}:8080/api/download/logo.png`;
+
+  const heroUrl = `http://127.0.0.1:8080/api/download/hero.png`;
+  const logoUrl = `http://127.0.0.1:8080/api/download/logo.png`;
 
   return (
     <div className="min-h-screen bg-soc-bg flex items-center justify-center p-4 relative overflow-hidden font-orbitron selection:bg-soc-primary selection:text-soc-bg">
@@ -59,7 +62,8 @@ export default function Login({ onLogin }) {
 
       <div className="absolute inset-0 z-10 opacity-30 pointer-events-none scanline"></div>
 
-      <div className="max-w-md w-full z-20 animate-in fade-in slide-in-from-bottom-10 duration-[1500ms]">
+      <div className="max-w-md w-full z-20 animate-in fade-in zoom-in-95 duration-[300ms] ease-out">
+
         <div className="text-center mb-12 relative">
           <div className="w-24 h-24 mx-auto mb-6 relative group flex items-center justify-center">
              <div className="absolute inset-0 bg-soc-primary blur-3xl opacity-30 group-hover:opacity-60 transition-all duration-700 animate-spin-slow"></div>

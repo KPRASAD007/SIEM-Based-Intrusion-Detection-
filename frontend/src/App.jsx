@@ -16,7 +16,11 @@ import DeceptionOps from './pages/DeceptionOps';
 import BehavioralAnalytics from './pages/BehavioralAnalytics';
 import Forensics from './pages/Forensics';
 import OracleBot from './components/OracleBot';
-import { Shield, LayoutDashboard, Database, Activity, Briefcase, Settings, FileText, Target, Bell, X, Globe, Eye, Fingerprint, Ghost, Zap, Search, HardDrive, Terminal } from 'lucide-react';
+import { Shield, LayoutDashboard, Database, Activity, Briefcase, Settings, FileText, Target, Bell, X, Globe, Eye, Fingerprint, Ghost, Zap, Search, HardDrive, Terminal, LogOut } from 'lucide-react';
+
+
+
+
 
 function SidebarItem({ to, icon: Icon, label }) {
   const location = useLocation();
@@ -41,10 +45,9 @@ function App() {
   const [emailStatus, setEmailStatus] = useState('');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
 
-  // Fetch admin profile data when authenticated
   useEffect(() => {
     if (isAuthenticated && currentUser) {
-      fetch(`http://${window.location.hostname}:8080/api/auth/profile/${currentUser}`)
+      fetch(`http://127.0.0.1:8080/api/auth/profile/${currentUser}`)
         .then(res => res.json())
         .then(data => {
           if (data.alert_email) setAlertEmail(data.alert_email);
@@ -56,7 +59,7 @@ function App() {
   const saveProfile = async () => {
     setSavingEmail(true);
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/auth/profile`, {
+      const res = await fetch(`http://127.0.0.1:8080/api/auth/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: currentUser, alert_email: alertEmail })
@@ -73,12 +76,14 @@ function App() {
     setSavingEmail(false);
   };
 
+
   useEffect(() => {
     let ws;
     let reconnectTimer;
 
     const connectWebSocket = () => {
-      ws = new WebSocket(`ws://${window.location.hostname}:8080/api/logs/ws`);
+      ws = new WebSocket(`ws://127.0.0.1:8080/api/logs/ws`);
+
       
       ws.onopen = () => {
         console.log("Connected to SOC real-time stream");
@@ -119,6 +124,13 @@ function App() {
       clearTimeout(reconnectTimer);
     };
   }, []);
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    setShowProfileMenu(false);
+  };
+
 
   const dismissAlert = (id) => {
     setLiveAlerts(prev => prev.filter(a => a._id !== id));
@@ -207,6 +219,8 @@ function App() {
               <Route path="/docs" element={<Documentation />} />
             </Routes>
           </main>
+
+
           
           {showProfileMenu && (
              <div className="absolute top-14 right-8 w-72 bg-soc-panel border border-soc-border rounded-b-lg shadow-2xl z-[200] overflow-hidden animate-in slide-in-from-top-2 duration-300">
@@ -219,11 +233,19 @@ function App() {
                       <p className="text-lg font-black text-white tracking-tight leading-none">{currentUser || 'SYSTEM_ROOT'}</p>
                    </div>
                 </div>
-                <div className="p-4 bg-[#050510]/60">
-                   <div className="flex items-center justify-between text-[8px] font-black text-soc-muted uppercase tracking-widest px-2">
+                 <div className="p-2 bg-[#050510]/60">
+                   <div className="flex items-center justify-between text-[8px] font-black text-soc-muted uppercase tracking-widest px-2 mb-2">
                       <span>Neural Status</span>
                       <span className="text-soc-primary">Linked</span>
                    </div>
+                   
+                   <button 
+                     onClick={handleLogout}
+                     className="w-full flex items-center justify-between px-4 py-3 bg-soc-critical/5 hover:bg-soc-critical/20 border border-soc-critical/30 rounded-xl transition-all group/logout"
+                   >
+                      <span className="text-[10px] font-black text-soc-critical uppercase tracking-[0.2em]">End Session</span>
+                      <LogOut size={16} className="text-soc-critical group-hover/logout:translate-x-1 transition-transform" />
+                   </button>
                 </div>
              </div>
           )}

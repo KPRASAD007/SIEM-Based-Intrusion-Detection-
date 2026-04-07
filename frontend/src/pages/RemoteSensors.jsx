@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Server, Activity, ArrowDownToLine, RefreshCw, Terminal, Globe, Network, Search, Filter, X, ShieldCheck, Target } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Server, Activity, ArrowDownToLine, RefreshCw, Terminal, Globe, Network, Search, Filter, X, ShieldCheck, Target, Wifi } from 'lucide-react';
 
 export default function RemoteSensors() {
   const [remoteLogs, setRemoteLogs] = useState([]);
@@ -8,37 +8,119 @@ export default function RemoteSensors() {
   const [filterNoise, setFilterNoise] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDeploymentGuide, setShowDeploymentGuide] = useState(false);
+  const [liveMode, setLiveMode] = useState(true);
+  const [lastSync, setLastSync] = useState(null);
+  const [siemIp, setSiemIp] = useState(null);  // Real server IP from backend
+  const intervalRef = useRef(null);
 
-  const fetchRemoteLogs = () => {
-    setLoading(true);
-    fetch(`http://${window.location.hostname}:8080/api/logs`)
+  const isRemoteLog = (log) =>
+    log?.details?.source === "Remote Windows Forwarder" ||
+    log?.details?.source === "Advanced Forwarder v2";
+
+  const fetchRemoteLogs = (silent = false) => {
+    if (!silent) setLoading(true);
+    fetch(`http://${window.location.hostname}:8080/api/logs?limit=1000`)
       .then(res => res.json())
       .then(data => {
-        const filtered = data.filter(log => log.details?.source === "Advanced Forwarder v2" || log.details?.source === "Remote Windows Forwarder");
-        // Hide invisible heartbeats from the visual table
+        const filtered = data.filter(isRemoteLog);
         setRemoteLogs(filtered.filter(l => l.event_id !== "HEARTBEAT-001"));
-        
-        // Track unique computer hostnames and mark exactly when they were last seen!
+
+        // Build host map from DB logs with safe timestamp parsing
         const hostMap = {};
         filtered.forEach(log => {
-           const host = log.details?.host || log.ip_address;
-           if (!host) return;
-           const logTime = new Date(log.timestamp?.endsWith('Z') ? log.timestamp : log.timestamp + 'Z').getTime();
-           if (!hostMap[host] || logTime > hostMap[host].lastSeen) {
-               hostMap[host] = { host, lastSeen: logTime };
-           }
+          const host = log.details?.host || log.ip_address;
+          if (!host) return;
+          let logTime = Date.now();
+          try {
+            const ts = log.timestamp ? String(log.timestamp) : '';
+            const parsed = new Date(ts.endsWith('Z') ? ts : ts + 'Z').getTime();
+            if (!isNaN(parsed)) logTime = parsed;
+          } catch (_) {}
+          if (!hostMap[host] || logTime > hostMap[host].lastSeen) {
+            hostMap[host] = { host, lastSeen: logTime };
+          }
         });
-        setActiveHosts(Object.values(hostMap).sort((a,b) => b.lastSeen - a.lastSeen));
+
+        // MERGE with existing activeHosts — don't overwrite disconnected flags
+        // or hosts that appeared via WebSocket but have no DB logs yet
+        setActiveHosts(prev => {
+          const merged = { ...Object.fromEntries(prev.map(h => [h.host, h])) };
+          Object.values(hostMap).forEach(h => {
+            if (!merged[h.host]) {
+              merged[h.host] = h; // New host from DB
+            } else {
+              // Update lastSeen but preserve disconnected / other UI flags
+              merged[h.host] = { ...merged[h.host], lastSeen: Math.max(merged[h.host].lastSeen, h.lastSeen) };
+            }
+          });
+          return Object.values(merged).sort((a, b) => b.lastSeen - a.lastSeen);
+        });
+
+        setLastSync(new Date());
         setLoading(false);
       })
-      .catch(err => {
-        console.error("Error fetching remote logs:", err);
-        setLoading(false);
-      });
+      .catch(() => setLoading(false));
   };
 
+  // WebSocket for REAL-TIME updates (sub-second latency)
   useEffect(() => {
     fetchRemoteLogs();
+
+    const wsUrl = `ws://${window.location.hostname}:8080/api/logs/ws`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === "NEW_LOG" && isRemoteLog(msg.data)) {
+          const log = msg.data;
+          if (log.event_id !== "HEARTBEAT-001") {
+            setRemoteLogs(prev => [log, ...prev].slice(0, 500));
+          }
+          const host = log.details?.host || log.ip_address;
+          if (host) {
+            // Immediately add/update host on any incoming log — no poll wait needed
+            setActiveHosts(prev => {
+              const existing = prev.filter(h => h.host !== host);
+              const current = prev.find(h => h.host === host);
+              return [{ ...(current || {}), host, lastSeen: Date.now() }, ...existing];
+            });
+          }
+          setLastSync(new Date());
+        }
+        // Handle agent disconnect/reconnect broadcasts
+        if (msg.type === "AGENT_DISCONNECTED") {
+          setActiveHosts(prev => prev.map(h => h.host === msg.data.hostname ? { ...h, disconnected: true } : h));
+        }
+        if (msg.type === "AGENT_RECONNECTED") {
+          setActiveHosts(prev => prev.map(h => h.host === msg.data.hostname ? { ...h, disconnected: false } : h));
+        }
+      } catch (_) {}
+    };
+
+    ws.onopen = () => setLiveMode(true);
+    ws.onclose = () => setLiveMode(false);
+
+    // Poll every 3s (faster than before) — only for topology sync, WS handles real-time
+    const poll = setInterval(() => fetchRemoteLogs(true), 3000);
+
+    return () => {
+      ws.close();
+      clearInterval(poll);
+      clearInterval(intervalRef.current);
+    };
+  }, []);
+
+  // Fetch real server IP from backend (Tailscale > LAN > primary)
+  useEffect(() => {
+    fetch(`http://${window.location.hostname}:8080/api/system/info`)
+      .then(r => r.json())
+      .then(info => {
+        // Prefer Tailscale IP for cross-network reach, then LAN, then primary
+        const best = info.tailscale_ip || info.primary_ip || info.lan_ip || window.location.hostname;
+        setSiemIp(best);
+      })
+      .catch(() => setSiemIp(window.location.hostname));
   }, []);
 
   const displayLogs = remoteLogs.filter(log => {
@@ -61,12 +143,28 @@ export default function RemoteSensors() {
           </h2>
           <p className="text-[10px] font-bold text-soc-muted tracking-[0.4em] mt-3">LIVE ENDPOINT TELEMETRY & GLOBAL FORWARDER MANAGEMENT</p>
         </div>
-        <button 
-          onClick={fetchRemoteLogs} 
-          className="px-8 py-3.5 bg-soc-panel/60 border-2 border-soc-border text-white rounded-xl hover:border-soc-secondary hover:text-soc-secondary transition-all text-xs font-black uppercase tracking-widest italic flex items-center shadow-xl group"
-        >
-          <RefreshCw size={18} className={`mr-3 group-hover:rotate-180 transition-transform duration-700 ${loading ? 'animate-spin' : ''}`} /> SYNC_SENSOR_GRID
-        </button>
+        <div className="flex items-center gap-3">
+          {lastSync && (
+            <span className="text-[10px] font-black text-soc-muted uppercase tracking-widest">
+              LAST_SYNC: {lastSync.toLocaleTimeString()}
+            </span>
+          )}
+          <button
+            onClick={() => setLiveMode(l => !l)}
+            className={`px-5 py-3.5 border-2 rounded-xl text-xs font-black uppercase tracking-widest italic flex items-center shadow-xl transition-all ${
+              liveMode ? 'bg-soc-secondary/10 border-soc-secondary text-soc-secondary' : 'bg-soc-panel/60 border-soc-border text-soc-muted'
+            }`}
+          >
+            <Wifi size={16} className={`mr-2 ${liveMode ? 'animate-pulse' : ''}`} />
+            {liveMode ? 'LIVE' : 'PAUSED'}
+          </button>
+          <button
+            onClick={() => fetchRemoteLogs()}
+            className="px-8 py-3.5 bg-soc-panel/60 border-2 border-soc-border text-white rounded-xl hover:border-soc-secondary hover:text-soc-secondary transition-all text-xs font-black uppercase tracking-widest italic flex items-center shadow-xl group"
+          >
+            <RefreshCw size={18} className={`mr-3 group-hover:rotate-180 transition-transform duration-700 ${loading ? 'animate-spin' : ''}`} /> SYNC_NOW
+          </button>
+        </div>
       </div>
 
       {/* Sensor Grid Architecture */}
@@ -119,22 +217,55 @@ export default function RemoteSensors() {
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {activeHosts.map(h => {
                   const isOffline = (Date.now() - h.lastSeen) > (2 * 60 * 1000);
+                  const isDisconnected = h.disconnected;
                   return (
-                  <div key={h.host} className={`group flex items-center bg-soc-bg border-2 p-5 rounded-[1.5rem] transition-all duration-500 relative overflow-hidden
-                    ${isOffline ? 'border-soc-critical/20 opacity-50 grayscale' : 'border-soc-border hover:border-soc-secondary hover:shadow-[0_0_30px_rgba(6,182,212,0.15)]'}`}>
-                    <div className={`absolute top-0 right-0 w-2 h-full ${isOffline ? 'bg-soc-critical' : 'bg-soc-secondary'}`}></div>
-                    <div className={`w-3 h-3 rounded-full ${isOffline ? 'bg-soc-critical' : 'bg-soc-secondary animate-pulse'} mr-5 shadow-[0_0_15px_rgba(6,182,212,0.5)]`}></div>
-                    <div className="flex-1">
-                      <div className="flex items-center text-soc-muted mb-1 text-[8px] font-black uppercase tracking-widest group-hover:text-soc-secondary transition-colors">
-                        <Server size={10} className="mr-2" /> HOST_IDENTIFIER
+                  <div key={h.host} className={`group flex flex-col bg-soc-bg border-2 p-5 rounded-[1.5rem] transition-all duration-500 relative overflow-hidden
+                    ${isDisconnected ? 'border-soc-critical/40 opacity-60' : isOffline ? 'border-soc-critical/20 opacity-50 grayscale' : 'border-soc-border hover:border-soc-secondary hover:shadow-[0_0_30px_rgba(6,182,212,0.15)]'}`}>
+                    <div className={`absolute top-0 right-0 w-2 h-full ${isDisconnected ? 'bg-soc-critical' : isOffline ? 'bg-soc-critical' : 'bg-soc-secondary'}`}></div>
+                    <div className="flex items-center mb-3">
+                      <div className={`w-3 h-3 rounded-full ${isDisconnected ? 'bg-soc-critical' : isOffline ? 'bg-soc-critical' : 'bg-soc-secondary animate-pulse'} mr-4 shadow-[0_0_15px_rgba(6,182,212,0.5)]`}></div>
+                      <div className="flex-1">
+                        <div className="flex items-center text-soc-muted mb-1 text-[8px] font-black uppercase tracking-widest group-hover:text-soc-secondary transition-colors">
+                          <Server size={10} className="mr-2" /> HOST_IDENTIFIER
+                        </div>
+                        <span className="font-mono text-sm font-black text-white tracking-tight">{h.host}</span>
                       </div>
-                      <span className="font-mono text-sm font-black text-white tracking-tight">{h.host}</span>
+                      {isDisconnected && (
+                        <div className="px-3 py-1 bg-soc-critical/20 rounded-lg border border-soc-critical/40 animate-in fade-in zoom-in duration-500">
+                           <span className="text-[8px] text-soc-critical font-black uppercase tracking-widest">TERMINATED</span>
+                        </div>
+                      )}
+                      {!isDisconnected && isOffline && (
+                        <div className="px-3 py-1 bg-soc-critical/20 rounded-lg border border-soc-critical/40 animate-in fade-in zoom-in duration-500">
+                           <span className="text-[8px] text-soc-critical font-black uppercase tracking-widest">TIMEOUT</span>
+                        </div>
+                      )}
                     </div>
-                    {isOffline && (
-                      <div className="px-3 py-1 bg-soc-critical/20 rounded-lg border border-soc-critical/40 ml-4 animate-in fade-in zoom-in duration-500">
-                         <span className="text-[8px] text-soc-critical font-black uppercase tracking-widest">TIMEOUT</span>
-                      </div>
-                    )}
+                    {/* Disconnect / Reconnect controls */}
+                    <div className="flex gap-2 mt-2 pt-2 border-t border-soc-border/30">
+                      {isDisconnected ? (
+                        <button
+                          onClick={async () => {
+                            await fetch(`http://${window.location.hostname}:8080/api/logs/agents/${encodeURIComponent(h.host)}/reconnect`, { method: 'POST' });
+                            setActiveHosts(prev => prev.map(a => a.host === h.host ? { ...a, disconnected: false } : a));
+                          }}
+                          className="flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest bg-soc-secondary/10 border border-soc-secondary/30 text-soc-secondary rounded-lg hover:bg-soc-secondary hover:text-soc-bg transition-all"
+                        >
+                          ⚡ RECONNECT
+                        </button>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`Disconnect agent "${h.host}"? The agent process on that machine will be terminated.`)) return;
+                            await fetch(`http://${window.location.hostname}:8080/api/logs/agents/${encodeURIComponent(h.host)}`, { method: 'DELETE' });
+                            setActiveHosts(prev => prev.map(a => a.host === h.host ? { ...a, disconnected: true } : a));
+                          }}
+                          className="flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest bg-soc-critical/10 border border-soc-critical/30 text-soc-critical rounded-lg hover:bg-soc-critical hover:text-white transition-all"
+                        >
+                          ✕ DISCONNECT
+                        </button>
+                      )}
+                    </div>
                   </div>
                   );
                 })}
@@ -183,13 +314,34 @@ export default function RemoteSensors() {
                         <div className="bg-[#0b0e14] border-2 border-soc-secondary/30 rounded-[1.5rem] p-8 font-mono text-sm relative overflow-hidden">
                           <div className="flex items-center space-x-2 text-[9px] font-black text-soc-muted/40 uppercase tracking-[0.3em] mb-4">
                              <div className="w-2 h-2 rounded-full bg-soc-secondary"></div>
-                             <span>SECURE_PAYLOAD_V2.SYSEXE</span>
+                             <span>SENTINEL_AGENT_v3.0 — POWERSHELL</span>
                           </div>
-                          <code className="text-soc-secondary break-all leading-relaxed block pr-12">
-                             $s="{window.location.hostname}"; iwr -useb "http://$s:8080/api/download/agent" | iex
-                          </code>
-                          <button className="absolute top-6 right-6 p-3 bg-soc-secondary/10 hover:bg-soc-secondary text-soc-secondary hover:text-soc-bg border-2 border-soc-secondary/20 rounded-xl transition-all shadow-xl">
-                              <Target size={18} />
+                          {!siemIp ? (
+                            <p className="text-soc-muted italic text-xs animate-pulse">Detecting server IP...</p>
+                          ) : (
+                            <>
+                              <p className="text-[9px] text-soc-muted uppercase tracking-widest mb-2 opacity-60">▶ RECOMMENDED (works in all PS sessions):</p>
+                              <code id="deploy-cmd-1" className="text-soc-secondary break-all leading-relaxed block pr-14 mb-6">
+                                {`$env:SIEM_IP="${siemIp}"; iwr -useb "http://${siemIp}:8080/api/download/agent" | iex`}
+                              </code>
+                              <p className="text-[9px] text-soc-muted uppercase tracking-widest mb-2 opacity-60">▶ ALTERNATE (same session only):</p>
+                              <code id="deploy-cmd-2" className="text-soc-muted/60 break-all leading-relaxed block pr-14 text-xs">
+                                {`$s="${siemIp}"; iwr -useb "http://$s:8080/api/download/agent" | iex`}
+                              </code>
+                            </>
+                          )}
+                          <button
+                            onClick={() => {
+                              const ip = siemIp || window.location.hostname;
+                              const cmd = `$env:SIEM_IP="${ip}"; iwr -useb "http://${ip}:8080/api/download/agent" | iex`;
+                              navigator.clipboard.writeText(cmd);
+                              const btn = document.getElementById('copy-btn-provision');
+                              if (btn) { btn.textContent = '✓ COPIED!'; btn.style.color = '#22c55e'; setTimeout(() => { btn.textContent = 'COPY'; btn.style.color = ''; }, 2000); }
+                            }}
+                            id="copy-btn-provision"
+                            className="absolute top-6 right-6 px-3 py-2 bg-soc-secondary/10 hover:bg-soc-secondary text-soc-secondary hover:text-soc-bg border-2 border-soc-secondary/20 rounded-xl transition-all shadow-xl text-[9px] font-black uppercase tracking-widest"
+                          >
+                            COPY
                           </button>
                         </div>
                     </div>
@@ -203,7 +355,7 @@ export default function RemoteSensors() {
                         </h4>
                         <div className="space-y-6 relative z-10">
                             {[
-                              { label: "SIEM_ENDPOINT", value: window.location.hostname, mono: true },
+                              { label: "SIEM_ENDPOINT", value: siemIp || 'Detecting...', mono: true },
                               { label: "COMM_PORT", value: "8080", mono: true },
                               { label: "ENCRYPTION", value: "MOCK_TLS_V1.2", mono: false },
                               { label: "STATUS", value: "READY_FOR_SYNC", mono: false, highlight: true }

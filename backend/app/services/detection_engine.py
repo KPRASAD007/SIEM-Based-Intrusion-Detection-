@@ -4,7 +4,8 @@ from ..models.schemas import RuleModel
 
 class DetectionEngine:
     def __init__(self):
-        pass
+        # Sliding window for brute force: { "ip_user": [(timestamp, log_data), ...] }
+        self.failed_logins = {}
 
     async def evaluate_log(self, log: Dict[str, Any], rules: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
@@ -12,7 +13,35 @@ class DetectionEngine:
         Returns a list of matching rules.
         """
         matched_rules = []
+        
+        # --- STATEFUL DETECTIONS ---
+        if str(log.get("event_id")) == "4625":
+            now = datetime.utcnow().timestamp()
+            # Try to get IP, or fall back to Hostname as the sliding window key
+            source = log.get("ip_address") or log.get("details", {}).get("host") or "unknown_source"
+            
+            if source not in self.failed_logins:
+                self.failed_logins[source] = []
+                
+            # Add current failure
+            self.failed_logins[source].append(now)
+            
+            # Keep only last 60 seconds
+            self.failed_logins[source] = [t for t in self.failed_logins[source] if now - t <= 60]
+            
+            # Exactly 5 failures? Trigger Alert! (We cap it at 5 so it doesn't spam alerts for every 6th, 7th fail in the window)
+            if len(self.failed_logins[source]) == 5:
+                matched_rules.append({
+                    "_id": "virtual_brute_force",
+                    "name": "SIEM: Windows RDP/Local Brute Force",
+                    "description": "5+ failed logon attempts (Event 4625) within 60 seconds.",
+                    "severity": "high",
+                    "mitre_attack_id": "T1110.001",
+                    "is_active": True
+                })
+
         for rule in rules:
+
             if self._check_condition(log, rule):
                 matched_rules.append(rule)
         

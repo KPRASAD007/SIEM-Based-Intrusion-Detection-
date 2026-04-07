@@ -59,6 +59,46 @@ async def seed_rules(db=Depends(get_db)):
             "is_active": True
         },
         {
+            "name": "Credential Dumping Tool Detected",
+            "description": "Mimikatz or similar password dumper launched.",
+            "field": "process_name",
+            "operator": "contains",
+            "value": "mimikatz",
+            "severity": "critical",
+            "mitre_attack_id": "T1003",
+            "is_active": True
+        },
+        {
+            "name": "Network Scanning Utility Detected",
+            "description": "Nmap or similar port scanner launched on host.",
+            "field": "process_name",
+            "operator": "contains",
+            "value": "nmap",
+            "severity": "high",
+            "mitre_attack_id": "T1046",
+            "is_active": True
+        },
+        {
+            "name": "Lateral Movement Tool Detected",
+            "description": "PsExec execution spotted, potentially indicating lateral movement.",
+            "field": "process_name",
+            "operator": "contains",
+            "value": "psexec",
+            "severity": "high",
+            "mitre_attack_id": "T1134",
+            "is_active": True
+        },
+        {
+            "name": "Suspicious Download via Certutil",
+            "description": "certutil.exe launched flagrantly.",
+            "field": "process_name",
+            "operator": "contains",
+            "value": "certutil",
+            "severity": "high",
+            "mitre_attack_id": "T1105",
+            "is_active": True
+        },
+        {
             "name": "IDS: Network Port Scanning Detected",
             "description": "Suricata alert for suspicious inbound scanning (ET SCAN).",
             "field": "event_type",
@@ -101,3 +141,4 @@ async def seed_rules(db=Depends(get_db)):
     ]
     await db.rules.insert_many(seeds)
     return {"status": "success", "count": len(seeds)}
+

@@ -1,72 +1,167 @@
-# Remote Windows Forwarder Agent
+# Remote Windows Forwarder Agent - Deep-Scanner v2.0
 Write-Host "[+] Initializing Remote Windows Forwarder..." -ForegroundColor Green
 
-if (-not $s) {
-    $s = "localhost"
-}
-$siemUrl = "http://${s}:8080/api/logs"
+# ALWAYS prefer $env:SIEM_IP — it overrides any stale $s from a previous session
+if ($env:SIEM_IP) { $s = $env:SIEM_IP }
+if (-not $s)      { $s = "localhost" }
 
+$siemUrl = "http://${s}:8080/api/logs"
 Write-Host "[+] Target SIEM: $siemUrl" -ForegroundColor Cyan
 
-function Send-Log ($event_id, $severity, $message_text, $proc="AgentDaemon.exe") {
-    # Fallback to 127.0.0.1 if IP lookup fails
-    $ip = "127.0.0.1"
-    try {
-        $ip = (Test-Connection -ComputerName (hostname) -Count 1 -ErrorAction Stop).IPV4Address.IPAddressToString
-    } catch {}
 
-    $payload = @{
-        timestamp = (Get-Date).ToUniversalTime().ToString("o")
-        event_id = $event_id
-        process_name = $proc
-        user = [Environment]::UserName
-        ip_address = $ip
-        severity = $severity
-        details = @{
-            source = "Remote Windows Forwarder"
-            host = [Environment]::MachineName
-            message = $message_text
-        }
-    } | ConvertTo-Json -Depth 5 -Compress
-    
+# Get the local LAN IP (kept for reference)
+$localLanIp = "127.0.0.1"
+try {
+    $socket = [System.Net.Sockets.UdpClient]::new()
+    $socket.Connect("8.8.8.8", 80)
+    $localLanIp = $socket.Client.LocalEndPoint.Address.ToString()
+    $socket.Close()
+} catch {}
+
+# Get the REAL public internet IP for accurate geolocation in the SIEM
+# Falls back to local LAN IP if no internet access
+$publicIp = $localLanIp
+try {
+    $publicIp = (Invoke-RestMethod -Uri "https://api.ipify.org?format=text" -TimeoutSec 4 -ErrorAction Stop).Trim()
+    Write-Host "[+] Public IP detected: $publicIp (LAN: $localLanIp)" -ForegroundColor Green
+} catch {
     try {
-        Invoke-RestMethod -Uri $siemUrl -Method Post -Body $payload -ContentType "application/json" -ErrorAction SilentlyContinue | Out-Null
+        # Fallback public IP service
+        $publicIp = (Invoke-RestMethod -Uri "http://checkip.amazonaws.com" -TimeoutSec 4 -ErrorAction Stop).Trim()
+        Write-Host "[+] Public IP detected (fallback): $publicIp" -ForegroundColor Green
     } catch {
-        # Silent fail to keep agent running
+        Write-Host "[!] Could not detect public IP, using LAN IP: $localLanIp" -ForegroundColor Yellow
     }
 }
 
-# 1. Send Initial Heartbeat
-Send-Log "HEARTBEAT-001" "low" "Agent initialized successfully"
+function Send-Log ($event_id, $severity, $message_text, $proc_name) {
+    $payload = @{
+        timestamp    = (Get-Date).ToUniversalTime().ToString("o")
+        event_id     = $event_id
+        process_name = $proc_name
+        user         = [Environment]::UserName
+        ip_address   = $publicIp
+        severity     = $severity
+        details      = @{
+            source   = "Remote Windows Forwarder"
+            host     = [Environment]::MachineName
+            message  = $message_text
+            local_ip = $localLanIp
+        }
+    } | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        Invoke-RestMethod -Uri $siemUrl -Method Post -Body $payload -ContentType "application/json" -ErrorAction Stop | Out-Null
+    } catch {
+        # HTTP 410 Gone = SIEM operator has disconnected this agent remotely
+        if ($_.Exception.Response -and $_.Exception.Response.StatusCode.value__ -eq 410) {
+            Write-Host "" -ForegroundColor Red
+            Write-Host "╔══════════════════════════════════════════════════╗" -ForegroundColor Red
+            Write-Host "║  KILL-SWITCH ACTIVATED BY SIEM OPERATOR          ║" -ForegroundColor Red
+            Write-Host "║  This agent has been remotely disconnected.      ║" -ForegroundColor Red
+            Write-Host "║  Terminating telemetry stream...                 ║" -ForegroundColor Red
+            Write-Host "╚══════════════════════════════════════════════════╝" -ForegroundColor Red
+            exit 0
+        }
+        # Any other error — silently ignore and keep running
+    }
+}
+
+# --- FULL BACKGROUND PROCESS SWEEP (runs on startup + every 30 seconds) ---
+# Noisy Windows system processes to ignore — everything else is "interesting"
+$systemNoise = @(
+    'Idle','System','Registry','smss','csrss','wininit','winlogon','lsass','services',
+    'svchost','fontdrvhost','dwm','conhost','dllhost','taskhostw','sihost','ctfmon',
+    'spoolsv','SearchIndexer','WmiPrvSE','RuntimeBroker','ShellExperienceHost',
+    'StartMenuExperienceHost','TextInputHost','SecurityHealthSystray','SecurityHealthService',
+    'MsMpEng','NisSrv','SgrmBroker','audiodg','TabTip','TabTip32','splwow64',
+    'ApplicationFrameHost','UserOOBEBroker','backgroundTaskHost','CompPkgSrv',
+    'MusNotifyIcon','MoUsoCoreWorker','UsoClient','WUDFHost','LsaIso','VaultSvc'
+)
+
+function Send-BackgroundSweep {
+    param($allProcs)
+    $interesting = $allProcs | Where-Object {
+        $name = $_.Name
+        -not ($systemNoise -contains $name) -and
+        $name -notmatch '^(svchost|RuntimeBroker|conhost|dllhost|WmiPrvSE|msiexec)$'
+    }
+    $count = 0
+    foreach ($proc in $interesting) {
+        $procName = $proc.Name + ".exe"
+        $sev = "low"
+        # Flag suspicious/high-interest processes
+        if ($proc.Name -match 'crack|keygen|patch|loader|repack|fitgirl|skidrow|codex|torrent|qbittorrent|utorrent|bitcomet|steam_api|xtrap|bypass|inject|cheat|hack|trainer') {
+            $sev = "high"
+        } elseif ($proc.Name -match 'game|unity|unreal|steam|epic|origin|gog|battle|fortnite|minecraft|roblox|valorant|league|dota|csgo|gta|discord|telegram|whatsapp|spotify|vlc|obs|streamlabs|python|node|java|powershell|cmd|wscript|cscript|mshta|regsvr32') {
+            $sev = "medium"
+        }
+        Send-Log "BG-SCAN" $sev "Background process running: $procName (PID:$($proc.Id))" $procName
+        $count++
+        if ($count -ge 30) { break } # Cap at 30 per sweep to avoid flooding
+    }
+    Write-Host "[*] Background sweep: reported $count active background processes" -ForegroundColor Blue
+}
+
+# Run sweep immediately on startup to catch FitGirl, games, torrents etc. already running
+$allProcs = Get-Process -ErrorAction SilentlyContinue
+Write-Host "[*] Running initial background sweep..." -ForegroundColor Blue
+Send-BackgroundSweep $allProcs
+
+# Send initial heartbeat using the top running process name
+$topProc = ($allProcs | Sort-Object CPU -Descending | Select-Object -First 1).Name + ".exe"
+Send-Log "HEARTBEAT-001" "low" "Agent initialized successfully" $topProc
 Write-Host "[*] Heartbeat sent. Agent is now active." -ForegroundColor Yellow
 
-$lastTime = Get-Date
+# Track seen process IDs to detect NEW process launches
+$knownPids = @{}
+$allProcs | ForEach-Object { $knownPids[$_.Id] = $true }
 
-# 2. Main Event Loop
+$lastEventTime = Get-Date
+$sweepCounter = 0
+
+# Main Loop
 while ($true) {
-    Start-Sleep -Seconds 10
-    
-    # Heartbeat to keep the node active in the UI
-    Send-Log "HEARTBEAT-001" "low" "Telemetry ping" "AgentKernel.sys"
-    Write-Host "[*] Heartbeat ping sent." -ForegroundColor DarkGray
-    
-    # Pull the latest Windows Event from Application log to show real telemetry
-    try {
-        $logs = Get-WinEvent -FilterHashtable @{LogName='Application'; StartTime=$lastTime} -MaxEvents 5 -ErrorAction SilentlyContinue
-        $lastTime = Get-Date
-        
-        if ($logs) {
-            foreach ($log in $logs) {
-                # Map Windows Event levels to our severity
-                $sev = "low"
-                if ($log.LevelDisplayName -match "Error|Critical") { $sev = "high" }
-                elseif ($log.LevelDisplayName -match "Warning") { $sev = "medium" }
-                
-                Send-Log $log.Id.ToString() $sev $log.Message "svchost.exe"
-                Write-Host "[!] Forwarded Event $($log.Id)" -ForegroundColor Magenta
-            }
-        }
-    } catch {
-        # Ignore errors if no permission
+    Start-Sleep -Seconds 3
+    $sweepCounter++
+
+    # --- 1. Detect NEW processes launched since last scan ---
+    $currentProcs = Get-Process -ErrorAction SilentlyContinue
+    $newProcs = $currentProcs | Where-Object { -not $knownPids.ContainsKey($_.Id) }
+
+    foreach ($proc in $newProcs) {
+        $procName = $proc.Name + ".exe"
+        $knownPids[$proc.Id] = $true
+        $sev = "low"
+        if ($proc.Name -match 'crack|keygen|patch|loader|repack|fitgirl|skidrow|torrent|qbittorrent|inject|cheat|trainer|mimikatz|nmap|psexec|vssadmin|certutil') { $sev = "high" }
+        elseif ($proc.Name -match 'game|steam|discord|chrome|firefox|edge|powershell|cmd|python|node') { $sev = "medium" }
+        Send-Log "PROC-START" $sev "New process launched: $procName (PID:$($proc.Id))" $procName
+        Write-Host "[+] Process: $procName" -ForegroundColor Cyan
     }
+
+
+    # --- 2. Send heartbeat using a real running process name ---
+    $heartbeatProc = ($currentProcs | Where-Object { $_.Name -notmatch 'Idle|System|svchost|csrss|lsass|winlogon|smss' } | Sort-Object CPU -Descending | Select-Object -First 1).Name
+    if (-not $heartbeatProc) { $heartbeatProc = "explorer" }
+    Send-Log "HEARTBEAT-001" "low" "Telemetry ping" ($heartbeatProc + ".exe")
+    Write-Host "[*] Heartbeat: $heartbeatProc" -ForegroundColor DarkGray
+
+    # --- 3. Full background sweep every 30 seconds (10 x 3s loops) ---
+    if ($sweepCounter % 10 -eq 0) {
+        Send-BackgroundSweep $currentProcs
+    }
+
+    # --- 4. Forward Windows Event Log entries (Security + System) ---
+    try {
+        $events = Get-WinEvent -FilterHashtable @{LogName='Security','System'; StartTime=$lastEventTime} -MaxEvents 3 -ErrorAction SilentlyContinue
+        $lastEventTime = Get-Date
+        foreach ($ev in $events) {
+            $sev = "low"
+            if ($ev.LevelDisplayName -match "Error|Critical") { $sev = "high" }
+            elseif ($ev.LevelDisplayName -match "Warning") { $sev = "medium" }
+            $evProc = if ($ev.ProviderName) { $ev.ProviderName + ".exe" } else { "WinEvent.exe" }
+            Send-Log $ev.Id.ToString() $sev ($ev.Message -replace '[\r\n]+', ' ') $evProc
+            Write-Host "[!] Event $($ev.Id) from $evProc" -ForegroundColor Magenta
+        }
+    } catch {}
 }

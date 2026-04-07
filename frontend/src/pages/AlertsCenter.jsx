@@ -62,7 +62,11 @@ export default function AlertsCenter() {
 
   const startInvestigation = (alert) => {
     setInvestigatingAlert(alert);
-    setIntelData(null); // Reset intel when opening new investigation
+    setIntelData(null);
+    setIntelError(null);
+    setSoarRunning({});
+    setSoarSuccess({});
+    setSoarError(null);
   };
 
   const fetchThreatIntel = async (ip) => {
@@ -199,7 +203,7 @@ export default function AlertsCenter() {
            </div>
         ) : (
           filteredAlerts.map(alert => (
-            <div key={alert.id} className="bg-[#050510]/80 backdrop-blur-3xl border border-soc-border/50 p-6 flex flex-col lg:flex-row lg:items-center justify-between shadow-[0_0_20px_rgba(0,0,0,0.5)] hover:shadow-[0_0_40px_rgba(255,0,60,0.1)] transition-all group relative overflow-hidden clip-path-cyber"
+            <div key={alert.id} className="bg-[#050510]/80 backdrop-blur-3xl border border-soc-border/50 p-6 flex flex-col lg:flex-row lg:items-center justify-between shadow-[0_0_20px_rgba(0,0,0,0.5)] hover:shadow-[0_0_40px_rgba(255,0,60,0.1)] transition-all group relative"
                  style={{ borderLeftColor: (alert.severity || '').toLowerCase() === 'critical' ? '#ef4444' : (alert.severity || '').toLowerCase() === 'high' ? '#f59e0b' : '#3b82f6', borderLeftWidth: '4px' }}>
               
               <div className="absolute top-0 right-0 w-32 h-32 bg-soc-critical opacity-0 group-hover:opacity-10 rounded-full -mr-16 -mt-16 transition-all duration-700 pointer-events-none group-hover:scale-150"></div>
@@ -249,20 +253,21 @@ export default function AlertsCenter() {
                 </div>
               </div>
 
-              <div className="mt-6 lg:mt-0 flex space-x-3 relative z-20 shrink-0">
-                <button 
-                  onClick={() => startInvestigation(alert)}
+              <div className="mt-6 lg:mt-0 flex space-x-3 relative z-30 shrink-0">
+                <button
+                  onClick={(e) => { e.stopPropagation(); startInvestigation(alert); }}
                   className="flex-1 lg:flex-none px-6 py-2.5 bg-soc-bg border border-soc-border rounded-xl text-xs font-black uppercase tracking-widest hover:border-soc-primary hover:text-soc-primary transition-all shadow-xl italic"
                 >
                   <Search size={14} className="inline mr-2" /> Playbook
                 </button>
-                <button 
-                  onClick={() => handleStatusChange(alert.id, 'resolved')}
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleStatusChange(alert.id, 'resolved'); }}
                   className="flex-1 lg:flex-none px-6 py-2.5 bg-soc-primary/10 text-soc-primary border border-soc-primary/30 rounded-xl hover:bg-soc-primary hover:text-soc-bg transition-all text-xs font-black uppercase tracking-widest shadow-xl italic"
                 >
                    Resolve
                 </button>
               </div>
+
             </div>
           ))
         )}
@@ -347,8 +352,13 @@ export default function AlertsCenter() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
                                 <Scan size={20} className="text-soc-primary" />
-                                <span className={`text-sm font-black italic tracking-widest uppercase ${intelData.verdict === 'CRITICAL RISK' ? 'text-soc-critical' : 'text-soc-warning'}`}>
-                                  VERDICT_{intelData.verdict?.replace(' ', '_')}
+                                <span className={`text-sm font-black italic tracking-widest uppercase ${
+                                  intelData.verdict === 'CRITICAL RISK' ? 'text-soc-critical' :
+                                  intelData.verdict === 'SUSPICIOUS' ? 'text-soc-warning' :
+                                  intelData.verdict?.includes('INTERNAL') ? 'text-soc-secondary' :
+                                  'text-soc-primary'
+                                }`}>
+                                  VERDICT_{intelData.verdict?.replace(/ /g, '_')}
                                 </span>
                               </div>
                               <div className="text-[10px] font-black text-soc-muted uppercase tracking-[0.2em] opacity-50 italic">Confidence_Level: 98.4%</div>
@@ -359,11 +369,56 @@ export default function AlertsCenter() {
                                   <p className="text-[9px] font-black text-soc-primary uppercase tracking-widest flex items-center">
                                      <Globe size={12} className="mr-2" /> Global_Origin
                                   </p>
-                                  <div className="p-4 bg-soc-bg/80 border border-soc-border rounded-xl">
-                                     <p className="text-xl font-black text-white italic">{intelData.geodata.city}, {intelData.geodata.country}</p>
-                                     <p className="text-[10px] text-soc-muted font-mono mt-1 mt-2">{intelData.geodata.asn}</p>
+                                  <div className="p-4 bg-soc-bg/80 border border-soc-border rounded-xl space-y-2">
+                                    {intelData.verdict?.includes('INTERNAL') ? (
+                                      // Clean display for internal / Tailscale IPs
+                                      <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-lg font-black text-soc-secondary italic">🔒 Internal / VPN</span>
+                                        </div>
+                                        <p className="text-[10px] text-soc-muted font-mono">Source: Tailscale Mesh VPN</p>
+                                        <p className="text-[10px] text-soc-muted font-mono">Address Space: RFC1918 / Private</p>
+                                        <p className="text-[10px] text-soc-muted font-mono">IP: {intelData.ip}</p>
+                                        <div className="mt-2 px-3 py-1.5 bg-soc-secondary/10 border border-soc-secondary/30 rounded-lg">
+                                          <p className="text-[10px] text-soc-secondary font-black">⚡ This endpoint is on your trusted Tailscale network. Geolocation is not applicable for private addresses.</p>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      // Full geolocation display for public IPs
+                                      <>
+                                        <p className="text-lg font-black text-white italic">
+                                          {[intelData.geodata.city, intelData.geodata.region, intelData.geodata.country].filter(v => v && v !== 'Unknown').join(', ')}
+                                          {intelData.geodata.country_code && intelData.geodata.country_code !== '–' && (
+                                            <span className="ml-2 text-xs bg-soc-panel border border-soc-border px-2 py-0.5 rounded-lg not-italic font-mono">
+                                              {intelData.geodata.country_code}
+                                            </span>
+                                          )}
+                                        </p>
+                                        {intelData.geodata.isp && intelData.geodata.isp !== 'Unknown' && (
+                                          <p className="text-[10px] text-soc-secondary font-mono">ISP: {intelData.geodata.isp}</p>
+                                        )}
+                                        {intelData.geodata.asn && intelData.geodata.asn !== 'Unknown' && (
+                                          <p className="text-[10px] text-soc-muted font-mono">{intelData.geodata.asn}</p>
+                                        )}
+                                        {intelData.geodata.timezone && intelData.geodata.timezone !== 'Unknown' && intelData.geodata.timezone !== 'N/A' && (
+                                          <p className="text-[10px] text-soc-muted font-mono">TZ: {intelData.geodata.timezone}</p>
+                                        )}
+                                        {intelData.geodata.lat && (
+                                          <p className="text-[10px] text-soc-muted font-mono">
+                                            📍 {intelData.geodata.lat?.toFixed(4)}, {intelData.geodata.lon?.toFixed(4)}
+                                          </p>
+                                        )}
+                                        {(intelData.geodata.is_proxy || intelData.geodata.is_hosting) && (
+                                          <div className="flex gap-1 mt-1">
+                                            {intelData.geodata.is_proxy && <span className="px-2 py-0.5 text-[9px] bg-soc-warning/10 border border-soc-warning/30 text-soc-warning rounded font-black">PROXY</span>}
+                                            {intelData.geodata.is_hosting && <span className="px-2 py-0.5 text-[9px] bg-soc-critical/10 border border-soc-critical/30 text-soc-critical rounded font-black">HOSTING</span>}
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
                                   </div>
                                </div>
+
                                <div className="space-y-3">
                                   <p className="text-[9px] font-black text-soc-secondary uppercase tracking-widest flex items-center">
                                      <Activity size={12} className="mr-2" /> Malware_Heuristics

@@ -104,6 +104,18 @@ async def process_log_for_alerts(log_dict: Dict[str, Any], db, background_tasks:
 @router.post("", response_model=LogModel)
 async def create_log(log: LogModel, background_tasks: BackgroundTasks, db=Depends(get_db)):
     log_dict = log.model_dump(by_alias=True, exclude_none=True)
+
+    # ── KILL-SWITCH CHECK ──────────────────────────────────────────────────────
+    # If this agent's hostname is in the blocked_agents list, return 410 GONE.
+    # The agent script checks for this and exits cleanly.
+    host = log_dict.get("details", {}).get("host") or ""
+    if host:
+        blocked = await db.blocked_agents.find_one({"hostname": host})
+        if blocked:
+            print(f"KILL-SWITCH: Rejected log from blocked agent '{host}'")
+            raise HTTPException(status_code=410, detail=f"AGENT_TERMINATED: {host} has been disconnected by SIEM operator.")
+    # ──────────────────────────────────────────────────────────────────────────
+
     if not isinstance(log_dict.get("timestamp"), datetime):
         if log_dict.get("timestamp"):
             try:
@@ -112,22 +124,51 @@ async def create_log(log: LogModel, background_tasks: BackgroundTasks, db=Depend
                 log_dict["timestamp"] = datetime.utcnow()
         else:
             log_dict["timestamp"] = datetime.utcnow()
-        
+
     result = await db.logs.insert_one(log_dict)
     log_dict["_id"] = str(result.inserted_id)
-    
-    # Broadcast new log to frontend
+
+    # Broadcast new log to frontend immediately via WebSocket (no waiting)
     await manager.broadcast({
         "type": "NEW_LOG",
         "data": log_dict
     })
-    
+
     print(f"SYSTEM: Ingested Log - ID: {log_dict.get('event_id')} | Proc: {log_dict.get('process_name')}")
-    
-    # Process rules using background tasks
-    await process_log_for_alerts(log_dict, db, background_tasks)
-    
+
+    # Run detection pipeline in the BACKGROUND so this endpoint returns instantly
+    background_tasks.add_task(process_log_for_alerts, log_dict, db)
+
     return log_dict
+
+# ── Agent Management Endpoints ────────────────────────────────────────────────
+@router.get("/agents")
+async def list_agents(db=Depends(get_db)):
+    """Returns list of blocked agents (for UI to show disconnect status)."""
+    blocked = await db.blocked_agents.find({}).to_list(length=100)
+    return [{"hostname": b["hostname"], "blocked_at": b.get("blocked_at")} for b in blocked]
+
+@router.delete("/agents/{hostname}")
+async def disconnect_agent(hostname: str, db=Depends(get_db)):
+    """Blocks an agent by hostname. On next heartbeat the agent receives 410 and exits."""
+    await db.blocked_agents.update_one(
+        {"hostname": hostname},
+        {"$set": {"hostname": hostname, "blocked_at": datetime.utcnow().isoformat()}},
+        upsert=True
+    )
+    # Broadcast disconnect event to all dashboards
+    await manager.broadcast({"type": "AGENT_DISCONNECTED", "data": {"hostname": hostname}})
+    print(f"KILL-SWITCH: Agent '{hostname}' has been BLOCKED.")
+    return {"status": "disconnected", "hostname": hostname, "message": f"Agent '{hostname}' will terminate on next heartbeat (within 3s)."}
+
+@router.post("/agents/{hostname}/reconnect")
+async def reconnect_agent(hostname: str, db=Depends(get_db)):
+    """Removes a hostname from the blocklist, allowing it to reconnect."""
+    await db.blocked_agents.delete_one({"hostname": hostname})
+    await manager.broadcast({"type": "AGENT_RECONNECTED", "data": {"hostname": hostname}})
+    print(f"KILL-SWITCH: Agent '{hostname}' has been UNBLOCKED.")
+    return {"status": "reconnected", "hostname": hostname}
+# ──────────────────────────────────────────────────────────────────────────────
 
 @router.post("/splunk")
 async def ingest_splunk_webhook(payload: Dict[str, Any], db=Depends(get_db)):

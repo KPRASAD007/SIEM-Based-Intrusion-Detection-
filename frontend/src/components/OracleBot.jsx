@@ -69,24 +69,36 @@ export default function OracleBot() {
       {/* Floating Orb Toggle */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-8 right-8 z-[300] group outline-none transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] animate-vanguard-drift ${isOpen ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100 hover:scale-110'}`}
+        className={`fixed bottom-6 right-6 z-[300] group outline-none transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] animate-vanguard-drift ${isOpen ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100 hover:scale-110'}`}
       >
-        <div className="absolute inset-[-15px] bg-white blur-[45px] rounded-full opacity-20 group-hover:opacity-40 transition-opacity animate-pulse"></div>
-        <div className="absolute inset-[-25px] bg-soc-primary blur-[50px] rounded-full opacity-20 group-hover:opacity-60 transition-opacity"></div>
-        <div className="absolute inset-[-20px] border border-white/30 rounded-full animate-energy-spin opacity-40 group-hover:opacity-80 transition-opacity"></div>
-        
-        <div className="w-24 h-24 bg-[#000] border-2 border-white/60 rounded-full flex items-center justify-center relative overflow-hidden shadow-[0_0_60px_rgba(255,255,255,1),inset_0_0_40px_rgba(0,243,255,0.8)] group-hover:border-white transition-all duration-500 hover:shadow-[0_0_100px_rgba(255,255,255,1)]">
+        {/* Super-Nova Bloom Halos */}
+        <div className="absolute inset-[-20px] bg-white blur-[50px] rounded-full opacity-40 group-hover:opacity-80 transition-opacity animate-pulse"></div>
+        <div className="absolute inset-[-15px] bg-soc-primary blur-[30px] rounded-full opacity-30 group-hover:opacity-60 transition-opacity"></div>
+        <div className="absolute inset-[-10px] border-2 border-white/40 rounded-full animate-energy-spin shadow-[0_0_30px_rgba(255,255,255,0.5)]"></div>
+
+        <div className="w-16 h-16 rounded-full flex items-center justify-center relative overflow-hidden transition-all duration-500 hover:scale-110 group shadow-[0_0_40px_rgba(255,255,255,0.4)]">
+          {/* Rotating Data Ring with Bloom */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-60 group-hover:opacity-100 transition-opacity">
+            <Hexagon size={64} className="text-white animate-hud-rotate drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
+          </div>
+          
           <img 
-            src={`http://${window.location.hostname}:8080/api/download/vanguard_logo.png`} 
+            src={`http://${window.location.hostname}:8080/api/download/vanguard_logo.png?v=3.1`} 
             alt="Vanguard AI" 
-            className="w-[160%] h-[160%] object-cover absolute opacity-100 brightness-[1.8] contrast-[1.4] animate-vanguard-nova"
-            style={{ filter: "drop-shadow(0 0 20px rgba(255, 255, 255, 1))" }}
+            className="w-full h-full object-contain absolute opacity-100 animate-binary-focus z-10 brightness-[1.1] contrast-[1.1]"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#000]/40 via-transparent to-transparent opacity-30"></div>
-          <div className="absolute bottom-2 w-3/4 h-[5px] bg-white opacity-90 shadow-[0_0_25px_rgba(255,255,255,1)] rounded-full animate-pulse"></div>
+          {/* Internal Scan Line Effect */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-transparent h-1/2 w-full animate-[scan-line-vanguard_3s_linear_infinite] pointer-events-none z-20"></div>
         </div>
-        <div className="absolute -top-5 -left-5 bg-white text-[#000] text-[10px] font-black uppercase tracking-[0.4em] px-4 py-1.5 rounded-full shadow-[0_0_30px_rgba(255,255,255,1)] animate-bounce font-orbitron border-2 border-soc-primary">LINK_ONLINE</div>
+
+
+
+
       </button>
+
+
+
+
 
 
 
@@ -102,13 +114,15 @@ export default function OracleBot() {
         <div className="p-5 border-b border-soc-primary/20 bg-soc-bg/40 flex items-center justify-between shrink-0 relative overflow-hidden cursor-pointer" onClick={() => setIsOpen(false)}>
            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-soc-primary to-transparent opacity-50"></div>
             <div className="flex items-center space-x-3">
-             <div className="w-10 h-10 border border-soc-primary/30 rounded-xl relative overflow-hidden bg-soc-bg shadow-[0_0_15px_rgba(0,243,255,0.3)]">
+             <div className="w-10 h-10 relative overflow-hidden flex items-center justify-center">
                 <img 
-                  src={`http://${window.location.hostname}:8080/api/download/vanguard_logo.png`} 
+                  src={`http://${window.location.hostname}:8080/api/download/vanguard_logo.png?v=3.1`} 
                   alt="V" 
-                  className="w-full h-full object-cover scale-125 animate-pulse"
+                  className="w-full h-full object-contain animate-pulse"
                 />
              </div>
+
+
 
              <div>
                 <h3 className="text-sm font-black text-white tracking-[0.2em] uppercase leading-none mb-1 text-transparent bg-clip-text bg-gradient-to-r from-soc-primary to-white">V.A.N.G.U.A.R.D</h3>
