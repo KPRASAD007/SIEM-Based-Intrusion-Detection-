@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from .database import connect_to_mongo, close_mongo_connection, get_db
-from .routers import logs, rules, alerts, incidents, simulator, search, auth, threat_intel, soar, deception, behavior, sigma
+from .routers import logs, rules, alerts, incidents, simulator, search, auth, threat_intel, soar, deception, behavior, sigma, oracle
 
 app = FastAPI(
     title="CyberDetect Lab API",
@@ -37,6 +37,7 @@ app.include_router(auth.router)
 app.include_router(deception.router)
 app.include_router(behavior.router)
 app.include_router(sigma.router)
+app.include_router(oracle.router)
 
 @app.on_event("startup")
 async def startup_db_client():

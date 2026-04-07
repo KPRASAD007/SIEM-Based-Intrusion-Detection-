@@ -15,6 +15,7 @@ import WebSurveillance from './pages/WebSurveillance';
 import DeceptionOps from './pages/DeceptionOps';
 import BehavioralAnalytics from './pages/BehavioralAnalytics';
 import Forensics from './pages/Forensics';
+import OracleBot from './components/OracleBot';
 import { Shield, LayoutDashboard, Database, Activity, Briefcase, Settings, FileText, Target, Bell, X, Globe, Eye, Fingerprint, Ghost, Zap, Search, HardDrive, Terminal } from 'lucide-react';
 
 function SidebarItem({ to, icon: Icon, label }) {
@@ -271,6 +272,9 @@ function App() {
                </div>
              ))}
           </div>
+          {/* Global VANGUARD Chatbot */}
+          <OracleBot />
+
         </div>
       </div>
     </Router>
