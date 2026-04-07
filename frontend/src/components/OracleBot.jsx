@@ -8,7 +8,17 @@ export default function OracleBot() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showMentionMenu, setShowMentionMenu] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const terminals = [
+    { id: 'simulator', name: 'Attack Simulator', icon: '⚔️', desc: 'Simulate breaches and test defenses.' },
+    { id: 'analyzer', name: 'Log Analyzer', icon: '🔍', desc: 'Sift through raw data for threat signals.' },
+    { id: 'deception', name: 'Deception Ops', icon: '🎭', desc: 'Deploy traps and honeytokens.' },
+    { id: 'cases', name: 'Case Management', icon: '📁', desc: 'Initialize and track security incidents.' },
+    { id: 'dashboard', name: 'Command Center', icon: '🛰️', desc: 'Macroscopic overview of lab status.' }
+  ];
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -59,16 +69,27 @@ export default function OracleBot() {
       {/* Floating Orb Toggle */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-6 right-6 z-[200] group outline-none transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${isOpen ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100 hover:scale-110'}`}
+        className={`fixed bottom-8 right-8 z-[300] group outline-none transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] animate-vanguard-drift ${isOpen ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100 hover:scale-110'}`}
       >
-        <div className="absolute inset-0 bg-soc-primary blur-[20px] rounded-full opacity-40 group-hover:opacity-100 animate-pulse transition-opacity"></div>
-        <div className="w-16 h-16 bg-[#050510] border-2 border-soc-primary rounded-full flex items-center justify-center relative overflow-hidden shadow-[0_0_30px_rgba(0,243,255,0.6)]">
-          <Hexagon size={32} className="text-soc-primary absolute animate-spin-slow opacity-20" />
-          <Terminal size={24} className="text-white relative z-10 group-hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
-          <div className="absolute bottom-1 w-2/3 h-[2px] bg-soc-primary opacity-50"></div>
+        <div className="absolute inset-[-15px] bg-white blur-[45px] rounded-full opacity-20 group-hover:opacity-40 transition-opacity animate-pulse"></div>
+        <div className="absolute inset-[-25px] bg-soc-primary blur-[50px] rounded-full opacity-20 group-hover:opacity-60 transition-opacity"></div>
+        <div className="absolute inset-[-20px] border border-white/30 rounded-full animate-energy-spin opacity-40 group-hover:opacity-80 transition-opacity"></div>
+        
+        <div className="w-24 h-24 bg-[#000] border-2 border-white/60 rounded-full flex items-center justify-center relative overflow-hidden shadow-[0_0_60px_rgba(255,255,255,1),inset_0_0_40px_rgba(0,243,255,0.8)] group-hover:border-white transition-all duration-500 hover:shadow-[0_0_100px_rgba(255,255,255,1)]">
+          <img 
+            src={`http://${window.location.hostname}:8080/api/download/vanguard_logo.png`} 
+            alt="Vanguard AI" 
+            className="w-[160%] h-[160%] object-cover absolute opacity-100 brightness-[1.8] contrast-[1.4] animate-vanguard-nova"
+            style={{ filter: "drop-shadow(0 0 20px rgba(255, 255, 255, 1))" }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#000]/40 via-transparent to-transparent opacity-30"></div>
+          <div className="absolute bottom-2 w-3/4 h-[5px] bg-white opacity-90 shadow-[0_0_25px_rgba(255,255,255,1)] rounded-full animate-pulse"></div>
         </div>
-        <div className="absolute -top-3 -left-3 bg-soc-primary text-soc-bg text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded shadow-[0_0_10px_rgba(0,243,255,1)] animate-bounce font-orbitron">AI</div>
+        <div className="absolute -top-5 -left-5 bg-white text-[#000] text-[10px] font-black uppercase tracking-[0.4em] px-4 py-1.5 rounded-full shadow-[0_0_30px_rgba(255,255,255,1)] animate-bounce font-orbitron border-2 border-soc-primary">LINK_ONLINE</div>
       </button>
+
+
+
 
       {/* Expanded Chat Interface */}
       <div 
@@ -80,11 +101,15 @@ export default function OracleBot() {
         {/* Header */}
         <div className="p-5 border-b border-soc-primary/20 bg-soc-bg/40 flex items-center justify-between shrink-0 relative overflow-hidden cursor-pointer" onClick={() => setIsOpen(false)}>
            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-soc-primary to-transparent opacity-50"></div>
-           <div className="flex items-center space-x-3">
-             <div className="p-2 bg-soc-primary/10 rounded-xl border border-soc-primary/30 relative">
-                <Hexagon size={18} className="text-soc-primary animate-spin-slow absolute inset-auto opacity-30" />
-                <Terminal size={18} className="text-soc-primary relative z-10" />
+            <div className="flex items-center space-x-3">
+             <div className="w-10 h-10 border border-soc-primary/30 rounded-xl relative overflow-hidden bg-soc-bg shadow-[0_0_15px_rgba(0,243,255,0.3)]">
+                <img 
+                  src={`http://${window.location.hostname}:8080/api/download/vanguard_logo.png`} 
+                  alt="V" 
+                  className="w-full h-full object-cover scale-125 animate-pulse"
+                />
              </div>
+
              <div>
                 <h3 className="text-sm font-black text-white tracking-[0.2em] uppercase leading-none mb-1 text-transparent bg-clip-text bg-gradient-to-r from-soc-primary to-white">V.A.N.G.U.A.R.D</h3>
                 <div className="flex items-center space-x-1">
@@ -100,25 +125,44 @@ export default function OracleBot() {
 
         {/* Chat Area */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar relative z-10">
-           {messages.map((msg, idx) => (
-             <div key={idx} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-2 fade-in duration-300`}>
-                <div className={`max-w-[85%] p-4 rounded-2xl relative group ${msg.sender === 'user' ? 'bg-soc-primary/10 border border-soc-primary/30 rounded-tr-sm text-white' : 'bg-soc-panel/60 border border-soc-border rounded-tl-sm text-soc-primary/90'}`}>
-                   {msg.sender === 'oracle' && (
-                     <p className="text-[7px] font-black uppercase tracking-[0.3em] mb-2 opacity-50 flex items-center">
-                        <Terminal size={8} className="mr-1" /> V.A.N.G.U.A.R.D. LOGIC
-                     </p>
-                   )}
-                   <p className="text-xs leading-relaxed font-mono drop-shadow-[0_0_2px_rgba(0,243,255,0.2)]">{msg.text}</p>
-                   {msg.action && (
-                     <div className="mt-3 p-2 bg-soc-bg border border-soc-primary/20 rounded flex items-center shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]">
+            {messages.map((msg, idx) => {
+              const parts = msg.text.split('**SIMPLIFIED INSIGHT:**');
+              const technicalText = parts[0];
+              const insightText = parts[1];
+
+              return (
+                <div key={idx} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-2 fade-in duration-300`}>
+                  <div className={`max-w-[90%] p-4 rounded-2xl relative group ${msg.sender === 'user' ? 'bg-soc-primary/10 border border-soc-primary/30 rounded-tr-sm text-white' : 'bg-soc-panel/60 border border-soc-border rounded-tl-sm text-soc-primary/90'}`}>
+                    {msg.sender === 'oracle' && (
+                      <p className="text-[7px] font-black uppercase tracking-[0.3em] mb-2 opacity-50 flex items-center">
+                        <Terminal size={8} className="mr-1" /> V.A.N.G.U.A.R.D. NEURAL_LOGIC
+                      </p>
+                    )}
+                    <p className="text-xs leading-relaxed font-mono drop-shadow-[0_0_2px_rgba(0,243,255,0.2)]">{technicalText}</p>
+                    
+                    {insightText && (
+                      <div className="mt-4 p-3 bg-white/5 border-l-4 border-soc-primary rounded-r-lg animate-in fade-in slide-in-from-left-2 duration-700">
+                        <p className="text-[8px] font-black text-white uppercase tracking-widest mb-1 opacity-70">
+                          🎯 The Bottom Line
+                        </p>
+                        <p className="text-[11px] font-bold text-white leading-tight">
+                          {insightText}
+                        </p>
+                      </div>
+                    )}
+
+                    {msg.action && (
+                      <div className="mt-3 p-2 bg-soc-bg border border-soc-primary/20 rounded flex items-center shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]">
                         <ShieldAlert size={10} className="text-soc-warning mr-2 animate-pulse" />
                         <span className="text-[8px] font-black text-soc-warning uppercase tracking-widest">{msg.action}</span>
-                     </div>
-                   )}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-[8px] font-bold text-soc-muted uppercase mt-1 px-1">{msg.sender === 'user' ? 'ANALYST_DIRECTIVE' : 'RESPONSE_GENERATED'}</span>
                 </div>
-                <span className="text-[8px] font-bold text-soc-muted uppercase mt-1 px-1">{msg.sender === 'user' ? 'ANALYST_DIRECTIVE' : 'RESPONSE_GENERATED'}</span>
-             </div>
-           ))}
+              );
+            })}
+
            {loading && (
              <div className="flex items-start animate-in fade-in">
                 <div className="bg-soc-panel/60 border border-soc-border p-4 rounded-2xl rounded-tl-sm flex items-center space-x-3">
@@ -132,26 +176,70 @@ export default function OracleBot() {
 
         {/* Input Area */}
         <div className="p-4 border-t border-soc-primary/20 bg-soc-bg/60 shrink-0 relative z-10">
-           <form onSubmit={sendMessage} className="relative flex items-center group">
-              <div className="absolute left-3 text-soc-primary/50 group-focus-within:text-soc-primary transition-colors">
-                <Terminal size={14} />
-              </div>
-              <input 
-                type="text" 
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Declare directive to Vanguard..."
-                className="w-full bg-[#050510] border border-soc-primary/30 rounded-xl py-3 pl-9 pr-12 text-[10px] font-bold text-white tracking-widest placeholder:text-soc-muted/50 focus:outline-none focus:border-soc-primary focus:shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all font-mono"
-              />
+           {showMentionMenu && (
+             <div className="absolute bottom-[calc(100%+8px)] left-4 right-4 bg-[#0a0a1f] border border-soc-primary/30 rounded-2xl shadow-[0_-10px_40px_rgba(0,243,255,0.2)] overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+                <div className="p-3 border-b border-soc-primary/10 bg-soc-primary/5">
+                   <p className="text-[8px] font-black text-soc-primary uppercase tracking-widest">Select Core Terminal Reference</p>
+                </div>
+                <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                   {terminals.map(t => (
+                     <button 
+                        key={t.id}
+                        onClick={() => {
+                          setInput(input + `@${t.name} `);
+                          setShowMentionMenu(false);
+                        }}
+                        className="w-full p-3 flex items-center space-x-3 hover:bg-soc-primary/10 transition-colors border-b border-white/5 last:border-0 group text-left"
+                     >
+                        <div className="w-8 h-8 rounded-lg bg-soc-bg border border-soc-primary/20 flex items-center justify-center text-sm group-hover:border-soc-primary transition-all">
+                           {t.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                           <p className="text-[10px] font-black text-white uppercase tracking-wider mb-0.5">@{t.name}</p>
+                           <p className="text-[8px] text-soc-muted truncate">{t.desc}</p>
+                        </div>
+                     </button>
+                   ))}
+                </div>
+             </div>
+           )}
+
+           <form onSubmit={sendMessage} className="relative flex items-center group space-x-2">
               <button 
-                type="submit" 
-                disabled={!input.trim() || loading}
-                className="absolute right-2 p-2 bg-soc-primary/10 text-soc-primary rounded-lg hover:bg-soc-primary hover:text-[#0b0e14] transition-all disabled:opacity-30 border border-soc-primary/20"
+                type="button"
+                onClick={() => setShowMentionMenu(!showMentionMenu)}
+                className={`p-2 rounded-xl border transition-all duration-300 ${showMentionMenu ? 'bg-soc-primary text-soc-bg border-soc-primary' : 'bg-soc-primary/10 text-soc-primary border-soc-primary/20 hover:bg-soc-primary/20'}`}
               >
-                <Send size={14} />
+                <span className="text-lg font-black leading-none">+</span>
               </button>
+
+              <div className="relative flex-1">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-soc-primary/50 group-focus-within:text-soc-primary transition-colors">
+                  <Terminal size={14} />
+                </div>
+                <input 
+                  type="text" 
+                  value={input}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setInput(val);
+                    if (val.endsWith('@')) setShowMentionMenu(true);
+                  }}
+                  onBlur={() => setTimeout(() => setShowMentionMenu(false), 200)}
+                  placeholder="Declare directive or use @Mention..."
+                  className="w-full bg-[#050510] border border-soc-primary/30 rounded-xl py-3 pl-9 pr-12 text-[10px] font-bold text-white tracking-widest placeholder:text-soc-muted/50 focus:outline-none focus:border-soc-primary focus:shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all font-mono"
+                />
+                <button 
+                  type="submit" 
+                  disabled={!input.trim() || loading}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-soc-primary/10 text-soc-primary rounded-lg hover:bg-soc-primary hover:text-[#0b0e14] transition-all disabled:opacity-30 border border-soc-primary/20"
+                >
+                  <Send size={14} />
+                </button>
+              </div>
            </form>
         </div>
+
       </div>
     </>
   );

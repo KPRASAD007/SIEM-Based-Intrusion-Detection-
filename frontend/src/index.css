@@ -107,3 +107,31 @@
   z-index: 9998;
   pointer-events: none;
 }
+@keyframes vanguardNova {
+  0%, 100% { 
+    filter: drop-shadow(0 0 15px rgba(0, 243, 255, 0.4)) drop-shadow(0 0 40px rgba(0, 243, 255, 0.2)) brightness(1); 
+    transform: scale(1);
+  }
+  50% { 
+    filter: drop-shadow(0 0 30px rgba(0, 243, 255, 1)) drop-shadow(0 0 80px rgba(139, 92, 246, 0.6)) brightness(1.8); 
+    transform: scale(1.15);
+  }
+}
+
+@keyframes energyRotate {
+  from { transform: rotate(0deg) scale(1); }
+  to { transform: rotate(360deg) scale(1); }
+}
+
+.animate-vanguard-nova {
+  animation: vanguardNova 3s ease-in-out infinite;
+}
+
+.animate-energy-spin {
+  animation: energyRotate 10s linear infinite;
+}
+
+.animate-vanguard-drift {
+  animation: vanguardDrift 5s ease-in-out infinite;
+}
+
