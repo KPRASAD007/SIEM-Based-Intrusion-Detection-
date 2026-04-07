@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 from ..database import get_db
 import re
 import datetime
@@ -7,7 +6,7 @@ import datetime
 router = APIRouter(prefix="/api/oracle", tags=["oracle"])
 
 @router.post("/chat")
-async def chat_with_oracle(payload: dict, db: Session = Depends(get_db)):
+async def chat_with_oracle(payload: dict, db = Depends(get_db)):
     message = payload.get("message", "").lower()
     
     # Base styling response
@@ -16,18 +15,19 @@ async def chat_with_oracle(payload: dict, db: Session = Depends(get_db)):
     
     # 1. Status / Health checking
     if "status" in message or "health" in message or "overview" in message:
-        # Fetch actual DB stats using raw SQL for simplicity since we don't have models imported easily here without circular loops
-        total = db.execute("SELECT COUNT(*) FROM alerts").scalar()
-        critical = db.execute("SELECT COUNT(*) FROM alerts WHERE LOWER(severity) = 'critical'").scalar()
+        # Fetch actual DB stats
+        total = await db.alerts.count_documents({})
+        critical = await db.alerts.count_documents({"severity": {"$regex": "^critical$", "$options": "i"}})
         
         response_text = f"Sir, I have analyzed the current telemetry. We have a total of {total} events documented. Currently, there are {critical} CRITICAL level threats demanding immediate attention. The perimeter is holding, but vigilance is recommended."
         action_taken = "STATUS_REPORT_COMPILED"
         
     # 2. Critical threat analysis
     elif "critical" in message or "worst" in message or "highest" in message:
-        critical_alerts = db.execute("SELECT rule_name, source_ip FROM alerts WHERE LOWER(severity) = 'critical' LIMIT 3").fetchall()
+        cursor = db.alerts.find({"severity": {"$regex": "^critical$", "$options": "i"}}).limit(3)
+        critical_alerts = await cursor.to_list(length=3)
         if critical_alerts:
-            threats = ", ".join([f"{a[0]} (Vector: {a[1]})" for a in critical_alerts])
+            threats = ", ".join([f"{a.get('rule_name', 'Unknown')} (Vector: {a.get('source_ip', 'Unknown')})" for a in critical_alerts])
             response_text = f"I have isolated the most pressing threats. The highest priority vectors are: {threats}. Shall I initiate containment protocols?"
         else:
             response_text = "Good news, sir. I am detecting zero critical threats in the current operational timeframe."
