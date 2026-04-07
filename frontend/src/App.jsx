@@ -209,29 +209,21 @@ function App() {
           </main>
           
           {showProfileMenu && (
-             <div className="absolute top-14 right-8 w-72 bg-soc-panel border border-soc-border rounded-b-lg shadow-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 duration-300">
-                <div className="p-5 border-b border-soc-border bg-soc-bg/40">
-                   <p className="text-xs font-bold text-soc-primary uppercase mb-1">Authenticated Analyst</p>
-                   <p className="text-lg font-bold text-white tracking-tight">{currentUser || 'SYSTEM_ROOT'}</p>
-                </div>
-                <div className="p-5 space-y-4">
-                   <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-soc-muted uppercase tracking-wider">Alert Routing Endpoint</label>
-                      <input 
-                        type="email" 
-                        value={alertEmail}
-                        onChange={(e) => setAlertEmail(e.target.value)}
-                        className="w-full bg-soc-bg border border-soc-border rounded p-2 text-xs text-soc-text focus:border-soc-primary outline-none transition-all"
-                      />
+             <div className="absolute top-14 right-8 w-72 bg-soc-panel border border-soc-border rounded-b-lg shadow-2xl z-[200] overflow-hidden animate-in slide-in-from-top-2 duration-300">
+                <div className="p-5 border-b border-soc-border bg-soc-bg/40 flex items-center space-x-4">
+                   <div className="w-12 h-12 rounded-full border border-soc-primary p-1 bg-soc-bg">
+                      <img src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentUser || 'admin'}`} alt="User" className="w-full h-full object-cover rounded-full" />
                    </div>
-                   <button 
-                     onClick={saveProfile}
-                     disabled={savingEmail}
-                     className="w-full bg-soc-primary/10 hover:bg-soc-primary text-soc-primary hover:text-white border border-soc-primary/30 py-2 rounded text-[10px] font-bold uppercase transition-all"
-                   >
-                     {savingEmail ? 'COMMITTING...' : 'SYNC PREFERENCES'}
-                   </button>
-                   {emailStatus && <p className="text-[10px] text-center text-soc-primary">{emailStatus}</p>}
+                   <div>
+                      <p className="text-[10px] font-black text-soc-primary uppercase tracking-widest leading-none mb-1">Authenticated Analyst</p>
+                      <p className="text-lg font-black text-white tracking-tight leading-none">{currentUser || 'SYSTEM_ROOT'}</p>
+                   </div>
+                </div>
+                <div className="p-4 bg-[#050510]/60">
+                   <div className="flex items-center justify-between text-[8px] font-black text-soc-muted uppercase tracking-widest px-2">
+                      <span>Neural Status</span>
+                      <span className="text-soc-primary">Linked</span>
+                   </div>
                 </div>
              </div>
           )}

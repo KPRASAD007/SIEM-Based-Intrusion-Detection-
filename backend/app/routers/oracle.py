@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends
 from ..database import get_db
+from ..services.email_service import send_alert_email
+from ..models.schemas import AlertModel
 import re
 import datetime
 
@@ -49,8 +51,28 @@ async def chat_with_oracle(payload: dict, db = Depends(get_db)):
         
     # 5. Email / Notification Dispatch
     elif "email" in message or "mail" in message or "notify" in message or "alert team" in message:
-        response_text = "Alert dispatch protocol initiated. I have compiled the current threat matrix and forwarded a high-priority briefing to all registered Level-5 SOC operators' secure mailboxes."
-        action_taken = "SMTP_DISPATCH_COMPLETE"
+        # Actually trigger for the most recent critical alert if possible
+        cursor = db.alerts.find({"severity": {"$regex": "^critical$", "$options": "i"}}).sort("triggered_time", -1).limit(1)
+        alerts_list = await cursor.to_list(length=1)
+        if alerts_list:
+            # Reconstruct AlertModel for the service
+            alert_data = alerts_list[0]
+            # Handle potential dict vs model mapping
+            from pydantic import TypeAdapter
+            ta = TypeAdapter(AlertModel)
+            try:
+                # Clean up _id for pydantic
+                if "_id" in alert_data: alert_data["id"] = str(alert_data["_id"])
+                alert_obj = ta.validate_python(alert_data)
+                # Call the service
+                await send_alert_email(alert_obj, db)
+                response_text = "Alert dispatch protocol initiated. I have compiled the current threat matrix and forwarded a high-priority briefing to all registered Level-5 SOC operators' secure mailboxes."
+            except Exception as e:
+                print(f"DEBUG Oracle Email Trigger Error: {e}")
+                response_text = "Sir, I attempted to dispatch the briefing, but encountered a protocol error in the SMTP uplink. Please verify server connection."
+        else:
+             response_text = "I would proceed with the dispatch, but the threat matrix currently shows zero critical events worthy of notification."
+        action_taken = "SMTP_DISPATCH_TRIGGERED"
         
     # 6. Guide / Help / Documentation
     elif "guide" in message or "help" in message or "how to" in message or "explain" in message:

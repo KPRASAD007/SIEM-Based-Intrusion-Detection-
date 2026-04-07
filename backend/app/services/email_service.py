@@ -1,6 +1,7 @@
 import smtplib
 import os
 import logging
+import asyncio
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
@@ -15,6 +16,34 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "krishnaprasadt004@gmail.com")
 SMTP_PASS = os.getenv("SMTP_PASS", "ornmeufhfzhgudcg")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "krishnaprasadt004@gmail.com")
+
+def _transmit_email(subject, html_body, recipients, severity):
+    """Blocking SMTP transmission logic called in a separate thread."""
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"CyberDetect SOC <{SMTP_USER}>"
+        
+        if severity in ["critical", "high"]:
+            msg['X-Priority'] = '1 (Highest)'
+            msg['Importance'] = 'High'
+
+        msg.attach(MIMEText(html_body, "html"))
+
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10) as server:
+            server.set_debuglevel(0)
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASS)
+            
+            for recipient in recipients:
+                if not recipient or "@" not in recipient: continue
+                msg["To"] = recipient
+                server.send_message(msg)
+                logger.info(f"SUCCESS: Alert email sent to {recipient}")
+        return True
+    except Exception as e:
+        logger.error(f"CRITICAL SMTP FAILURE: {str(e)}")
+        return False
 
 async def send_alert_email(alert: AlertModel, db=None):
     """
@@ -102,40 +131,19 @@ async def send_alert_email(alert: AlertModel, db=None):
                 # Fetch all users who have an alert email configured
                 cursor = db.users.find({"alert_email": {"$exists": True, "$ne": ""}})
                 users = await cursor.to_list(length=50) if hasattr(cursor, 'to_list') else []
-                # If we are in a sync context (from threading), we might need to handle this differently
-                # but process_log_for_alerts is async. Wait, send_alert_email is SYNC.
-                # Let's use a simpler approach for now since it's a lab.
+                for user in users:
+                    email = user.get("alert_email")
+                    if email: recipients.append(email)
             except Exception as e:
                 logger.error(f"DB Error fetching recipients: {e}")
 
         # Unique recipients
         recipients = list(set(recipients))
 
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = f"CyberDetect SOC <{SMTP_USER}>"
-        
-        # Priority Headers for Email Clients
-        if alert.severity in ["critical", "high"]:
-            msg['X-Priority'] = '1 (Highest)'
-            msg['Importance'] = 'High'
-
-        msg.attach(MIMEText(html_report, "html"))
-
-        # Transmission
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.set_debuglevel(0)
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASS)
-            
-            for recipient in recipients:
-                if not recipient or "@" not in recipient: continue
-                msg["To"] = recipient
-                server.send_message(msg)
-                logger.info(f"SUCCESS: Alert email for '{alert.rule_name}' sent to {recipient}")
+        # Offload blocking SMTP to thread
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, _transmit_email, subject, html_report, recipients, alert.severity)
 
     except Exception as e:
-        logger.error(f"CRITICAL SMTP FAILURE: Could not dispatch alert email. Error: {str(e)}")
+        logger.error(f"CRITICAL DISPATCH FAILURE: {str(e)}")
 
-    except Exception as e:
-        logger.error(f"CRITICAL SMTP FAILURE: Could not dispatch alert email. Error: {str(e)}")
