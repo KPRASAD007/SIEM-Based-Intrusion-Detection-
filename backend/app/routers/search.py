@@ -38,22 +38,37 @@ def parse_query_to_mongo(query_string: str) -> Dict[str, Any]:
 @router.get("/topology")
 async def get_system_topology(db=Depends(get_db)):
     try:
-        # Get extremely basic fast counts for the hero page
         total_logs = await db.logs.count_documents({})
         total_alerts = await db.alerts.count_documents({})
+        critical_alerts = await db.alerts.count_documents({"severity": "critical"})
+        resolved_alerts = await db.alerts.count_documents({"status": "resolved"})
         
-        # Approximate "active sensors" safely without aggregate if possible, or just a mock/simple distinct
         sensors = await db.logs.distinct("ip_address")
         sensor_count = len(sensors) if sensors else 1
+
+        # Dynamic SOC Calculations
+        base_score = 100
+        risk_deduction = (critical_alerts * 5) + ((total_alerts - resolved_alerts) * 2)
+        health_score = max(0, min(100, base_score - risk_deduction))
         
+        defcon_level = 5
+        if health_score < 30: defcon_level = 1
+        elif health_score < 50: defcon_level = 2
+        elif health_score < 70: defcon_level = 3
+        elif health_score < 90: defcon_level = 4
+
         return {
-            "total_logs": total_logs,
+            "total_logs": f"{total_logs:,}",
             "total_alerts": total_alerts,
+            "critical_active": critical_alerts,
             "sensors": sensor_count,
+            "health_score": health_score,
+            "defcon": defcon_level,
+            "autonomy_mode": "ACTIVE (AI_ASSIST)",
             "status": "online"
         }
     except Exception as e:
-        return {"total_logs": "APP_ERR", "total_alerts": "APP_ERR", "sensors": "APP_ERR"}
+        return {"total_logs": 0, "total_alerts": 0, "sensors": 0, "health_score": 100, "defcon": 5}
 
 @router.get("")
 async def threat_hunt(query: str, limit: int = 100, db=Depends(get_db)):

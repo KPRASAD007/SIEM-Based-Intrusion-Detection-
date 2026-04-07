@@ -22,9 +22,10 @@ function SidebarItem({ to, icon: Icon, label }) {
   const isActive = location.pathname === to;
   
   return (
-    <Link to={to} className={`flex items-center px-4 py-3 rounded-lg transition-colors duration-200 mb-1 ${isActive ? 'bg-soc-primary/10 text-soc-primary box-shadow-glow' : 'text-soc-muted hover:bg-soc-border hover:text-soc-text'}`}>
-      <Icon size={20} className="mr-3" />
-      <span className="font-medium">{label}</span>
+    <Link to={to} className={`flex items-center px-4 py-3 rounded-lg transition-all duration-300 mb-1 group relative overflow-hidden ${isActive ? 'bg-soc-primary/10 text-soc-primary shadow-[inset_4px_0_0_0_#10b981]' : 'text-soc-muted hover:bg-soc-border hover:text-white'}`}>
+      <div className={`absolute top-0 left-0 w-full h-full bg-gradient-to-r from-soc-primary/20 to-transparent -translate-x-full transition-transform duration-500 ease-out ${isActive ? 'translate-x-0' : 'group-hover:translate-x-0'} opacity-0 group-hover:opacity-100`}></div>
+      <Icon size={20} className={`mr-3 relative z-10 transition-transform ${isActive ? 'scale-110' : 'group-hover:scale-110 text-soc-muted group-hover:text-soc-primary'}`} />
+      <span className="font-bold relative z-10 tracking-wide">{label}</span>
     </Link>
   );
 }
@@ -175,11 +176,11 @@ function App() {
         
         {/* Main Content */}
         <div className="flex-1 flex flex-col relative w-full min-w-0">
-          <header className="h-14 bg-soc-bg/50 backdrop-blur-xl border-b border-soc-border flex items-center justify-between px-8 z-[110]">
+          <header className="h-14 bg-soc-panel/80 backdrop-blur-3xl border-b border-soc-primary/20 shadow-[0_4px_30px_rgba(16,185,129,0.05)] flex items-center justify-between px-8 z-[110]">
             <div className="flex items-center">
               <button 
                 onClick={() => setIsSidebarVisible(!isSidebarVisible)}
-                className="mr-6 p-2 text-soc-muted hover:bg-soc-border hover:text-soc-primary rounded transition-all"
+                className="mr-6 p-2 text-soc-primary/70 hover:bg-soc-primary/10 hover:text-soc-primary rounded transition-all shadow-[inset_0_0_10px_rgba(16,185,129,0)] hover:shadow-[inset_0_0_10px_rgba(16,185,129,0.2)]"
               >
                 <LayoutDashboard size={18} />
               </button>
