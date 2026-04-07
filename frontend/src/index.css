@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;600;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,11 +7,16 @@
 @layer base {
   body {
     @apply bg-soc-bg text-soc-text antialiased;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Inter', sans-serif;
   }
   
-  code, pre {
-    font-family: 'JetBrains Mono', monospace !important;
+  h1, h2, h3, h4, h5, h6, .font-orbitron {
+     font-family: 'Orbitron', sans-serif !important;
+     letter-spacing: 0.1em;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'Share Tech Mono', monospace !important;
   }
 }
 
@@ -62,11 +67,11 @@
   left: 0;
   bottom: 0;
   right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(16, 185, 129, 0.03) 50%);
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 243, 255, 0.05) 50%);
   z-index: 9999;
   background-size: 100% 4px;
   pointer-events: none;
-  animation: scanline 10s linear infinite;
+  animation: scanline 8s linear infinite;
 }
 
 @keyframes scanline {
@@ -83,7 +88,7 @@
   left: 0;
   bottom: 0;
   right: 0;
-  background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.6) 100%);
+  background: radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(3,0,20,0.8) 100%);
   z-index: 9998;
   pointer-events: none;
 }

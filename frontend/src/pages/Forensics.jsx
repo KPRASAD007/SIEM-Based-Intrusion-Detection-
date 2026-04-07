@@ -93,7 +93,12 @@ export default function Forensics() {
                  ))}
               </div>
               
-              <button className="mt-8 w-full py-4 bg-accent/10 border-2 border-accent/30 text-accent rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-accent hover:text-soc-bg transition-all italic flex items-center justify-center">
+              <button 
+                  onClick={() => {
+                     setTerminalLogs(prev => [...prev, " [UPLOAD] Initiating secure transfer protocol to /mnt/forensics_vault...", " [UPLOAD] SUCCESS: new_evidence_source.raw processed."]);
+                  }}
+                  className="mt-8 w-full py-4 bg-accent/10 border-2 border-accent/30 text-accent rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-accent hover:text-soc-bg transition-all italic flex items-center justify-center"
+              >
                  <Upload size={16} className="mr-2" /> UPLOAD_EVIDENCE_SOURCE
               </button>
            </div>
@@ -160,7 +165,12 @@ export default function Forensics() {
                     <p className="text-sm font-black text-white italic tracking-tighter uppercase">DETONATE_MALWARE</p>
                  </div>
               </div>
-              <div className="bg-soc-panel border-2 border-soc-border p-6 rounded-3xl flex items-center space-x-4 hover:border-accent cursor-pointer transition-all group">
+              <div 
+                 onClick={() => {
+                    setTerminalLogs(prev => [...prev, " [EXPORT] Compiling Network IOCs (IPs, Hashes, Domains)...", " [EXPORT] File saved to local storage: ioc_export.csv"]);
+                 }}
+                 className="bg-soc-panel border-2 border-soc-border p-6 rounded-3xl flex items-center space-x-4 hover:border-accent cursor-pointer transition-all group"
+              >
                  <div className="p-3 bg-accent/10 border border-accent/20 rounded-2xl text-accent group-hover:bg-accent group-hover:text-soc-bg transition-all">
                     <Download size={24} />
                  </div>

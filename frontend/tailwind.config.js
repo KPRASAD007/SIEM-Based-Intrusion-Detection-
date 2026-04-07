@@ -8,18 +8,18 @@ export default {
     extend: {
       colors: {
         soc: {
-          bg: '#020617',      
-          panel: '#0f172a',   
-          border: '#1e293b',  
-          hover: '#1e2030',   
-          text: '#f8fafc',
-          muted: '#94a3b8',
-          primary: '#10b981', 
-          secondary: '#3b82f6', 
-          critical: '#ef4444', 
-          warning: '#f59e0b',
+          bg: '#030014',      
+          panel: '#0a0a20',   
+          border: '#1f1b3d',  
+          hover: '#181236',   
+          text: '#e2e8f0',
+          muted: '#64748b',
+          primary: '#00f3ff', // Neon Cyan
+          secondary: '#ff003c', // Aggressive Red/Magenta
+          critical: '#ff003c', // Neon Red
+          warning: '#fbbf24',
           hacker: '#00ff41',    
-          accent: '#c084fc'    
+          accent: '#b026ff'    // Deep purple/magenta
         }
       },
       animation: {
