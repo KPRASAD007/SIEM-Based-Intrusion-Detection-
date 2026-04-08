@@ -55,29 +55,41 @@ export default function Login({ onLogin }) {
       <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-soc-panel via-soc-bg to-soc-bg mix-blend-multiply"></div>
       
       {/* Cyber Grid Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,243,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0"></div>
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,243,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px] pointer-events-none z-0"></div>
 
       {/* Hero Lighting Backdrop */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-soc-primary/5 rounded-full blur-[150px] animate-pulse-slow z-0"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-soc-primary/5 rounded-full blur-[150px] z-0"></div>
 
-      <div className="absolute inset-0 z-10 opacity-30 pointer-events-none scanline"></div>
+      {/* Hero Background Image (Very Low Opacity) */}
+      <div 
+        className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none bg-center bg-cover grayscale"
+        style={{ backgroundImage: `url(${heroUrl})` }}
+      ></div>
 
       <div className="max-w-md w-full z-20 animate-in fade-in zoom-in-95 duration-[300ms] ease-out">
 
-        <div className="text-center mb-12 relative">
-          <div className="w-24 h-24 mx-auto mb-6 relative group flex items-center justify-center">
-             <div className="absolute inset-0 bg-soc-primary blur-3xl opacity-30 group-hover:opacity-60 transition-all duration-700 animate-spin-slow"></div>
-             {/* Neon Hexagon Logo Replacement */}
-             <div className="w-full h-full border-2 border-soc-primary shadow-[inset_0_0_20px_rgba(0,243,255,0.5),0_0_20px_rgba(0,243,255,0.5)] transform rotate-45 relative z-10 flex items-center justify-center bg-soc-bg">
-                <div className="w-16 h-16 border border-soc-secondary -rotate-45 flex items-center justify-center bg-soc-panel animate-pulse">
-                   <Shield size={32} className="text-soc-primary" />
-                </div>
-             </div>
+        <div className="text-center mb-12 relative animate-in fade-in slide-in-from-top-4 duration-1000">
+          <div className="w-40 h-40 mx-auto mb-6 relative group flex items-center justify-center p-4 bg-white/5 backdrop-blur-sm border border-white/10 shadow-[0_0_30px_rgba(0,0,20,0.5)]">
+             {/* Micro-nodes at corners */}
+             <div className="absolute top-0 left-0 w-1 h-1 bg-soc-primary shadow-[0_0_5px_#00f3ff]"></div>
+             <div className="absolute top-0 right-0 w-1 h-1 bg-soc-primary shadow-[0_0_5px_#00f3ff]"></div>
+             <div className="absolute bottom-0 left-0 w-1 h-1 bg-soc-primary shadow-[0_0_5px_#00f3ff]"></div>
+             <div className="absolute bottom-0 right-0 w-1 h-1 bg-soc-primary shadow-[0_0_5px_#00f3ff]"></div>
+
+             {/* Ambient Glow behind image */}
+             <div className="absolute inset-4 bg-soc-primary blur-[40px] opacity-20 group-hover:opacity-40 transition-all duration-1000 animate-pulse"></div>
+             
+             {/* The Emblem itself, screen blended for true holographic feel */}
+             <img 
+               src="/emblem.png" 
+               alt="CyberDetect Lab" 
+               className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(0,243,255,0.4)] transition-transform duration-700 group-hover:scale-110 mix-blend-screen" 
+             />
           </div>
-          <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-soc-primary to-soc-secondary tracking-[0.2em] uppercase drop-shadow-[0_0_20px_rgba(0,243,255,0.2)]">
-            CYBER<span className="text-white">DETECT</span>
+          <h1 className="text-5xl font-light text-slate-100 tracking-[0.2em] uppercase">
+            VANGUARD<span className="text-soc-primary">_AI</span>
           </h1>
-          <p className="text-soc-secondary mt-4 text-[10px] font-black uppercase tracking-[0.5em] font-mono">Restricted Neural Gateway</p>
+          <p className="text-soc-muted mt-2 text-[10px] uppercase tracking-[0.5em] font-sans">Enterprise Security Nexus</p>
         </div>
 
         <div className="bg-[#050510]/90 backdrop-blur-3xl border border-soc-primary/30 rounded-none shadow-[0_0_80px_rgba(0,243,255,0.15)] overflow-hidden p-10 relative font-mono">

@@ -10,6 +10,7 @@ import Simulator from './pages/Simulator';
 import MitreMapping from './pages/MitreMapping';
 import Documentation from './pages/Documentation';
 import Login from './pages/Login';
+import Welcome from './pages/Welcome';
 import RemoteSensors from './pages/RemoteSensors';
 import WebSurveillance from './pages/WebSurveillance';
 import DeceptionOps from './pages/DeceptionOps';
@@ -44,6 +45,8 @@ function App() {
   const [savingEmail, setSavingEmail] = useState(false);
   const [emailStatus, setEmailStatus] = useState('');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && currentUser) {
@@ -136,8 +139,12 @@ function App() {
     setLiveAlerts(prev => prev.filter(a => a._id !== id));
   };
 
-  if (!isAuthenticated) {
-    return <Login onLogin={(username) => { setIsAuthenticated(true); setCurrentUser(username); }} />;
+  if (!isAuthenticated && !showWelcome) {
+    return <Login onLogin={(username) => { setCurrentUser(username); setShowWelcome(true); }} />;
+  }
+
+  if (showWelcome) {
+    return <Welcome username={currentUser || 'SYSTEM'} onComplete={() => { setShowWelcome(false); setIsAuthenticated(true); }} />;
   }
 
   const logoUrl = `http://${window.location.hostname}:8080/api/download/logo.png`;
