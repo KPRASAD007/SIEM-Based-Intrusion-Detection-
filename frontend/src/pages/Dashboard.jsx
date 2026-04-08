@@ -73,12 +73,12 @@ export default function Dashboard() {
 
   if (severityData.length === 0) severityData.push({ name: 'Baseline', value: 1 });
 
-  // Ingestion Trend Data (Mocked based on log count)
-  const ingestionData = Array.from({ length: 12 }, (_, i) => ({
+  // Ingestion Trend Data (Stable memoized data to prevent flickering during re-renders)
+  const ingestionData = React.useMemo(() => Array.from({ length: 12 }, (_, i) => ({
     time: `${i*2}:00`,
     logs: 1000 + Math.floor(Math.random() * 500) + (i * 100),
     alerts: Math.floor(Math.random() * 5)
-  }));
+  })), []);
 
   const renderBarChart = (isExpanded = false) => (
     <ResponsiveContainer width="100%" height="100%" minHeight={300}>
@@ -186,6 +186,23 @@ export default function Dashboard() {
           { label: 'Network Sensors', value: '12', trend: 'ONLINE', icon: Zap, color: 'text-accent', border: 'border-accent', glow: 'shadow-[0_0_30px_rgba(176,38,255,0.15)]' }
         ].map((stat, i) => (
           <div key={i} className={`bg-[#050510]/80 backdrop-blur-3xl border ${stat.border}/50 p-8 relative overflow-hidden group ${stat.glow} transition-all duration-500 hover:-translate-y-2 hover:border-b-4 clip-path-cyber`}>
+            
+            {/* Dynamic Data Particles Layer */}
+            <div className="absolute inset-0 pointer-events-none opacity-20">
+               {[...Array(6)].map((_, j) => (
+                 <div 
+                   key={j} 
+                   className={`absolute w-1 h-1 rounded-full bg-current ${stat.color} animate-vanguard-drift`}
+                   style={{ 
+                     top: `${Math.random() * 100}%`, 
+                     left: `${Math.random() * 100}%`, 
+                     animationDelay: `${j * 0.5}s`,
+                     animationDuration: `${3 + Math.random() * 4}s`
+                   }}
+                 ></div>
+               ))}
+            </div>
+
             {/* Cyberpunk corner cut mock via border tricks */}
             <div className={`absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 ${stat.border}`}></div>
             <div className={`absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 ${stat.border}`}></div>

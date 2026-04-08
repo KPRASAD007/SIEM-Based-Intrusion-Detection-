@@ -170,6 +170,33 @@ PROJECT_KNOWLEDGE_MATRIX = {
         "commands": "Default Credentials:\n- **Operator ID:** `admin` \n- **Decryption Phrase:** `admin` \n\nMaster Registration Cipher:\n- **Cipher:** `MASTER-AI-KEY` (Required for new registrations).",
         "benefits": "Ensures total neural security for the SOC's databanks.",
         "guidance": "Use 'admin/admin' for immediate access to the production HUD."
+    },
+    "routine": {
+        "keywords": ["morning", "routine", "first", "start", "daily", "check", "begin"],
+        "overview": "A consistent daily routine is the backbone of a successful SOC analyst.",
+        "mechanism": "The 'Morning Checklist' focuses on high-impact triage first to clear the most dangerous signals.",
+        "steps": "1. Open the **Alerts Center** and check for 'Critical' severity items. 2. Verify **Deception Ops** for any honeypot triggers. 3. Scan the **Command Center** for inbound traffic spikes.",
+        "commands": "Tactical Tip:\nUse `/system_overview` in the Command Bar to get an instant health pulse.",
+        "benefits": "Ensures no critical breach stays hidden for long.",
+        "guidance": "Always start with 'Threats' before 'Logs'. Alerts are the priority; logs are the evidence."
+    },
+    "classification": {
+        "keywords": ["malicious", "false", "positive", "legit", "verify", "is", "checking"],
+        "overview": "Differentiating between a hacker and a developer is the analyst's primary skill.",
+        "mechanism": "Validation involves checking User Context, IP Reputation, and Command frequency.",
+        "steps": "1. Check the **User ID** (Is it a known admin?). 2. Use **Enrich Intel** to check the IP. 3. Look at the **Forensics Sandbox** for process ancestry.",
+        "commands": "Verification Command:\n`/summarize` (Vanguard's quick opinion).",
+        "benefits": "Reduces fatigue and ensures you don't block legitimate company work.",
+        "guidance": "If a process like 'CMD' is spawned by 'PowerShell' by a 'Marketing' user, it is 99% malicious."
+    },
+    "usage": {
+        "keywords": ["use", "how", "operate", "start", "guide", "functions", "help"],
+        "overview": "The Vanguard Platform is a multi-layered Neural SOC interface designed for full-spectrum security ops.",
+        "mechanism": "It integrates SIEM (Telemetry), SOAR (Automation), and Deception (Traps) into a single HUD.",
+        "steps": "1. Use **Simulate** to generate traffic. 2. Monitor **Alerts** for triggers. 3. Use **Telemetry** to investigate raw logs. 4. Pivot to **Forensics** for root cause and **Cases** for legal tracking.",
+        "commands": "Tactical HUD:\nUse `Ctrl+K` for rapid terminal commands across any page.",
+        "benefits": "Reduces mean-time-to-detection (MTTD) by 80% through AI-correlated telemetry.",
+        "guidance": "Try asking me about specific techniques like 'Ransomware' or 'Brute Force' for a deep-dive technical briefing."
     }
 }
 
@@ -270,11 +297,7 @@ async def chat_with_oracle(payload: OracleRequest, db = Depends(get_db)):
         return {"reply": response_text, "action": "THREAT_SCAN", "timestamp": datetime.datetime.now().isoformat()}
 
     return {
-        "reply": "👋 **Vanguard Neural Interface Online. Status: Operational Sentinel.**\n\nI am your direct interface for both technical intelligence and facility orchestration. Beyond technical deep-dives (Attacks, Forensics, Deception), I can now perform the following for you:\n\n"
-                 "• **SOAR Control:** Tell me to `block <IP>` and I will execute the containment protocol.\n"
-                 "• **Neural Decoding:** Paste any encoded PowerShell string and I will decrypt it for you.\n"
-                 "• **HUD Navigation:** Ask for 'Steps to Sandbox' and I will reveal the operational blueprint.\n\n"
-                 "Which tactical objective are we pursuing, Analyst?",
+        "reply": "📡 **Vanguard Neural Interface: Guidance Core Active.**\n\nI couldn't find a specific protocol for that query, but here is your **Operational Quick-Start**:\n\n• **Briefing/Home:** High-level status and AI interaction.\n• **Command/Dashboard:** Live metrics and facility heatmaps.\n• **Telemetry/Logs:** Raw data hunting and forensic evidence.\n• **Threats/Alerts:** Priority triage of critical events.\n\nType `use` or `how to start` for a full functional breakdown, or specify a threat like 'PowerShell' for technical analysis.",
         "action": "IDLE_MENTOR_FALLBACK",
         "timestamp": datetime.datetime.now().isoformat()
     }

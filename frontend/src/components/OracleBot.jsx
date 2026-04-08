@@ -85,11 +85,18 @@ export default function OracleBot() {
           <img 
             src={`http://${window.location.hostname}:8080/api/download/vanguard_logo.png?v=3.1`} 
             alt="Vanguard AI" 
-            className="w-full h-full object-contain absolute opacity-100 animate-binary-focus z-10 brightness-[1.1] contrast-[1.1]"
+            className={`w-[70%] h-[70%] object-contain absolute transition-all duration-1000 z-10 ${loading ? 'scale-110 brightness-[1.5] animate-pulse' : 'scale-100 brightness-100 opacity-80'}`}
           />
           {/* Internal Scan Line Effect */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-transparent h-1/2 w-full animate-[scan-line-vanguard_3s_linear_infinite] pointer-events-none z-20"></div>
+          <div className={`absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-transparent h-1/2 w-full animate-[scan-line-vanguard_3s_linear_infinite] pointer-events-none z-20 ${loading ? 'opacity-100' : 'opacity-30'}`}></div>
         </div>
+
+        {/* Neural Waveform (Only visible when active/thinking) */}
+        {loading && (
+          <div className="absolute inset-[-10px] flex items-center justify-center pointer-events-none">
+            <div className="w-full h-full border border-soc-primary rounded-full animate-ping opacity-20"></div>
+          </div>
+        )}
 
 
 

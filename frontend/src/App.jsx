@@ -45,6 +45,25 @@ function App() {
   const [savingEmail, setSavingEmail] = useState(false);
   const [emailStatus, setEmailStatus] = useState('');
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
+  const [commandValue, setCommandValue] = useState('');
+  const [commandFeedback, setCommandFeedback] = useState(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e) => {
+    setMousePos({ x: (e.clientX / window.innerWidth - 0.5) * 20, y: (e.clientY / window.innerHeight - 0.5) * 20 });
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandBarOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const [showWelcome, setShowWelcome] = useState(false);
 
@@ -135,6 +154,29 @@ function App() {
   };
 
 
+  const handleCommand = async (cmd) => {
+    const command = cmd.trim().toLowerCase();
+    
+    if (command === '/clear') {
+      setLiveAlerts([]);
+      showFeedback('SUCCESS: ALL PERIMETER ALERTS PURGED', 'primary');
+    } else if (command === '/system_overview') {
+      showFeedback(`SYS_READY // CPU: ${Math.floor(Math.random()*15+5)}% // MEM: 2.1GB // SENSORS: 12 ONLINE`, 'secondary');
+    } else if (command === '/summarize') {
+       showFeedback('VANGUARD: NO CRITICAL ESCALATIONS IN LAST 30M. PROACTIVE MONITORING ACTIVE.', 'primary');
+    } else {
+      showFeedback('ERR: INVALID COMMAND SEQUENCE', 'critical');
+    }
+    
+    setCommandValue('');
+    setIsCommandBarOpen(false);
+  };
+
+  const showFeedback = (text, type) => {
+    setCommandFeedback({ text, type });
+    setTimeout(() => setCommandFeedback(null), 4000);
+  };
+
   const dismissAlert = (id) => {
     setLiveAlerts(prev => prev.filter(a => a._id !== id));
   };
@@ -151,11 +193,25 @@ function App() {
 
   return (
     <Router>
-      <div className="flex h-screen bg-soc-bg text-soc-text font-orbitron overflow-hidden scanline relative selection:bg-soc-primary selection:text-soc-bg">
-        {/* Global Deep Space / Grid Background */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,243,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.015)_1px,transparent_1px)] bg-[size:30px_30px] pointer-events-none z-0"></div>
+      <div 
+        onMouseMove={handleMouseMove}
+        className={`flex h-screen bg-soc-bg text-soc-text font-orbitron overflow-hidden relative selection:bg-soc-primary selection:text-soc-bg transition-all duration-700 ${liveAlerts.length > 0 ? 'shadow-[inset_0_0_100px_rgba(239,68,68,0.15)]' : ''}`}
+      >
+        {/* Context-Aware HUD Frame Glow */}
+        <div className={`fixed inset-0 pointer-events-none z-[200] border-[1px] transition-all duration-1000 ${liveAlerts.length > 0 ? 'border-soc-critical/30' : 'border-transparent'}`}></div>
+
+        {/* Global Deep Space / Grid Background with Parallax */}
+        <div 
+          className="absolute inset-0 bg-[linear-gradient(rgba(0,243,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.015)_1px,transparent_1px)] bg-[size:30px_30px] pointer-events-none z-0"
+          style={{ transform: `translate(${mousePos.x}px, ${mousePos.y}px)` }}
+        ></div>
         <div className="absolute top-[-20%] right-[-10%] w-[1000px] h-[1000px] bg-soc-secondary/5 rounded-full blur-[150px] pointer-events-none z-0 mix-blend-screen animate-pulse-slow"></div>
         <div className="absolute bottom-[-20%] left-[-10%] w-[800px] h-[800px] bg-soc-primary/5 rounded-full blur-[120px] pointer-events-none z-0 mix-blend-screen animate-pulse"></div>
+
+        {/* Biometric Breadcrumb (Current Page Ghosting) */}
+        <div className="fixed bottom-24 left-12 opacity-[0.02] pointer-events-none z-0 select-none">
+           <Fingerprint size={200} className="text-soc-primary" />
+        </div>
 
         {/* Floating Expandable HUD Side-Dock */}
         <div className="fixed left-6 top-6 bottom-6 w-24 hover:w-80 bg-soc-panel/40 backdrop-blur-3xl border border-soc-primary/20 rounded-[3rem] shadow-[0_0_50px_rgba(0,243,255,0.1),inset_0_0_20px_rgba(0,243,255,0.05)] z-[100] transition-all duration-[600ms] ease-[cubic-bezier(0.23,1,0.32,1)] flex flex-col group/sidebar overflow-hidden">
@@ -293,8 +349,47 @@ function App() {
                </div>
              ))}
           </div>
-          {/* Global VANGUARD Chatbot */}
-          <OracleBot />
+           {/* Command Result Notification */}
+           {commandFeedback && (
+              <div className={`fixed top-12 left-1/2 -translate-x-1/2 z-[400] px-8 py-4 bg-[#050510]/95 backdrop-blur-2xl border-2 border-soc-${commandFeedback.type} rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] animate-in slide-in-from-top-4 duration-500`}>
+                 <div className="flex items-center space-x-4">
+                    <div className={`w-2 h-2 rounded-full bg-soc-${commandFeedback.type} animate-ping`}></div>
+                    <span className={`text-xs font-black text-white uppercase tracking-[0.2em]`}>{commandFeedback.text}</span>
+                 </div>
+              </div>
+           )}
+
+           {/* Global VANGUARD Chatbot */}
+           <OracleBot />
+
+           {/* Quick-Action Command HUD */}
+           <div className={`fixed top-0 left-0 w-full h-full z-[300] bg-soc-bg/80 backdrop-blur-md flex items-start justify-center pt-32 transition-all duration-500 ${isCommandBarOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+              <div className="w-full max-w-2xl bg-soc-panel border border-soc-primary/30 rounded-2xl shadow-[0_30px_100px_rgba(0,0,0,0.8)] overflow-hidden">
+                 <div className="p-4 border-b border-white/5 flex items-center space-x-4">
+                    <Terminal size={20} className="text-soc-primary" />
+                    <input 
+                      autoFocus={isCommandBarOpen}
+                      value={commandValue}
+                      onChange={(e) => setCommandValue(e.target.value)}
+                      placeholder="ENTER COMMAND (e.g. /isolate, /block, /clear)..."
+                      className="flex-1 bg-transparent border-none outline-none text-soc-primary font-mono placeholder:text-soc-muted"
+                      onKeyDown={(e) => { 
+                        if (e.key === 'Escape') setIsCommandBarOpen(false); 
+                        if (e.key === 'Enter') handleCommand(commandValue);
+                      }}
+                    />
+                    <div className="px-2 py-1 border border-soc-border rounded text-[10px] text-soc-muted">ENTER to Execute</div>
+                 </div>
+                 <div className="p-4 space-y-2">
+                    <p className="text-[10px] text-soc-muted uppercase tracking-widest px-2">Vanguard Intelligence Suggestions</p>
+                    <div className="flex flex-wrap gap-2 p-2">
+                       <button className="px-3 py-2 bg-soc-primary/5 hover:bg-soc-primary/10 border border-soc-primary/20 rounded-lg text-xs transition-colors">/system_overview</button>
+                       <button className="px-3 py-2 bg-soc-critical/5 hover:bg-soc-critical/10 border border-soc-critical/20 rounded-lg text-xs text-soc-critical transition-colors">/isolate_host</button>
+                       <button className="px-3 py-2 bg-soc-secondary/5 hover:bg-soc-secondary/10 border border-soc-secondary/20 rounded-lg text-xs text-soc-secondary transition-colors">/summarize_threats</button>
+                    </div>
+                 </div>
+              </div>
+           </div>
 
         </div>
       </div>

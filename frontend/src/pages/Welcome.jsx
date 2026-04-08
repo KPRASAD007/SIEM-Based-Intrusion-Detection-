@@ -41,7 +41,6 @@ export default function Welcome({ username, onComplete }) {
         });
       }, 80);
 
-      let logIdx = 0;
       const logInt = setInterval(() => {
         if (logIdx < bootLogs.length) {
           setVisibleLogs(prev => [...prev, bootLogs[logIdx]]);
@@ -58,10 +57,27 @@ export default function Welcome({ username, onComplete }) {
     }
   }, [phase, onComplete]);
 
+  const [isExiting, setIsExiting] = useState(false);
+  const handleComplete = () => {
+    setIsExiting(true);
+    setTimeout(onComplete, 1200);
+  };
+
+  useEffect(() => {
+    if (phase === 2) {
+      handleComplete();
+    }
+  }, [phase]);
+
   return (
-    <div className="fixed inset-0 bg-soc-bg flex flex-col items-center justify-center font-orbitron overflow-hidden z-[9999] select-none selection:bg-soc-primary selection:text-soc-bg">
+    <div className={`fixed inset-0 bg-soc-bg flex flex-col items-center justify-center font-orbitron overflow-hidden z-[9999] select-none transition-all duration-[1200ms] ${isExiting ? 'scale-[2] opacity-0 blur-2xl' : 'scale-100 opacity-100'}`}>
       
-      {/* --- BACKGROUND LAYERS (Matching Login.jsx) --- */}
+      {/* --- BACKGROUND LAYERS --- */}
+      
+      {/* Biometric Ghosting - Large watermark fingerprint */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none z-0 transform scale-[4]">
+         <Fingerprint size={400} className="text-soc-primary animate-pulse" />
+      </div>
       {/* Layer 1: Glitch Overlay Effect */}
       <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-soc-panel via-soc-bg to-soc-bg mix-blend-multiply pointer-events-none"></div>
       
