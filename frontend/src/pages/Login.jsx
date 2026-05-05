@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../config';
 import { Shield, Lock, User, Key } from 'lucide-react';
 
 
@@ -7,8 +8,6 @@ export default function Login({ onLogin }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [adminKey, setAdminKey] = useState(''); // Deprecated
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,10 +15,8 @@ export default function Login({ onLogin }) {
     setError('');
 
     try {
-      const endpoint = `http://127.0.0.1:8080/api/auth/login`;
+      const endpoint = `${API_BASE_URL}/api/auth/login`;
       const payload = { username, password };
-
-
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -44,8 +41,8 @@ export default function Login({ onLogin }) {
   };
 
 
-  const heroUrl = `http://127.0.0.1:8080/api/download/hero.png`;
-  const logoUrl = `http://127.0.0.1:8080/api/download/logo.png`;
+  const heroUrl = `${API_BASE_URL}/api/download/hero.png`;
+  const logoUrl = `${API_BASE_URL}/api/download/logo.png`;
 
   return (
     <div className="min-h-screen bg-soc-bg flex items-center justify-center p-4 relative overflow-hidden font-orbitron selection:bg-soc-primary selection:text-soc-bg">
@@ -79,7 +76,7 @@ export default function Login({ onLogin }) {
              
              {/* The Emblem itself, screen blended for true holographic feel */}
              <img 
-               src="/emblem.png" 
+               src={logoUrl} 
                alt="CyberDetect Lab" 
                className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(0,243,255,0.4)] transition-transform duration-700 group-hover:scale-110 mix-blend-screen" 
              />

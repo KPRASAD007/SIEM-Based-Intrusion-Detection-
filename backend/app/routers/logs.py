@@ -151,7 +151,8 @@ async def process_log_for_alerts(log_dict: Dict[str, Any], db, background_tasks:
     except Exception as e:
         error_msg = f"ERROR: process_log_for_alerts failed: {e}\n{traceback.format_exc()}"
         print(error_msg)
-        with open(r"c:\Users\user\Documents\project\backend_errors.log", "a") as f:
+        with open("backend_errors.log", "a") as f:
+
             f.write(f"[{datetime.utcnow()}] {error_msg}\n")
 
 async def verify_api_key(x_api_key: str = Header(None)):

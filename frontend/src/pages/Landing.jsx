@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL, WS_BASE_URL } from '../config';
 import { Terminal, Shield, Activity, Database, Crosshair, ArrowRight, Zap, Orbit, Cpu, Network, Clock, Lock, Server, Globe2, AlertTriangle } from 'lucide-react';
+
 import { Link } from 'react-router-dom';
 
 export default function Landing() {
@@ -22,13 +24,16 @@ export default function Landing() {
   }, []);
 
   useEffect(() => {
-    fetch(`http://127.0.0.1:8080/api/search/topology`)
+    fetch(`${API_BASE_URL}/api/search/topology`)
+
+
       .then(res => res.json())
       .then(data => setStats(data))
       .catch(err => console.error(err));
       
     // Connect to Websocket for Live Terminal Streaming on Hero Page
-    const ws = new WebSocket(`ws://127.0.0.1:8080/api/logs/ws`);
+    const ws = new WebSocket(`${WS_BASE_URL}/api/logs/ws`);
+
 
     ws.onmessage = (event) => {
         try {

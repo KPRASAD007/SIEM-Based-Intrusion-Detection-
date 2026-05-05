@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL, WS_BASE_URL } from './config';
+
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import LogManagement from './pages/LogManagement';
@@ -73,7 +75,8 @@ function App() {
 
   useEffect(() => {
     if (isAuthenticated && currentUser) {
-      fetch(`http://127.0.0.1:8080/api/auth/profile/${currentUser}`)
+      fetch(`${API_BASE_URL}/api/auth/profile/${currentUser}`)
+
         .then(res => res.json())
         .then(data => {
           if (data.alert_email) setAlertEmail(data.alert_email);
@@ -89,7 +92,8 @@ function App() {
   const saveProfile = async () => {
     setSavingEmail(true);
     try {
-      const res = await fetch(`http://127.0.0.1:8080/api/auth/profile`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: currentUser, alert_email: alertEmail })
@@ -112,7 +116,8 @@ function App() {
     let reconnectTimer;
 
     const connectWebSocket = () => {
-      ws = new WebSocket(`ws://127.0.0.1:8080/api/logs/ws`);
+      ws = new WebSocket(`${WS_BASE_URL}/api/logs/ws`);
+
 
       
       ws.onopen = () => {
@@ -210,7 +215,8 @@ function App() {
     return <Welcome username={currentUser || 'SYSTEM'} onComplete={() => { setShowWelcome(false); setIsAuthenticated(true); }} />;
   }
 
-  const logoUrl = `http://${window.location.hostname}:8080/api/download/logo.png`;
+  const logoUrl = `${API_BASE_URL}/api/download/logo.png`;
+
 
   return (
     <Router>

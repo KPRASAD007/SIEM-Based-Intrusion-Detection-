@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
+
 import { Shield, Fingerprint } from 'lucide-react';
 
 export default function Welcome({ username, onComplete }) {
@@ -8,7 +10,8 @@ export default function Welcome({ username, onComplete }) {
   
   const glitchChars = "01ABCD";
   const [glitchText, setGlitchText] = useState("");
-  const heroUrl = `http://127.0.0.1:8080/api/download/hero.png`;
+  const heroUrl = `${API_BASE_URL}/api/download/hero.png`;
+
 
   const bootLogs = [
     "UPLINK_ESTABLISHED",

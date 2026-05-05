@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
+    }
+  ],
+  "env": {
+    "SIEM_API_KEY": "CYBER-DETECT-DEFAULT-KEY",
+    "DB_NAME": "cyberdetect"
+  }
+}
