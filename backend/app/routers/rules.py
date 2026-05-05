@@ -4,11 +4,14 @@ from bson import ObjectId
 
 from ..database import get_db
 from ..models.schemas import RuleModel
+from .auth import get_current_user
 
 router = APIRouter(prefix="/api/rules", tags=["Rules"])
 
 @router.post("", response_model=RuleModel)
-async def create_rule(rule: RuleModel, db=Depends(get_db)):
+async def create_rule(rule: RuleModel, db=Depends(get_db), current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Unauthorized: Only SOC Admins can create rules.")
     rule_dict = rule.model_dump(by_alias=True, exclude_none=True)
     result = await db.rules.insert_one(rule_dict)
     rule_dict["_id"] = str(result.inserted_id)
@@ -24,14 +27,18 @@ async def get_rules(db=Depends(get_db)):
     return rules
 
 @router.delete("/{id}")
-async def delete_rule(id: str, db=Depends(get_db)):
+async def delete_rule(id: str, db=Depends(get_db), current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Unauthorized: Only SOC Admins can delete rules.")
     result = await db.rules.delete_one({"_id": ObjectId(id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Rule not found")
     return {"status": "success"}
 
 @router.put("/{id}/toggle")
-async def toggle_rule(id: str, db=Depends(get_db)):
+async def toggle_rule(id: str, db=Depends(get_db), current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Unauthorized: Only SOC Admins can toggle rules.")
     rule = await db.rules.find_one({"_id": ObjectId(id)})
     if not rule:
         raise HTTPException(status_code=404, detail="Rule not found")
@@ -45,7 +52,9 @@ async def toggle_rule(id: str, db=Depends(get_db)):
     return rule
 
 @router.post("/seed")
-async def seed_rules(db=Depends(get_db)):
+async def seed_rules(db=Depends(get_db), current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Unauthorized: Only SOC Admins can reset the rule vault.")
     await db.rules.delete_many({})
     seeds = [
         {

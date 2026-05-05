@@ -1,15 +1,68 @@
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, WebSocket, WebSocketDisconnect
-from typing import List, Dict, Any
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, WebSocket, WebSocketDisconnect, Header, Request
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 import json
+import os
 
 from ..database import get_db
 from ..models.schemas import LogModel, AlertModel
 from ..services.detection_engine import detection_engine
 from ..services.email_service import send_alert_email
 from ..websocket_manager import manager
+from .auth import get_current_user
 
 router = APIRouter(prefix="/api/logs", tags=["Logs"])
+
+@router.post("/purge")
+async def purge_logs(request: Request, db=Depends(get_db), current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Unauthorized: Only SOC Admins can purge the log vault.")
+        
+    # Parse selective filters from request body
+    try:
+        body = await request.json()
+    except:
+        body = {}
+        
+    hostname = body.get("hostname")
+    older_than_days = body.get("older_than_days")
+    min_severity = body.get("min_severity")
+    
+    query = {}
+    if hostname:
+        query["details.host"] = hostname
+    if min_severity:
+        query["severity"] = min_severity
+    if older_than_days:
+        from datetime import timedelta
+        cutoff = datetime.utcnow() - timedelta(days=int(older_than_days))
+        query["timestamp"] = {"$lt": cutoff}
+        
+    # Purge filtered data
+    log_result = await db.logs.delete_many(query)
+    
+    # If it was a full wipe (no query), clear alerts and incidents too
+    if not query:
+        await db.alerts.delete_many({})
+        await db.incidents.delete_many({})
+        purge_type = "FULL_SYSTEM_WIPE"
+    else:
+        purge_type = f"SELECTIVE_PURGE: {query}"
+    
+    # Audit Trace
+    await db.audit_logs.insert_one({
+        "action": "VAULT_PURGED",
+        "actor": current_user.get("username"),
+        "details": f"{purge_type} | Records removed: {log_result.deleted_count}",
+        "timestamp": datetime.utcnow()
+    })
+    
+    return {
+        "status": "success", 
+        "message": "Purge sequence complete", 
+        "deleted_count": log_result.deleted_count,
+        "type": purge_type
+    }
 
 async def process_log_for_alerts(log_dict: Dict[str, Any], db, background_tasks: BackgroundTasks = None):
     # Fetch active rules
@@ -101,8 +154,15 @@ async def process_log_for_alerts(log_dict: Dict[str, Any], db, background_tasks:
         with open(r"c:\Users\user\Documents\project\backend_errors.log", "a") as f:
             f.write(f"[{datetime.utcnow()}] {error_msg}\n")
 
+async def verify_api_key(x_api_key: str = Header(None)):
+    """Simple API Key verification for log ingestion."""
+    EXPECTED_KEY = os.getenv("SIEM_API_KEY", "CYBER-DETECT-DEFAULT-KEY")
+    if x_api_key != EXPECTED_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid SIEM API Key")
+    return x_api_key
+
 @router.post("", response_model=LogModel)
-async def create_log(log: LogModel, background_tasks: BackgroundTasks, db=Depends(get_db)):
+async def create_log(log: LogModel, background_tasks: BackgroundTasks, db=Depends(get_db), api_key: str = Depends(verify_api_key)):
     log_dict = log.model_dump(by_alias=True, exclude_none=True)
 
     # ── KILL-SWITCH CHECK ──────────────────────────────────────────────────────

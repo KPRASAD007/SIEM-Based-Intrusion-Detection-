@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
 from bson import ObjectId
+from datetime import datetime
 
 from ..database import get_db
+from .auth import get_current_user
 
 router = APIRouter(prefix="/api/alerts", tags=["Alerts"])
 
@@ -36,11 +38,23 @@ async def get_alerts(status: str = None, db=Depends(get_db)):
     return alerts
 
 @router.put("/{id}/status")
-async def update_alert_status(id: str, status: str, db=Depends(get_db)):
+async def update_alert_status(id: str, status: str, db=Depends(get_db), current_user: dict = Depends(get_current_user)):
+    # Update alert status
     result = await db.alerts.update_one(
         {"_id": ObjectId(id)},
         {"$set": {"status": status}}
     )
+    
     if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Alert not found or status already set")
-    return {"status": "success", "new_status": status}
+        raise HTTPException(status_code=404, detail="Alert not found")
+        
+    # AUDIT LOG: Track who resolved this alert
+    await db.audit_logs.insert_one({
+        "action": "ALERT_STATUS_UPDATE",
+        "actor": current_user.get("username"),
+        "alert_id": id,
+        "new_status": status,
+        "timestamp": datetime.utcnow()
+    })
+    
+    return {"status": "success", "message": f"Alert {id} status updated to {status}"}

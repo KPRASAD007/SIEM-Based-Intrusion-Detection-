@@ -48,8 +48,12 @@ export default function AlertsCenter() {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
+      const token = localStorage.getItem('siem_token');
       const res = await fetch(`http://${window.location.hostname}:8080/api/alerts/${id}/status?status=${newStatus}`, {
-        method: 'PUT'
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       if (res.ok) {
         setAllAlerts(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));

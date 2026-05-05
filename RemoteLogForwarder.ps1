@@ -1,10 +1,9 @@
 <#
 .SYNOPSIS
-    Advanced Remote Endpoint Agent for CyberDetect Lab SIEM
+    CyberDetect Resilience Agent v3.0
 .DESCRIPTION
-    Continuously monitors Security and Sysmon Event logs in real-time,
-    parses process execution parameters, user authentications, and network
-    traces securely, and streams telemetry to the central SIEM.
+    Real-time telemetry agent with local persistence, encrypted transmission ready, 
+    and authenticated ingestion headers.
 #>
 
 [CmdletBinding()]
@@ -14,19 +13,22 @@ param (
     [Parameter(Mandatory=$false)]
     [int]$Port = 8080,
     [Parameter(Mandatory=$false)]
+    [string]$ApiKey = "CYBER-DETECT-DEFAULT-KEY", # Matches the backend default
+    [Parameter(Mandatory=$false)]
     [int]$PollIntervalSeconds = 5,
     [Parameter(Mandatory=$false)]
     [switch]$Continuous
 )
 
-# Use inherited server variable if available from the deployment 'iex' scope
+# Use inherited server variable if available
 if (-not $ServerIP -and (Test-Path Variable:s)) { $ServerIP = $s }
 if (-not $ServerIP -and (Test-Path Variable:h)) { $ServerIP = $h }
-if (-not $ServerIP) { $ServerIP = "127.0.0.1" } # Absolute fallback
+if (-not $ServerIP) { $ServerIP = "127.0.0.1" } 
 
-$Endpoint = "http://${ServerIP}:${Port}/api/logs"
-$AgentVersion = "v2.0-Advanced"
+$Protocol = "http" # Set to 'https' if TLS is configured on the backend
+$Endpoint = "${Protocol}://${ServerIP}:${Port}/api/logs"
 $Hostname = $env:COMPUTERNAME
+$CacheFile = "$env:TEMP\siem_backlog.json"
 
 function Write-Log {
     param([string]$Message, [ConsoleColor]$Color = "White")
@@ -34,43 +36,47 @@ function Write-Log {
     Write-Host "[$Timestamp] $Message" -ForegroundColor $Color
 }
 
-Write-Log "CyberDetect Lab - Advanced Endpoint Telemetry Agent $AgentVersion" "Cyan"
-Write-Log "Initializing Real-Time Event Collector targeting: $Endpoint" "Cyan"
-
-if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Log "WARNING: Not running as Administrator. Some logs might be restricted!" "Yellow"
+function Save-To-Cache {
+    param($Payload)
+    $Existing = @()
+    if (Test-Path $CacheFile) {
+        $Existing = Get-Content $CacheFile | ConvertFrom-Json
+    }
+    $Existing += $Payload
+    $Existing | ConvertTo-Json -Depth 5 | Out-File $CacheFile
+    Write-Log "[!] SIEM Offline. Log cached locally: $($Payload.event_id)" "Yellow"
 }
 
-# Define the log sources and event IDs we care about defensively.
-$EventQueries = @(
-    "*[System[Provider[@Name='Microsoft-Windows-Security-Auditing'] and (EventID=4688 or EventID=4624)]]",                    # Process Creation & Logon
-    "*[System[Provider[@Name='Microsoft-Windows-Sysmon'] and (EventID=1 or EventID=3 or EventID=11)]]",                         # Sysmon Process, Network, File creation
-    "*[System[Provider[@Name='Microsoft-Windows-PowerShell'] and (EventID=4104)]]"                                              # PowerShell Script Block Logging
-)
-
-$QueryString = [string]::Join(" or ", $EventQueries)
-$LastEventTime = Get-Date # Set watermark to current time so we only catch NEW events if running continuously
-
-function Parse-EventData ($Event) {
-    # Convert event to XML for robust parsing
-    $EventXml = [xml]$Event.ToXml()
-    $EventData = @{}
+function Flush-Cache {
+    if (-not (Test-Path $CacheFile)) { return }
+    $Backlog = Get-Content $CacheFile | ConvertFrom-Json
+    if ($Backlog.Count -eq 0) { return }
     
-    if ($EventXml.Event.EventData.Data) {
-        foreach ($Node in $EventXml.Event.EventData.Data) {
-           $EventData[$Node.Name] = $Node.InnerText
+    Write-Log "[*] Attempting to flush backlog of $($Backlog.Count) events..." "Cyan"
+    $Remaining = @()
+    
+    foreach ($item in $Backlog) {
+        try {
+            $Json = $item | ConvertTo-Json -Depth 5 -Compress
+            $headers = @{ "X-API-Key" = $ApiKey }
+            Invoke-RestMethod -Uri $Endpoint -Method Post -Body $Json -ContentType "application/json" -Headers $headers -TimeoutSec 3
+            Write-Log "[+] Flushed event: $($item.event_id)" "Green"
+        } catch {
+            $Remaining += $item
         }
     }
-    return $EventData
+    
+    if ($Remaining.Count -gt 0) {
+        $Remaining | ConvertTo-Json -Depth 5 | Out-File $CacheFile
+    } else {
+        Remove-Item $CacheFile
+    }
 }
 
 function Stream-Logs {
     param([DateTime]$StartTime)
     
-    # Crucial Fix: @SystemTime in Windows Event Logs is ALWAYS stored in strict UTC.
-    # If we query it using Local Time without explicit conversion, we will look "into the future"!
     $StartTimeUtc = $StartTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-
     $FilterXml = @"
 <QueryList>
   <Query Id="0" Path="Security">
@@ -78,135 +84,58 @@ function Stream-Logs {
   </Query>
 </QueryList>
 "@
-    # Added try/catch nicely for logs that might not exist (like sysmon if not installed)
     $Events = $null
-    try {
-        $Events = Get-WinEvent -FilterXml $FilterXml -ErrorAction SilentlyContinue
-    } catch {}
-
+    try { $Events = Get-WinEvent -FilterXml $FilterXml -ErrorAction SilentlyContinue } catch {}
     if (-not $Events) { return $StartTime }
     
     $LatestEventTime = $StartTime
-
     foreach ($Event in $Events) {
         if ($Event.TimeCreated -gt $LatestEventTime) { $LatestEventTime = $Event.TimeCreated }
 
         $EventId = $Event.Id.ToString()
-        $ParsedData = Parse-EventData $Event
-        
-        $ProcessName = "System"
-        $User = "System"
-        $EventType = "Security Audit"
-        $Severity = "low"
-        $CommandLine = ""
-
-        # Advanced Context Parsing based on Threat rules
-        if ($EventId -eq "4688") {
-            $EventType = "Process Execution"
-            $ProcessName = $ParsedData["NewProcessName"] -replace '.*\\', ''
-            $CommandLine = $ParsedData["CommandLine"]
-            $User = $ParsedData["SubjectUserName"]
-            if ($ProcessName -match "powershell\.exe|cmd\.exe|wscript\.exe|certutil\.exe") { $Severity = "high" }
-        } elseif ($EventId -eq "4624") {
-            $EventType = "Network Logon"
-            $User = $ParsedData["TargetUserName"]
-            if ($ParsedData["IpAddress"] -and $ParsedData["IpAddress"] -ne "-") {
-                $ClientIp = $ParsedData["IpAddress"]
-            }
+        $EventXml = [xml]$Event.ToXml()
+        $ParsedData = @{}
+        if ($EventXml.Event.EventData.Data) {
+            foreach ($Node in $EventXml.Event.EventData.Data) { $ParsedData[$Node.Name] = $Node.InnerText }
         }
-
-        # Build comprehensive JSON schema for the SIEM backend
+        
         $Payload = @{
             event_id = $EventId
-            process_name = $ProcessName
-            user = $User
-            ip_address = if ($ClientIp) { $ClientIp } else { $Hostname }
-            command_line = $CommandLine
-            event_type = $EventType
-            severity = $Severity
-            raw_data = $Event.Message -replace "`n", " " -replace "`r", ""
-            details = @{
-                host = $Hostname
-                record_id = $Event.RecordId
-                source = "Advanced Forwarder v2"
-                parsed_context = $ParsedData
-            }
+            process_name = if ($EventId -eq "4688") { $ParsedData["NewProcessName"] -replace '.*\\', '' } else { "System" }
+            user = if ($EventId -eq "4624") { $ParsedData["TargetUserName"] } else { $ParsedData["SubjectUserName"] }
+            ip_address = if ($ParsedData["IpAddress"] -and $ParsedData["IpAddress"] -ne "-") { $ParsedData["IpAddress"] } else { $Hostname }
+            command_line = if ($EventId -eq "4688") { $ParsedData["CommandLine"] } else { "" }
+            event_type = if ($EventId -eq "4688") { "Process Execution" } else { "Logon" }
+            severity = "low"
+            timestamp = $Event.TimeCreated.ToString("yyyy-MM-ddTHH:mm:ssZ")
+            details = @{ host = $Hostname; source = "Resilience Agent v3"; parsed_context = $ParsedData }
         }
 
         $JsonPayload = $Payload | ConvertTo-Json -Depth 5 -Compress
+        $headers = @{ "X-API-Key" = $ApiKey }
 
         try {
-            $Response = Invoke-RestMethod -Uri $Endpoint -Method Post -Body $JsonPayload -ContentType "application/json" -TimeoutSec 5
-            if ($Severity -eq "high") {
-                Write-Log "[!] CRITICAL ALERT FORWARDED: $ProcessName execution by $User" "Red"
-            } else {
-                Write-Log "[+] Shipped Telemetry -> Event:$EventId | Type:$EventType" "Green"
-            }
+            Invoke-RestMethod -Uri $Endpoint -Method Post -Body $JsonPayload -ContentType "application/json" -Headers $headers -TimeoutSec 5
+            Write-Log "[+] Shipped Event: $EventId" "Green"
         } catch {
-            Write-Log "[-] SIEM Connection failed. Data queued in memory (Not really, but imagine it is)." "DarkYellow"
+            Save-To-Cache -Payload $Payload
         }
     }
     return $LatestEventTime
 }
 
-function Stream-WebTraffic {
-    param([DateTime]$StartTime)
-    
-    $CurrentDns = @()
-    try {
-        $DnsCache = Get-DnsClientCache -ErrorAction SilentlyContinue | Where-Object { $_.Entry -and $_.Type -eq 1 }
-        foreach ($entry in $DnsCache) {
-            # Only pick up real domains (skip loopback/mdns noise)
-            if ($entry.Entry -match "^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$") {
-                $CurrentDns += $entry.Entry
-            }
-        }
-    } catch {}
+Write-Log "CyberDetect Resilience Agent v3.0 Initialized." "Cyan"
+Write-Log "Ingestion Security: Authenticated (X-API-Key)" "Cyan"
+Write-Log "Persistence Layer: Enabled ($CacheFile)" "Cyan"
 
-    $UniqueDomains = $CurrentDns | Select-Object -Unique
-
-    foreach ($Domain in $UniqueDomains) {
-        # Prevent shipping the exact same domain back-to-back repeatedly
-        if (-not $global:LastSeenDomains) { $global:LastSeenDomains = @{} }
-        if ($global:LastSeenDomains[$Domain] -gt (Get-Date).AddMinutes(-5)) { continue }
-        $global:LastSeenDomains[$Domain] = Get-Date
-
-        $Payload = @{
-            event_id = "DNS-WEB"
-            process_name = "Browser / DNS Client"
-            user = $Hostname
-            ip_address = $Hostname
-            command_line = "DNS Lookup: $Domain"
-            event_type = "Web Traffic"
-            severity = "low"
-            raw_data = "User or application navigated to: $Domain"
-            details = @{
-                host = $Hostname
-                record_id = "DNS-Cache"
-                source = "Advanced Forwarder v2"
-                domain = $Domain
-            }
-        }
-
-        $JsonPayload = $Payload | ConvertTo-Json -Depth 5 -Compress
-        try {
-            $null = Invoke-RestMethod -Uri $Endpoint -Method Post -Body $JsonPayload -ContentType "application/json" -TimeoutSec 5
-            Write-Log "[+] Surveillance -> Web Navigation Detected: $Domain" "DarkCyan"
-        } catch { }
-    }
-}
-
+$LastEventTime = Get-Date
 if ($Continuous) {
-    Write-Log "Agent running in continuous daemon mode. Press Ctrl+C to terminate." "Magenta"
-    $global:LastSeenDomains = @{}
     while ($true) {
+        Flush-Cache
         $LastEventTime = Stream-Logs -StartTime $LastEventTime
-        Stream-WebTraffic -StartTime (Get-Date)
         Start-Sleep -Seconds $PollIntervalSeconds
     }
 } else {
-    Write-Log "Agent running in historical batch mode (-Continuous not provided)." "Magenta"
-    $BatchStart = (Get-Date).AddHours(-1) # Grab last 1 hour of logs initially
-    $null = Stream-Logs -StartTime $BatchStart
-    Write-Log "Batch transmission complete. Run with -Continuous switch for real-time monitoring." "Cyan"
+    $LastEventTime = Stream-Logs -StartTime (Get-Date).AddHours(-1)
+    Flush-Cache
 }

@@ -11,13 +11,15 @@ import MitreMapping from './pages/MitreMapping';
 import Documentation from './pages/Documentation';
 import Login from './pages/Login';
 import Welcome from './pages/Welcome';
+import UserManagement from './pages/UserManagement';
+import AuditVault from './pages/AuditVault';
 import RemoteSensors from './pages/RemoteSensors';
 import WebSurveillance from './pages/WebSurveillance';
 import DeceptionOps from './pages/DeceptionOps';
 import BehavioralAnalytics from './pages/BehavioralAnalytics';
 import Forensics from './pages/Forensics';
 import OracleBot from './components/OracleBot';
-import { Shield, LayoutDashboard, Database, Activity, Briefcase, Settings, FileText, Target, Bell, X, Globe, Eye, Fingerprint, Ghost, Zap, Search, HardDrive, Terminal, LogOut } from 'lucide-react';
+import { Shield, LayoutDashboard, Database, Activity, Briefcase, Settings, FileText, Target, Bell, X, Globe, Eye, Fingerprint, Ghost, Zap, Search, HardDrive, Terminal, LogOut, Users } from 'lucide-react';
 
 
 
@@ -38,8 +40,10 @@ function SidebarItem({ to, icon: Icon, label }) {
 
 function App() {
   const [liveAlerts, setLiveAlerts] = useState([]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(localStorage.getItem('siem_user') || null);
+  const [userRole, setUserRole] = useState(localStorage.getItem('siem_role') || null);
+  const [authToken, setAuthToken] = useState(localStorage.getItem('siem_token') || null);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('siem_token'));
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [alertEmail, setAlertEmail] = useState('');
   const [savingEmail, setSavingEmail] = useState(false);
@@ -73,6 +77,10 @@ function App() {
         .then(res => res.json())
         .then(data => {
           if (data.alert_email) setAlertEmail(data.alert_email);
+          if (data.role) {
+            setUserRole(data.role);
+            localStorage.setItem('siem_role', data.role);
+          }
         })
         .catch(err => console.error("Error fetching profile", err));
     }
@@ -148,8 +156,13 @@ function App() {
   }, []);
 
   const handleLogout = () => {
+    localStorage.removeItem('siem_token');
+    localStorage.removeItem('siem_user');
+    localStorage.removeItem('siem_role');
     setIsAuthenticated(false);
     setCurrentUser(null);
+    setUserRole(null);
+    setAuthToken(null);
     setShowProfileMenu(false);
   };
 
@@ -182,7 +195,15 @@ function App() {
   };
 
   if (!isAuthenticated && !showWelcome) {
-    return <Login onLogin={(username) => { setCurrentUser(username); setShowWelcome(true); }} />;
+    return <Login onLogin={(username, token, role) => { 
+      setCurrentUser(username); 
+      setUserRole(role);
+      setAuthToken(token);
+      localStorage.setItem('siem_token', token);
+      localStorage.setItem('siem_user', username);
+      localStorage.setItem('siem_role', role);
+      setShowWelcome(true); 
+    }} />;
   }
 
   if (showWelcome) {
@@ -242,6 +263,8 @@ function App() {
             <div className="my-4 mx-4 h-px bg-gradient-to-r from-transparent via-soc-primary/30 to-transparent"></div>
             
             <SidebarItem to="/rules" icon={Settings} label="Rules" />
+            {userRole === 'admin' && <SidebarItem to="/users" icon={Users} label="Operators" />}
+            {userRole === 'admin' && <SidebarItem to="/audit" icon={FileText} label="Audit Vault" />}
             <SidebarItem to="/simulator" icon={Target} label="Simulate" />
           </nav>
         </div>
@@ -277,6 +300,8 @@ function App() {
               <Route path="/forensics" element={<Forensics />} />
               <Route path="/web" element={<WebSurveillance />} />
               <Route path="/rules" element={<RulesEngine />} />
+              <Route path="/users" element={userRole === 'admin' ? <UserManagement /> : <Dashboard />} />
+              <Route path="/audit" element={userRole === 'admin' ? <AuditVault /> : <Dashboard />} />
               <Route path="/mitre" element={<MitreMapping />} />
               <Route path="/simulator" element={<Simulator />} />
               <Route path="/docs" element={<Documentation />} />

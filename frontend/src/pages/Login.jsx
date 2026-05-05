@@ -5,11 +5,9 @@ import { Shield, Lock, User, Key } from 'lucide-react';
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [adminKey, setAdminKey] = useState(''); // Secret clearance cipher
+  const [adminKey, setAdminKey] = useState(''); // Deprecated
 
 
   const handleSubmit = async (e) => {
@@ -18,10 +16,8 @@ export default function Login({ onLogin }) {
     setError('');
 
     try {
-      const endpoint = isRegistering ? `http://127.0.0.1:8080/api/auth/register` : `http://127.0.0.1:8080/api/auth/login`;
-      const payload = isRegistering 
-        ? { username, password, alert_email: email, admin_key: adminKey } 
-        : { username, password };
+      const endpoint = `http://127.0.0.1:8080/api/auth/login`;
+      const payload = { username, password };
 
 
 
@@ -33,12 +29,14 @@ export default function Login({ onLogin }) {
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.detail || (isRegistering ? 'Registration failed' : 'Invalid credentials'));
+        throw new Error(errData.detail || 'Invalid credentials');
       }
 
+      const data = await response.json();
+      
       // Success Path: Zero-Latency Handover
       setLoading(false);
-      onLogin(username);
+      onLogin(username, data.access_token, data.role);
     } catch (err) {
       setLoading(false);
       setError(err.message);
@@ -121,44 +119,6 @@ export default function Login({ onLogin }) {
               </div>
             </div>
 
-            {isRegistering && (
-              <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-soc-primary uppercase tracking-[0.3em] flex items-center">
-                    <span className="text-soc-secondary mr-2">{'>'}</span> Comms Link
-                  </label>
-                  <div className="relative group">
-                    <input
-                      type="email"
-                      required={isRegistering}
-                      className="w-full bg-transparent border-b-2 border-soc-border py-2 text-lg text-white font-black focus:outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/20"
-                      placeholder="SIGNAL_PATH"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-soc-secondary uppercase tracking-[0.3em] flex items-center">
-                    <Key size={14} className="mr-2" /> Clearance_Cipher
-                  </label>
-                  <div className="relative group">
-                    <input
-                      type="password"
-                      required={isRegistering}
-                      className="w-full bg-soc-secondary/5 border-b-2 border-soc-secondary/30 py-2 text-lg text-soc-secondary font-black focus:outline-none focus:border-soc-secondary transition-all placeholder:text-soc-secondary/10 tracking-[0.8em]"
-                      placeholder="ADMIN_MASTER_KEY"
-                      value={adminKey}
-                      onChange={(e) => setAdminKey(e.target.value)}
-                    />
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 text-[8px] font-black text-soc-secondary/40 pointer-events-none tracking-widest uppercase">Encryption active</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-
             <div className="space-y-3">
               <label className="text-[10px] font-black text-soc-primary uppercase tracking-[0.3em] flex items-center">
                  <span className="text-soc-secondary mr-2">{'>'}</span> Decryption Phrase
@@ -167,7 +127,7 @@ export default function Login({ onLogin }) {
                 <input
                   type="password"
                   required
-                  className="w-full bg-transparent border-b-2 border-soc-border py-2 text-lg text-white font-black focus:outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/20 tracking-[0.5em]"
+                  className="w-full bg-soc-secondary/5 border-b-2 border-soc-border py-2 text-lg text-soc-secondary font-black focus:outline-none focus:border-soc-secondary transition-all placeholder:text-soc-secondary/10 tracking-[0.2em]"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -188,32 +148,20 @@ export default function Login({ onLogin }) {
                      <span>DECRYPTING...</span>
                   </div>
                 ) : (
-                  <span className="relative z-10">{isRegistering ? 'INITIALIZE BIOMETRICS' : 'ESTABLISH UPLINK'}</span>
+                  <span className="relative z-10">ESTABLISH UPLINK</span>
                 )}
               </button>
             </div>
-            
-            <div className="text-center pt-4">
-               <button 
-                  type="button" 
-                  onClick={() => { setIsRegistering(!isRegistering); setError(''); }} 
-                  className="text-[10px] font-black text-soc-muted hover:text-soc-secondary uppercase tracking-[0.2em] transition-colors"
-               >
-                 {isRegistering ? '« ABORT & RETURN' : 'REQUEST NEW CLEARANCE'}
-               </button>
-            </div>
           </form>
 
-          {!isRegistering && (
-            <div className="mt-12 pt-6 border-t border-soc-border/50 text-center flex flex-col space-y-2">
-              <p className="text-[9px] font-mono text-soc-secondary uppercase font-black tracking-widest">
-                WARNING: LEVEL 5 CLEARANCE REQUIRED
-              </p>
-              <p className="text-[8px] font-mono text-soc-muted uppercase">
-                DEFAULT: <span className="text-soc-primary">admin</span> // PASS: <span className="text-soc-primary">admin</span>
-              </p>
-            </div>
-          )}
+          <div className="mt-12 pt-6 border-t border-soc-border/50 text-center flex flex-col space-y-2">
+            <p className="text-[9px] font-mono text-soc-secondary uppercase font-black tracking-widest">
+              WARNING: AUTHORIZED PERSONNEL ONLY
+            </p>
+            <p className="text-[8px] font-mono text-soc-muted uppercase">
+              ALL ACCESS ATTEMPTS ARE AUDITED BY VANGUARD_AI
+            </p>
+          </div>
         </div>
       </div>
     </div>
