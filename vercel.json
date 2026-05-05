@@ -12,6 +12,7 @@
   ],
   "env": {
     "SIEM_API_KEY": "CYBER-DETECT-DEFAULT-KEY",
-    "DB_NAME": "cyberdetect"
+    "DB_NAME": "cyberdetect",
+    "PYO3_USE_ABI3_FORWARD_COMPATIBILITY": "1"
   }
 }
