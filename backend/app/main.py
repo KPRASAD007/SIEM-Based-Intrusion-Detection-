@@ -21,8 +21,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Static file serving
-app.mount("/api/download", StaticFiles(directory="app/static"), name="static")
+# Static file serving - use absolute path so it works on Vercel too
+_static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.isdir(_static_dir):
+    app.mount("/api/download", StaticFiles(directory=_static_dir), name="static")
 
 # Core Routers
 app.include_router(logs.router)
