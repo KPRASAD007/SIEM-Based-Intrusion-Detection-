@@ -39,5 +39,8 @@ async def close_mongo_connection():
         db_instance.client.close()
         print("SYSTEM: MongoDB Connection Terminated.")
 
-def get_db():
+async def get_db():
+    # Auto-connect for serverless environments where startup events don't fire
+    if db_instance.db is None:
+        await connect_to_mongo()
     return db_instance.db
