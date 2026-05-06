@@ -51,7 +51,12 @@ export default function LogManagement() {
 
   useEffect(() => {
     fetchLogs();
-  }, []);
+    // Auto-sync every 5 seconds for "Live" feel
+    const interval = setInterval(() => {
+      fetchLogs(query, true);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [query]);
 
   const exportLogsToJSON = () => {
     if (logs.length === 0) return;
