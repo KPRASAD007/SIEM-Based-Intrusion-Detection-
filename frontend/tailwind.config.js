@@ -8,18 +8,18 @@ export default {
     extend: {
       colors: {
         soc: {
-          bg: '#030014',      
-          panel: '#0a0a20',   
-          border: '#1f1b3d',  
-          hover: '#181236',   
-          text: '#e2e8f0',
-          muted: '#64748b',
-          primary: '#00f3ff', // Neon Cyan
-          secondary: '#ff003c', // Aggressive Red/Magenta
-          critical: '#ff003c', // Neon Red
-          warning: '#fbbf24',
-          hacker: '#00ff41',    
-          accent: '#b026ff'    // Deep purple/magenta
+          bg: '#09090b',      // Zinc 950
+          panel: '#18181b',   // Zinc 900
+          border: '#27272a',  // Zinc 800
+          hover: '#3f3f46',   // Zinc 700
+          text: '#fafafa',    // Zinc 50
+          muted: '#71717a',   // Zinc 400
+          primary: '#3b82f6', // Modern Blue (Blue 500)
+          secondary: '#6366f1', // Indigo 500
+          critical: '#ef4444', // Red 500
+          warning: '#f59e0b', // Amber 500
+          hacker: '#22c55e',  // Green 500
+          accent: '#8b5cf6'   // Violet 500
         }
       },
       animation: {

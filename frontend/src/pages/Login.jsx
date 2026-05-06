@@ -56,86 +56,57 @@ export default function Login({ onLogin }) {
   const logoUrl = `${API_BASE_URL}/api/download/logo.png`;
 
   return (
-    <div className="min-h-screen bg-soc-bg flex items-center justify-center p-4 relative overflow-hidden font-orbitron selection:bg-soc-primary selection:text-soc-bg">
-      {/* Glitch Overlay Effect */}
-      <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-soc-panel via-soc-bg to-soc-bg mix-blend-multiply"></div>
-      
-      {/* Cyber Grid Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,243,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px] pointer-events-none z-0"></div>
+    <div className="min-h-screen bg-soc-bg flex items-center justify-center p-6 relative overflow-hidden selection:bg-soc-primary selection:text-soc-bg">
+      {/* Subtle Background Pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none opacity-20"></div>
 
-      {/* Hero Lighting Backdrop */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-soc-primary/5 rounded-full blur-[150px] z-0"></div>
-
-      {/* Hero Background Image (Very Low Opacity) */}
-      <div 
-        className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none bg-center bg-cover grayscale"
-        style={{ backgroundImage: `url(${heroUrl})` }}
-      ></div>
-
-      <div className="max-w-md w-full z-20 animate-in fade-in zoom-in-95 duration-[300ms] ease-out">
-
-        <div className="text-center mb-12 relative animate-in fade-in slide-in-from-top-4 duration-1000">
-          <div className="w-40 h-40 mx-auto mb-6 relative group flex items-center justify-center p-4 bg-white/5 backdrop-blur-sm border border-white/10 shadow-[0_0_30px_rgba(0,0,20,0.5)]">
-             {/* Micro-nodes at corners */}
-             <div className="absolute top-0 left-0 w-1 h-1 bg-soc-primary shadow-[0_0_5px_#00f3ff]"></div>
-             <div className="absolute top-0 right-0 w-1 h-1 bg-soc-primary shadow-[0_0_5px_#00f3ff]"></div>
-             <div className="absolute bottom-0 left-0 w-1 h-1 bg-soc-primary shadow-[0_0_5px_#00f3ff]"></div>
-             <div className="absolute bottom-0 right-0 w-1 h-1 bg-soc-primary shadow-[0_0_5px_#00f3ff]"></div>
-
-             {/* Ambient Glow behind image */}
-             <div className="absolute inset-4 bg-soc-primary blur-[40px] opacity-20 group-hover:opacity-40 transition-all duration-1000 animate-pulse"></div>
-             
-             {/* The Emblem itself, screen blended for true holographic feel */}
-             <img 
-               src={logoUrl} 
-               alt="CyberDetect Lab" 
-               className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(0,243,255,0.4)] transition-transform duration-700 group-hover:scale-110 mix-blend-screen" 
-             />
+      <div className="w-full max-w-md z-10">
+        <div className="text-center mb-10">
+          <div className="w-20 h-20 mx-auto mb-6 bg-soc-panel border border-soc-border rounded-2xl flex items-center justify-center shadow-2xl">
+            <Shield size={40} className="text-soc-primary" />
           </div>
-          <h1 className="text-5xl font-light text-slate-100 tracking-[0.2em] uppercase">
-            VANGUARD<span className="text-soc-primary">_AI</span>
+          <h1 className="text-3xl font-black text-white tracking-tight uppercase italic">
+            CYBER<span className="text-soc-primary">DETECT</span>_LAB
           </h1>
-          <p className="text-soc-muted mt-2 text-[10px] uppercase tracking-[0.5em] font-sans">Enterprise Security Nexus</p>
+          <p className="text-soc-muted text-[10px] uppercase tracking-[0.3em] mt-2 font-bold opacity-60">Security Operations Center Portal</p>
         </div>
 
-        <div className="bg-[#050510]/90 backdrop-blur-3xl border border-soc-primary/30 rounded-none shadow-[0_0_80px_rgba(0,243,255,0.15)] overflow-hidden p-10 relative font-mono">
-          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-soc-primary to-transparent"></div>
-          <div className="absolute bottom-0 right-0 w-2 h-2 bg-soc-primary"></div>
-          <div className="absolute top-0 left-0 w-2 h-2 bg-soc-secondary"></div>
-          
+        <div className="bg-soc-panel border border-soc-border rounded-3xl shadow-2xl p-10">
           {error && (
-            <div className="bg-soc-critical/10 border-l-4 border-soc-critical p-4 mb-8 text-xs font-black text-soc-critical uppercase tracking-widest flex items-center animate-in slide-in-from-left-4">
+            <div className="bg-soc-critical/10 border-l-4 border-soc-critical p-4 mb-6 text-[10px] font-bold text-soc-critical uppercase tracking-widest flex items-center">
               <Shield size={16} className="mr-3 shrink-0" />
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-soc-primary uppercase tracking-[0.3em] flex items-center">
-                 <span className="text-soc-secondary mr-2">{'>'}</span> Operator ID
-              </label>
-              <div className="relative group">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-soc-muted uppercase tracking-widest px-1">Operator Identity</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-soc-muted">
+                  <User size={18} />
+                </div>
                 <input
                   type="text"
                   required
-                  className="w-full bg-transparent border-b-2 border-soc-border py-2 text-lg text-white font-black focus:outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/20"
-                  placeholder="IDENTITY"
+                  className="w-full bg-soc-bg border border-soc-border rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/30"
+                  placeholder="Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
             </div>
 
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-soc-primary uppercase tracking-[0.3em] flex items-center">
-                 <span className="text-soc-secondary mr-2">{'>'}</span> Decryption Phrase
-              </label>
-              <div className="relative group">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-soc-muted uppercase tracking-widest px-1">Access Phrase</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-soc-muted">
+                  <Lock size={18} />
+                </div>
                 <input
                   type="password"
                   required
-                  className="w-full bg-soc-secondary/5 border-b-2 border-soc-border py-2 text-lg text-soc-secondary font-black focus:outline-none focus:border-soc-secondary transition-all placeholder:text-soc-secondary/10 tracking-[0.2em]"
+                  className="w-full bg-soc-bg border border-soc-border rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/30"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -143,31 +114,18 @@ export default function Login({ onLogin }) {
               </div>
             </div>
 
-            <div className="pt-6">
-              <button
-                type="submit"
-                disabled={loading}
-                className="relative w-full py-5 bg-soc-primary/10 hover:bg-soc-primary text-soc-primary hover:text-[#000] border border-soc-primary font-black text-xs uppercase tracking-[0.4em] transition-all duration-300 disabled:opacity-50 flex justify-center items-center group overflow-hidden"
-              >
-                <span className="absolute w-2 h-full bg-white opacity-50 left-[-20%] skew-x-[-20deg] group-hover:left-[120%] transition-all duration-700 ease-in-out"></span>
-                {loading ? (
-                  <div className="flex items-center space-x-2">
-                     <span className="w-2 h-2 bg-soc-bg animate-ping"></span>
-                     <span>DECRYPTING...</span>
-                  </div>
-                ) : (
-                  <span className="relative z-10">ESTABLISH UPLINK</span>
-                )}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-soc-primary text-black font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-white transition-all shadow-lg active:scale-[0.98] disabled:opacity-50"
+            >
+              {loading ? "Establishing Link..." : "Authenticate"}
+            </button>
           </form>
 
-          <div className="mt-12 pt-6 border-t border-soc-border/50 text-center flex flex-col space-y-2">
-            <p className="text-[9px] font-mono text-soc-secondary uppercase font-black tracking-widest">
-              WARNING: AUTHORIZED PERSONNEL ONLY
-            </p>
-            <p className="text-[8px] font-mono text-soc-muted uppercase">
-              ALL ACCESS ATTEMPTS ARE AUDITED BY VANGUARD_AI
+          <div className="mt-8 pt-6 border-t border-soc-border/50 text-center">
+            <p className="text-[9px] font-bold text-soc-muted uppercase tracking-widest">
+              Secured by CyberDetect Infrastructure
             </p>
           </div>
         </div>

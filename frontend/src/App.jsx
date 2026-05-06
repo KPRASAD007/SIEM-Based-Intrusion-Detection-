@@ -32,10 +32,9 @@ function SidebarItem({ to, icon: Icon, label }) {
   const isActive = location.pathname === to;
   
   return (
-    <Link to={to} className={`flex items-center px-4 py-4 rounded-3xl transition-all duration-500 mb-2 relative overflow-hidden group/item ${isActive ? 'bg-soc-primary/20 shadow-[inset_0_0_20px_rgba(0,243,255,0.4)] border border-soc-primary/30' : 'hover:bg-soc-primary/5 border border-transparent hover:border-soc-primary/10'}`}>
-      <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 rounded-r-full bg-soc-primary transition-all duration-300 ${isActive ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full group-hover/item:opacity-50 group-hover/item:translate-x-0'}`}></div>
-      <Icon size={24} className={`min-w-[24px] ml-1 transition-all duration-500 ${isActive ? 'text-soc-primary drop-shadow-[0_0_8px_rgba(0,243,255,0.8)] scale-110' : 'text-soc-muted group-hover/item:text-white group-hover/item:scale-110'}`} />
-      <span className="font-bold relative z-10 tracking-[0.2em] ml-6 opacity-0 translate-x-4 group-hover/sidebar:opacity-100 group-hover/sidebar:translate-x-0 transition-all duration-500 whitespace-nowrap text-xs uppercase">{label}</span>
+    <Link to={to} className={`flex items-center px-4 py-3.5 rounded-2xl transition-all duration-300 mb-1 group/item ${isActive ? 'bg-soc-primary text-black font-black' : 'text-soc-muted hover:bg-soc-panel hover:text-white'}`}>
+      <Icon size={20} className={`shrink-0 transition-transform ${isActive ? 'scale-110' : 'group-hover/item:scale-110'}`} />
+      <span className="ml-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">{label}</span>
     </Link>
   );
 }
@@ -250,81 +249,69 @@ function App() {
 
 
   return (
+  return (
     <Router>
-      <div 
-        onMouseMove={handleMouseMove}
-        className={`flex h-screen bg-soc-bg text-soc-text font-orbitron overflow-hidden relative selection:bg-soc-primary selection:text-soc-bg transition-all duration-700 ${liveAlerts.length > 0 ? 'shadow-[inset_0_0_100px_rgba(239,68,68,0.15)]' : ''}`}
-      >
-        {/* Context-Aware HUD Frame Glow */}
-        <div className={`fixed inset-0 pointer-events-none z-[200] border-[1px] transition-all duration-1000 ${liveAlerts.length > 0 ? 'border-soc-critical/30' : 'border-transparent'}`}></div>
-
-        {/* Global Deep Space / Grid Background with Parallax */}
-        <div 
-          className="absolute inset-0 bg-[linear-gradient(rgba(0,243,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.015)_1px,transparent_1px)] bg-[size:30px_30px] pointer-events-none z-0"
-          style={{ transform: `translate(${mousePos.x}px, ${mousePos.y}px)` }}
-        ></div>
-        <div className="absolute top-[-20%] right-[-10%] w-[1000px] h-[1000px] bg-soc-secondary/5 rounded-full blur-[150px] pointer-events-none z-0 mix-blend-screen animate-pulse-slow"></div>
-        <div className="absolute bottom-[-20%] left-[-10%] w-[800px] h-[800px] bg-soc-primary/5 rounded-full blur-[120px] pointer-events-none z-0 mix-blend-screen animate-pulse"></div>
-
-        {/* Biometric Breadcrumb (Current Page Ghosting) */}
-        <div className="fixed bottom-24 left-12 opacity-[0.02] pointer-events-none z-0 select-none">
-           <Fingerprint size={200} className="text-soc-primary" />
-        </div>
-
-        {/* Floating Expandable HUD Side-Dock */}
-        <div className="fixed left-6 top-6 bottom-6 w-24 hover:w-80 bg-soc-panel/40 backdrop-blur-3xl border border-soc-primary/20 rounded-[3rem] shadow-[0_0_50px_rgba(0,243,255,0.1),inset_0_0_20px_rgba(0,243,255,0.05)] z-[100] transition-all duration-[600ms] ease-[cubic-bezier(0.23,1,0.32,1)] flex flex-col group/sidebar overflow-hidden">
-          
-          <div className="p-8 flex items-center justify-center group-hover/sidebar:justify-start relative">
-             <div className="w-10 h-10 border-2 border-soc-primary shadow-[0_0_15px_rgba(0,243,255,0.6)] rounded-xl flex items-center justify-center shrink-0 bg-soc-bg">
-                <Shield size={20} className="text-soc-primary" />
-             </div>
-             <div className="absolute left-24 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                <h1 className="text-xl font-black text-white tracking-[0.3em] uppercase">CYBER<span className="text-soc-primary">DETECT</span></h1>
-             </div>
+      <div className="flex h-screen bg-soc-bg text-soc-text selection:bg-soc-primary selection:text-black">
+        
+        {/* Sidebar */}
+        <div className="w-20 hover:w-64 bg-soc-panel border-r border-soc-border transition-all duration-500 ease-in-out z-50 flex flex-col group/sidebar">
+          <div className="h-20 flex items-center px-6 overflow-hidden">
+            <Shield size={32} className="text-soc-primary shrink-0" />
+            <span className="ml-4 font-black text-lg tracking-tighter uppercase italic whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity">
+              CYBER<span className="text-soc-primary">DETECT</span>
+            </span>
           </div>
 
-          <nav className="flex-1 px-4 pb-4 overflow-y-auto custom-scrollbar">
-            <SidebarItem to="/" icon={Zap} label="Briefing" />
-            <SidebarItem to="/dashboard" icon={LayoutDashboard} label="Command" />
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
+            <SidebarItem to="/" icon={Zap} label="Overview" />
+            <SidebarItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
             <SidebarItem to="/logs" icon={Database} label="Telemetry" />
-            <SidebarItem to="/alerts" icon={Activity} label="Threats" />
+            <SidebarItem to="/alerts" icon={Activity} label="Alerts" />
             
-            <div className="my-4 mx-4 h-px bg-gradient-to-r from-transparent via-soc-primary/30 to-transparent"></div>
+            <div className="my-4 h-px bg-soc-border mx-4"></div>
             
-            <SidebarItem to="/sensors" icon={Globe} label="Agents" />
+            <SidebarItem to="/sensors" icon={Globe} label="Endpoints" />
             <SidebarItem to="/deception" icon={Ghost} label="Deception" />
             <SidebarItem to="/behavior" icon={Fingerprint} label="Behavioral" />
-            <SidebarItem to="/forensics" icon={Search} label="Sandbox" />
             <SidebarItem to="/incidents" icon={Briefcase} label="Cases" />
             
-            <div className="my-4 mx-4 h-px bg-gradient-to-r from-transparent via-soc-primary/30 to-transparent"></div>
+            <div className="my-4 h-px bg-soc-border mx-4"></div>
             
             <SidebarItem to="/rules" icon={Settings} label="Rules" />
-            {userRole === 'admin' && <SidebarItem to="/users" icon={Users} label="Operators" />}
-            {userRole === 'admin' && <SidebarItem to="/audit" icon={FileText} label="Audit Vault" />}
+            {userRole === 'admin' && <SidebarItem to="/users" icon={Users} label="Team" />}
+            {userRole === 'admin' && <SidebarItem to="/audit" icon={FileText} label="Audit" />}
             <SidebarItem to="/simulator" icon={Target} label="Simulate" />
           </nav>
+
+          <div className="p-4 border-t border-soc-border">
+             <button onClick={handleLogout} className="flex items-center w-full px-4 py-3 text-soc-muted hover:text-soc-critical hover:bg-soc-critical/10 rounded-2xl transition-all group/logout">
+                <LogOut size={20} className="shrink-0" />
+                <span className="ml-4 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover/sidebar:opacity-100 transition-opacity">Sign Out</span>
+             </button>
+          </div>
         </div>
-        
-        {/* Main Content Area (Pushed over to avoid floating dock) */}
-        <div className="flex-1 flex flex-col relative w-full h-full pl-36 pt-6 pr-6 pb-6 min-w-0 z-10 transition-all duration-500">
-          
-          {/* Floating Top Nav Pill */}
-          <header className="absolute top-6 right-6 h-16 bg-soc-panel/30 backdrop-blur-2xl border border-soc-primary/30 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.5)] flex items-center justify-end px-6 z-[110]">
-            <div className="flex items-center space-x-6">
-              <div className="hidden md:flex flex-col items-end">
-                  <div className="flex items-center space-x-2">
-                     <span className="text-[9px] font-black text-soc-secondary uppercase animate-ping absolute">LIVE</span>
-                     <span className="text-[9px] font-black text-soc-primary uppercase relative">LIVE STRM</span>
-                  </div>
-              </div>
-              <div className="w-10 h-10 rounded-full border-2 border-soc-primary shadow-[0_0_10px_rgba(0,243,255,0.4)] overflow-hidden cursor-pointer hover:border-white transition-all bg-soc-bg flex items-center justify-center p-1" onClick={() => setShowProfileMenu(!showProfileMenu)}>
-                <img src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentUser || 'admin'}`} alt="User" className="w-full h-full object-cover rounded-full" />
-              </div>
-            </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-w-0 bg-soc-bg relative overflow-hidden">
+          {/* Top Bar */}
+          <header className="h-20 border-b border-soc-border flex items-center justify-between px-10 bg-soc-bg/80 backdrop-blur-md z-40">
+             <div className="flex items-center text-[10px] font-bold text-soc-muted uppercase tracking-[0.4em]">
+                <div className="w-2 h-2 rounded-full bg-soc-hacker mr-3 animate-pulse"></div>
+                Grid Status: Connected
+             </div>
+             
+             <div className="flex items-center space-x-6">
+                <div className="text-right hidden sm:block">
+                   <p className="text-[10px] font-black text-white leading-none uppercase">{currentUser}</p>
+                   <p className="text-[9px] text-soc-muted uppercase font-bold mt-1">{userRole}</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-soc-panel border border-soc-border flex items-center justify-center p-1 cursor-pointer hover:border-soc-primary transition-all overflow-hidden" onClick={() => setShowProfileMenu(!showProfileMenu)}>
+                   <img src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentUser}`} alt="User" className="w-full h-full object-cover rounded-lg" />
+                </div>
+             </div>
           </header>
           
-          <main className="flex-1 overflow-auto bg-transparent custom-scrollbar relative rounded-[3rem] border border-soc-primary/10 shadow-[inner_0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-sm p-8">
+          <main className="flex-1 overflow-auto custom-scrollbar p-10">
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/dashboard" element={<Dashboard />} />
