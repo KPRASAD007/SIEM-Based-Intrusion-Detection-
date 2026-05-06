@@ -13,19 +13,20 @@ export default function LogManagement() {
   const [viewMode, setViewMode] = useState('raw'); // 'raw' or 'stats'
   const [statsData, setStatsData] = useState([]);
 
-  const fetchLogs = (searchQuery = '') => {
-    setLoading(true);
-    let url = `${API_BASE_URL}/api/logs`;
+  const fetchLogs = (searchQuery = '', silent = false) => {
+    if (!silent) setLoading(true);
+    const t = Date.now();
+    let url = `${API_BASE_URL}/api/logs?t=${t}`;
     
     // Simple Splunk-style pipe detection
     if (searchQuery) {
       if (searchQuery.includes('| stats')) {
         const fieldMatch = searchQuery.match(/by\s+(\w+)/);
         const field = fieldMatch ? fieldMatch[1] : 'ip_address';
-        url = `${API_BASE_URL}/api/search/stats?query=${encodeURIComponent(searchQuery.split('|')[0].trim())}&field=${field}`;
+        url = `${API_BASE_URL}/api/search/stats?query=${encodeURIComponent(searchQuery.split('|')[0].trim())}&field=${field}&t=${t}`;
         setViewMode('stats');
       } else {
-        url = `${API_BASE_URL}/api/search?query=${encodeURIComponent(searchQuery)}`;
+        url = `${API_BASE_URL}/api/search?query=${encodeURIComponent(searchQuery)}&t=${t}`;
         setViewMode('raw');
       }
     } else {
@@ -76,7 +77,7 @@ export default function LogManagement() {
            <p className="text-[10px] font-bold text-soc-muted tracking-[0.3em] mt-2">MULTIDIMENSIONAL SECURITY TELEMETRY EXPLORER</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <button onClick={fetchLogs} className="flex items-center px-4 py-2.5 bg-soc-panel/60 border border-soc-border rounded-xl hover:border-soc-primary hover:text-soc-primary hover:shadow-[0_0_15px_rgba(16,185,129,0.15)] transition-all text-xs font-bold uppercase tracking-widest">
+          <button onClick={() => fetchLogs(query, true)} className="flex items-center px-4 py-2.5 bg-soc-panel/60 border border-soc-border rounded-xl hover:border-soc-primary hover:text-soc-primary hover:shadow-[0_0_15px_rgba(16,185,129,0.15)] transition-all text-xs font-bold uppercase tracking-widest">
             <RefreshCw size={14} className={`mr-2.5 ${loading ? 'animate-spin' : ''}`} /> Sync_Nodes
           </button>
           
