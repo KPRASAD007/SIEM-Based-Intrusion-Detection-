@@ -281,7 +281,7 @@ function App() {
             <SidebarItem to="/rules" icon={Settings} label="Rules" />
             {userRole === 'admin' && <SidebarItem to="/users" icon={Users} label="Team" />}
             {userRole === 'admin' && <SidebarItem to="/audit" icon={FileText} label="Audit" />}
-            <SidebarItem to="/simulator" icon={Target} label="Simulate" />
+            <SidebarItem to="/simulator" icon={Target} label="Sandbox" />
           </nav>
 
           <div className="p-4 border-t border-soc-border">

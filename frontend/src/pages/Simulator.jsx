@@ -43,7 +43,7 @@ export default function Simulator() {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-soc-border pb-8">
         <div>
           <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic flex items-center">
-            <Zap className="mr-4 text-soc-warning animate-pulse" size={36} /> LIVE_FIRE_SIM
+            <Zap className="mr-4 text-soc-warning animate-pulse" size={36} /> VANGUARD_SANDBOX
           </h2>
           <p className="text-[10px] font-bold text-soc-muted tracking-[0.4em] mt-3">ADVERSARY EMULATION & SIGNAL INJECTION LABORATORY</p>
         </div>
