@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, ShieldAlert, Globe, Activity, RefreshCw, Search, Server } from 'lucide-react';
+import { API_BASE_URL } from '../config';
+
 
 export default function WebSurveillance() {
   const [webLogs, setWebLogs] = useState([]);
@@ -8,7 +10,7 @@ export default function WebSurveillance() {
 
   const fetchWebLogs = () => {
     setLoading(true);
-    fetch(`http://${window.location.hostname}:8080/api/logs`)
+    fetch(`${API_BASE_URL}/api/logs`)
       .then(res => res.json())
       .then(data => {
         const filtered = data.filter(l => l.event_type === "Web Traffic" || l.event_id === "DNS-WEB");

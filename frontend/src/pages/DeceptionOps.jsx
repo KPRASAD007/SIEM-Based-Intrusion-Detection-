@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Target, Shield, AlertTriangle, Activity, Database, Server, Plus, Trash2, Heart, Zap } from 'lucide-react';
+import { API_BASE_URL } from '../config';
+
 
 export default function DeceptionOps() {
   const [assets, setAssets] = useState([]);
@@ -14,8 +16,8 @@ export default function DeceptionOps() {
     setLoading(true);
     try {
       const [assetsRes, tokensRes] = await Promise.all([
-        fetch(`http://${window.location.hostname}:8080/api/deception/assets`),
-        fetch(`http://${window.location.hostname}:8080/api/deception/tokens`)
+        fetch(`${API_BASE_URL}/api/deception/assets`),
+        fetch(`${API_BASE_URL}/api/deception/tokens`)
       ]);
       const assetsData = await assetsRes.json();
       const tokensData = await tokensRes.json();
@@ -35,7 +37,7 @@ export default function DeceptionOps() {
      const ip = `10.0.5.${Math.floor(Math.random() * 254)}`;
      
      try {
-       await fetch(`http://${window.location.hostname}:8080/api/deception/assets`, {
+       await fetch(`${API_BASE_URL}/api/deception/assets`, {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
          body: JSON.stringify({ name, type, ip, status: 'active', last_interaction: 'None' })
@@ -52,7 +54,7 @@ export default function DeceptionOps() {
     const value = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     
     try {
-      await fetch(`http://${window.location.hostname}:8080/api/deception/tokens`, {
+      await fetch(`${API_BASE_URL}/api/deception/tokens`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, value, type, risk_score: 85 })

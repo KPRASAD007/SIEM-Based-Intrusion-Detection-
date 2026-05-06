@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { ShieldAlert, Activity, Users, Database, Maximize2, X, TrendingUp, AlertTriangle, Zap, Fingerprint } from 'lucide-react';
+import { API_BASE_URL } from '../config';
+
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -14,8 +16,8 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const [alertsRes, logsRes] = await Promise.all([
-        fetch(`http://${window.location.hostname}:8080/api/alerts`),
-        fetch(`http://${window.location.hostname}:8080/api/logs?limit=1000`)
+        fetch(`${API_BASE_URL}/api/alerts`),
+        fetch(`${API_BASE_URL}/api/logs?limit=1000`)
       ]);
       const alertsData = await alertsRes.json();
       const logsData = await logsRes.json();

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Briefcase, User, MessageSquare, Clock, X, CheckCircle, AlertCircle, Plus, Send, Shield, Activity, Target, ShieldCheck, Info, Terminal, AlertTriangle, Search, Trash2, ChevronRight, BookOpen, Fingerprint, Download, Share2 } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 import KillChainVisualization from '../components/KillChainVisualization';
+
 
 const ATTACK_PLAYBOOKS = {
   recon: {
@@ -64,7 +66,7 @@ export default function Incidents() {
 
   const fetchIncidents = () => {
     setLoading(true);
-    fetch(`http://${window.location.hostname}:8080/api/incidents`)
+    fetch(`${API_BASE_URL}/api/incidents`)
       .then(res => res.json())
       .then(data => {
         setIncidents(data);
@@ -90,7 +92,7 @@ export default function Incidents() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
-      const res = await fetch(`http://${window.location.hostname}:8080/api/incidents`, {
+      const res = await fetch(`${API_BASE_URL}/api/incidents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -116,7 +118,7 @@ export default function Incidents() {
     setIsAnalyzing(true);
     setAiAnalysis(null);
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/incidents/${selectedCase.id}/ai-analyze`, {
+      const res = await fetch(`${API_BASE_URL}/api/incidents/${selectedCase.id}/ai-analyze`, {
         method: 'POST'
       });
       if (res.ok) {
@@ -131,7 +133,7 @@ export default function Incidents() {
 
   const handleStatusUpdate = async (id, newStatus) => {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/alerts/${id}/status?status=${newStatus}`, {
+      const res = await fetch(`${API_BASE_URL}/api/alerts/${id}/status?status=${newStatus}`, {
         method: 'PUT'
       });
       if (res.ok) {
@@ -145,7 +147,7 @@ export default function Incidents() {
     if (!newNote.trim() || !selectedCase) return;
     setSubmittingNote(true);
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/incidents/${selectedCase.id}/notes?note_content=${encodeURIComponent(newNote)}`, {
+      const res = await fetch(`${API_BASE_URL}/api/incidents/${selectedCase.id}/notes?note_content=${encodeURIComponent(newNote)}`, {
         method: 'PUT'
       });
       if (res.ok) {

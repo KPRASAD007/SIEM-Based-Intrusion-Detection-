@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Server, Activity, ArrowDownToLine, RefreshCw, Terminal, Globe, Network, Search, Filter, X, ShieldCheck, Target, Wifi } from 'lucide-react';
+import { API_BASE_URL, WS_BASE_URL } from '../config';
+
 
 export default function RemoteSensors() {
   const [remoteLogs, setRemoteLogs] = useState([]);
@@ -19,7 +21,7 @@ export default function RemoteSensors() {
 
   const fetchRemoteLogs = (silent = false) => {
     if (!silent) setLoading(true);
-    fetch(`http://${window.location.hostname}:8080/api/logs?limit=1000`)
+    fetch(`${API_BASE_URL}/api/logs?limit=1000`)
       .then(res => res.json())
       .then(data => {
         const filtered = data.filter(isRemoteLog);
@@ -67,7 +69,7 @@ export default function RemoteSensors() {
     fetchRemoteLogs();
 
     // WS is optional for Vercel, but useful for Local Dev
-    const wsUrl = `ws://${window.location.hostname}:8080/api/logs/ws`;
+    const wsUrl = `${WS_BASE_URL}/api/logs/ws`;
     let ws;
     
     try {
@@ -101,7 +103,7 @@ export default function RemoteSensors() {
 
   // Fetch real server IP from backend (Tailscale > LAN > primary)
   useEffect(() => {
-    fetch(`http://${window.location.hostname}:8080/api/system/info`)
+    fetch(`${API_BASE_URL}/api/system/info`)
       .then(r => r.json())
       .then(info => {
         // Prefer Tailscale IP for cross-network reach, then LAN, then primary
@@ -234,7 +236,7 @@ export default function RemoteSensors() {
                       {isDisconnected ? (
                         <button
                           onClick={async () => {
-                            await fetch(`http://${window.location.hostname}:8080/api/logs/agents/${encodeURIComponent(h.host)}/reconnect`, { method: 'POST' });
+                            await fetch(`${API_BASE_URL}/api/logs/agents/${encodeURIComponent(h.host)}/reconnect`, { method: 'POST' });
                             setActiveHosts(prev => prev.map(a => a.host === h.host ? { ...a, disconnected: false } : a));
                           }}
                           className="flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest bg-soc-secondary/10 border border-soc-secondary/30 text-soc-secondary rounded-lg hover:bg-soc-secondary hover:text-soc-bg transition-all"
@@ -245,7 +247,7 @@ export default function RemoteSensors() {
                         <button
                           onClick={async () => {
                             if (!confirm(`Disconnect agent "${h.host}"? The agent process on that machine will be terminated.`)) return;
-                            await fetch(`http://${window.location.hostname}:8080/api/logs/agents/${encodeURIComponent(h.host)}`, { method: 'DELETE' });
+                            await fetch(`${API_BASE_URL}/api/logs/agents/${encodeURIComponent(h.host)}`, { method: 'DELETE' });
                             setActiveHosts(prev => prev.map(a => a.host === h.host ? { ...a, disconnected: true } : a));
                           }}
                           className="flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest bg-soc-critical/10 border border-soc-critical/30 text-soc-critical rounded-lg hover:bg-soc-critical hover:text-white transition-all"

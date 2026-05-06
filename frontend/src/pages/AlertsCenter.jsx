@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, CheckCircle, Clock, X, AlertTriangle, Activity, Lock, Search, Filter, Globe, Database, ShieldCheck, ShieldX, Zap, RefreshCw, Target, Scan } from 'lucide-react';
+import { API_BASE_URL, WS_BASE_URL } from '../config';
+
 
 export default function AlertsCenter() {
   const [allAlerts, setAllAlerts] = useState([]);
@@ -16,7 +18,7 @@ export default function AlertsCenter() {
 
   const fetchAlerts = () => {
     setLoading(true);
-    fetch(`http://${window.location.hostname}:8080/api/alerts`)
+    fetch(`${API_BASE_URL}/api/alerts`)
       .then(res => res.json())
       .then(data => {
         setAllAlerts(data);
@@ -32,7 +34,7 @@ export default function AlertsCenter() {
     fetchAlerts();
 
     // Real-time alert updates
-    const ws = new WebSocket(`ws://${window.location.hostname}:8080/api/logs/ws`);
+    const ws = new WebSocket(`${WS_BASE_URL}/api/logs/ws`);
     ws.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
@@ -49,7 +51,7 @@ export default function AlertsCenter() {
   const handleStatusChange = async (id, newStatus) => {
     try {
       const token = localStorage.getItem('siem_token');
-      const res = await fetch(`http://${window.location.hostname}:8080/api/alerts/${id}/status?status=${newStatus}`, {
+      const res = await fetch(`${API_BASE_URL}/api/alerts/${id}/status?status=${newStatus}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -82,7 +84,7 @@ export default function AlertsCenter() {
     setIntelError(null);
     setIntelData(null);
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/intel/lookup/${encodeURIComponent(ip)}`);
+      const res = await fetch(`${API_BASE_URL}/api/intel/lookup/${encodeURIComponent(ip)}`);
       if (res.ok) {
         const data = await res.json();
         setIntelData(data);
@@ -109,7 +111,7 @@ export default function AlertsCenter() {
     
     try {
       const endpoint = action === 'quarantine' ? `quarantine/${encodeURIComponent(target)}` : `ban-ip/${encodeURIComponent(target)}`;
-      const res = await fetch(`http://${window.location.hostname}:8080/api/soar/${endpoint}`, { 
+      const res = await fetch(`${API_BASE_URL}/api/soar/${endpoint}`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });

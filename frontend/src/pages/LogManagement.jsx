@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Download, RefreshCw, Database, X, Globe, Activity, Scan } from 'lucide-react';
+import { API_BASE_URL } from '../config';
+
 
 export default function LogManagement() {
   const [logs, setLogs] = useState([]);
@@ -13,17 +15,17 @@ export default function LogManagement() {
 
   const fetchLogs = (searchQuery = '') => {
     setLoading(true);
-    let url = `http://${window.location.hostname}:8080/api/logs`;
+    let url = `${API_BASE_URL}/api/logs`;
     
     // Simple Splunk-style pipe detection
     if (searchQuery) {
       if (searchQuery.includes('| stats')) {
         const fieldMatch = searchQuery.match(/by\s+(\w+)/);
         const field = fieldMatch ? fieldMatch[1] : 'ip_address';
-        url = `http://${window.location.hostname}:8080/api/search/stats?query=${encodeURIComponent(searchQuery.split('|')[0].trim())}&field=${field}`;
+        url = `${API_BASE_URL}/api/search/stats?query=${encodeURIComponent(searchQuery.split('|')[0].trim())}&field=${field}`;
         setViewMode('stats');
       } else {
-        url = `http://${window.location.hostname}:8080/api/search?query=${encodeURIComponent(searchQuery)}`;
+        url = `${API_BASE_URL}/api/search?query=${encodeURIComponent(searchQuery)}`;
         setViewMode('raw');
       }
     } else {

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, Trash2, Shield, Mail, Calendar, Activity, Lock, CheckCircle, X, AlertTriangle } from 'lucide-react';
+import { API_BASE_URL } from '../config';
+
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -15,7 +17,7 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/auth/users`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -38,7 +40,7 @@ export default function UserManagement() {
     e.preventDefault();
     setModalError(null);
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/auth/register`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -65,7 +67,7 @@ export default function UserManagement() {
     if (!window.confirm(`Decommission Operator ${username}? This action is irreversible.`)) return;
     
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/auth/users/${username}`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/users/${username}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

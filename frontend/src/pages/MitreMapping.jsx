@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Target, Shield, Activity, RefreshCw } from 'lucide-react';
+import { API_BASE_URL } from '../config';
+
 
 const TACTICS = [
   { id: 'TA0001', name: 'Initial Access', techniques: ['T1190', 'T1133', 'T1566'] },
@@ -20,7 +22,7 @@ export default function MitreMapping() {
   const scanCoverage = async () => {
     setIsScanning(true);
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/rules`);
+      const res = await fetch(`${API_BASE_URL}/api/rules`);
       const data = await res.json();
       const newCoverage = {};
       let active = 0;

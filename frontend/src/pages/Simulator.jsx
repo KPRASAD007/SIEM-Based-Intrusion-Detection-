@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Zap, Terminal, CheckCircle } from 'lucide-react';
+import { API_BASE_URL } from '../config';
+
 
 export default function Simulator() {
   const [scenarios, setScenarios] = useState([]);
@@ -8,7 +10,7 @@ export default function Simulator() {
   const [result, setResult] = useState(null);
 
   useEffect(() => {
-    fetch(`http://${window.location.hostname}:8080/api/simulator/scenarios`)
+    fetch(`${API_BASE_URL}/api/simulator/scenarios`)
       .then(res => res.json())
       .then(data => {
         setScenarios(data);
@@ -23,7 +25,7 @@ export default function Simulator() {
   const runScenario = (id) => {
     setRunning(id);
     setResult(null);
-    fetch(`http://${window.location.hostname}:8080/api/simulator/run/${id}`, { method: 'POST' })
+    fetch(`${API_BASE_URL}/api/simulator/run/${id}`, { method: 'POST' })
       .then(res => res.json())
       .then(data => {
         setRunning(null);
@@ -119,7 +121,7 @@ export default function Simulator() {
               onClick={() => {
                 setRunning('caldera');
                 setResult(null);
-                fetch(`http://${window.location.hostname}:8080/api/logs/caldera`, {
+                fetch(`${API_BASE_URL}/api/logs/caldera`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({

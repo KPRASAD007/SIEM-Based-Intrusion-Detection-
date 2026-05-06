@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Fingerprint, TrendingUp, AlertCircle, Activity, ShieldCheck, UserCheck, ShieldAlert, BarChart3, ListFilter } from 'lucide-react';
+import { API_BASE_URL } from '../config';
+
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export default function BehavioralAnalytics() {
@@ -15,8 +17,8 @@ export default function BehavioralAnalytics() {
     setLoading(true);
     try {
       const [profilesRes, anomaliesRes] = await Promise.all([
-        fetch(`http://${window.location.hostname}:8080/api/behavior/profiles`),
-        fetch(`http://${window.location.hostname}:8080/api/behavior/anomalies`)
+        fetch(`${API_BASE_URL}/api/behavior/profiles`),
+        fetch(`${API_BASE_URL}/api/behavior/anomalies`)
       ]);
       const profilesData = await profilesRes.json();
       const anomaliesData = await anomaliesRes.json();

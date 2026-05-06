@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Clock, User, Activity, AlertCircle, FileText, Search, Filter } from 'lucide-react';
+import { API_BASE_URL } from '../config';
+
 
 export default function AuditVault() {
   const [logs, setLogs] = useState([]);
@@ -10,7 +12,7 @@ export default function AuditVault() {
   useEffect(() => {
     const fetchAuditLogs = async () => {
       try {
-        const res = await fetch(`http://${window.location.hostname}:8080/api/auth/audit-logs`, {
+        const res = await fetch(`${API_BASE_URL}/api/auth/audit-logs`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -163,7 +165,7 @@ export default function AuditVault() {
                   
                   if (window.confirm(`Surgical Strike: Purge all records for ${targetHost}?`)) {
                     try {
-                      const res = await fetch(`http://${window.location.hostname}:8080/api/logs/purge`, {
+                      const res = await fetch(`${API_BASE_URL}/api/logs/purge`, {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify({ hostname: targetHost })
@@ -196,7 +198,7 @@ export default function AuditVault() {
                   if (window.confirm("NUCLEAR OPTION: Wipe ALL telemetry data? This cannot be reversed.")) {
                     if (window.confirm("FINAL_AUTHORIZATION: Confirm global data destruction?")) {
                        try {
-                         const res = await fetch(`http://${window.location.hostname}:8080/api/logs/purge`, {
+                         const res = await fetch(`${API_BASE_URL}/api/logs/purge`, {
                            method: 'POST',
                            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                            body: JSON.stringify({}) // Full wipe

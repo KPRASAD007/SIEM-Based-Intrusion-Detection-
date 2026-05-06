@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Plus, Trash2, Info, ChevronDown, ChevronRight, Activity, Target, CheckCircle, XCircle, FileText, X } from 'lucide-react';
+import { API_BASE_URL } from '../config';
+
 
 export default function RulesEngine() {
   const [rules, setRules] = useState([]);
@@ -18,7 +20,7 @@ export default function RulesEngine() {
   }, []);
 
   const fetchRules = () => {
-    fetch(`http://${window.location.hostname}:8080/api/rules`)
+    fetch(`${API_BASE_URL}/api/rules`)
       .then(res => res.json())
       .then(data => {
         setRules(data);
@@ -28,19 +30,19 @@ export default function RulesEngine() {
 
   const toggleRule = (id, e) => {
     e.stopPropagation();
-    fetch(`http://${window.location.hostname}:8080/api/rules/${id}/toggle`, { method: 'PUT' })
+    fetch(`${API_BASE_URL}/api/rules/${id}/toggle`, { method: 'PUT' })
       .then(() => fetchRules());
   };
 
   const deleteRule = (id, e) => {
     e.stopPropagation();
-    fetch(`http://${window.location.hostname}:8080/api/rules/${id}`, { method: 'DELETE' })
+    fetch(`${API_BASE_URL}/api/rules/${id}`, { method: 'DELETE' })
       .then(() => fetchRules());
   };
 
   const handleCreateRule = (e) => {
     e.preventDefault();
-    fetch(`http://${window.location.hostname}:8080/api/rules`, {
+    fetch(`${API_BASE_URL}/api/rules`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newRule)
@@ -53,7 +55,7 @@ export default function RulesEngine() {
   const handleSigmaImport = (e) => {
     e.preventDefault();
     setImportingSigma(true);
-    fetch(`http://${window.location.hostname}:8080/api/sigma/convert?rule_yaml=${encodeURIComponent(sigmaContent)}`, {
+    fetch(`${API_BASE_URL}/api/sigma/convert?rule_yaml=${encodeURIComponent(sigmaContent)}`, {
       method: 'POST'
     }).then(res => res.json())
       .then(() => {
