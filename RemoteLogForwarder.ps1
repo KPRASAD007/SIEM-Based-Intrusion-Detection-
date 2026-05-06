@@ -80,7 +80,7 @@ function Stream-Logs {
     $FilterXml = @"
 <QueryList>
   <Query Id="0" Path="Security">
-    <Select Path="Security">*[System[TimeCreated[@SystemTime>='$StartTimeUtc'] and (EventID=4688 or EventID=4624)]]</Select>
+    <Select Path="Security">*[System[TimeCreated[@SystemTime>='$StartTimeUtc'] and (EventID=4688 or EventID=4624 or EventID=4625)]]</Select>
   </Query>
 </QueryList>
 "@
@@ -105,7 +105,7 @@ function Stream-Logs {
             user = if ($EventId -eq "4624") { $ParsedData["TargetUserName"] } else { $ParsedData["SubjectUserName"] }
             ip_address = if ($ParsedData["IpAddress"] -and $ParsedData["IpAddress"] -ne "-") { $ParsedData["IpAddress"] } else { $Hostname }
             command_line = if ($EventId -eq "4688") { $ParsedData["CommandLine"] } else { "" }
-            event_type = if ($EventId -eq "4688") { "Process Execution" } else { "Logon" }
+            event_type = if ($EventId -eq "4688") { "Process Execution" } elseif ($EventId -eq "4624") { "Successful Logon" } elseif ($EventId -eq "4625") { "Failed Logon" } else { "Logon" }
             severity = "low"
             timestamp = $Event.TimeCreated.ToString("yyyy-MM-ddTHH:mm:ssZ")
             details = @{ host = $Hostname; source = "Resilience Agent v3"; parsed_context = $ParsedData }
