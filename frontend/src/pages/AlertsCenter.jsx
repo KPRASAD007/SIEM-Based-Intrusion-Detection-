@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldAlert, CheckCircle, Clock, X, AlertTriangle, Activity, Lock, Search, Filter, Globe, Database, ShieldCheck, ShieldX, Zap, RefreshCw, Target, Scan } from 'lucide-react';
 import { API_BASE_URL, WS_BASE_URL } from '../config';
 
@@ -30,24 +30,6 @@ export default function AlertsCenter() {
       });
   };
 
-  useEffect(() => {
-    fetchAlerts();
-
-    // Real-time alert updates
-    const ws = new WebSocket(`${WS_BASE_URL}/api/logs/ws`);
-    ws.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        if (payload.type === 'NEW_ALERT') {
-          setAllAlerts(prev => [payload.data, ...prev]);
-        }
-      } catch (e) {
-        console.error("WS error in AlertsCenter:", e);
-      }
-    };
-    return () => ws.close();
-  }, []);
-
   const handleStatusChange = async (id, newStatus) => {
     try {
       const token = sessionStorage.getItem('siem_token');
@@ -58,8 +40,12 @@ export default function AlertsCenter() {
         }
       });
       if (res.ok) {
-        setAllAlerts(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
-        if (investigatingAlert?.id === id) setInvestigatingAlert(null);
+        setAllAlerts(prev => prev.map(a => (a.id === id || a._id === id) ? { ...a, status: newStatus } : a));
+        if (investigatingAlert?.id === id || investigatingAlert?._id === id) setInvestigatingAlert(null);
+      } else {
+        const err = await res.json();
+        console.error("Resolve failed:", err);
+        alert(`Resolution failed: ${err.detail || 'Access Denied'}`);
       }
     } catch (err) {
       console.error("Failed to update status", err);
@@ -146,6 +132,27 @@ export default function AlertsCenter() {
     const date = new Date(dateStr);
     return isNaN(date.getTime()) ? 'N/A' : date.toLocaleString();
   };
+
+  useEffect(() => {
+    fetchAlerts();
+
+    // Real-time alert updates
+    const ws = new WebSocket(`${WS_BASE_URL}/api/logs/ws`);
+    ws.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.type === 'NEW_ALERT') {
+          const newAlert = payload.data;
+          // Ensure ID consistency
+          if (newAlert._id && !newAlert.id) newAlert.id = newAlert._id;
+          setAllAlerts(prev => [newAlert, ...prev]);
+        }
+      } catch (e) {
+        console.error("WS error in AlertsCenter:", e);
+      }
+    };
+    return () => ws.close();
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
