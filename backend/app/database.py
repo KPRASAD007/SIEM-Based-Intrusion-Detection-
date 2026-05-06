@@ -24,15 +24,21 @@ async def connect_to_mongo():
         if "@" in MONGO_URL:
             safe_url = "mongodb://****:****@" + MONGO_URL.split("@")[1]
             
-        db_instance.client = AsyncIOMotorClient(MONGO_URL)
+        db_instance.client = AsyncIOMotorClient(
+            MONGO_URL,
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=5000
+        )
         db_instance.db = db_instance.client[DB_NAME]
         
-        # Verify connection
+        # Verify connection with a short timeout
         await db_instance.client.admin.command('ping')
         print(f"SYSTEM: Secured MongoDB Link Established -> {safe_url}")
     except Exception as e:
+        db_instance.db = None # Ensure it retries next time
         logging.error(f"DATABASE_CRITICAL: Failed to connect to MongoDB: {e}")
-        print(f"CRITICAL: MongoDB Connection Failure. System functionality will be limited.")
+        print(f"CRITICAL: MongoDB Connection Failure. Ensure MONGO_URL env var is set and IP is whitelisted.")
+        raise e # Re-raise so FastAPI shows 500 instead of attempting to use None
 
 async def close_mongo_connection():
     if db_instance.client:

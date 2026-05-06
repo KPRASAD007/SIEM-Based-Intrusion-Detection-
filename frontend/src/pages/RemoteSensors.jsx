@@ -62,52 +62,40 @@ export default function RemoteSensors() {
       .catch(() => setLoading(false));
   };
 
-  // WebSocket for REAL-TIME updates (sub-second latency)
+  // Telemetry Sync Logic: Unified Polling & WebSocket Attempt
   useEffect(() => {
     fetchRemoteLogs();
 
+    // WS is optional for Vercel, but useful for Local Dev
     const wsUrl = `ws://${window.location.hostname}:8080/api/logs/ws`;
-    const ws = new WebSocket(wsUrl);
-
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.type === "NEW_LOG" && isRemoteLog(msg.data)) {
-          const log = msg.data;
-          if (log.event_id !== "HEARTBEAT-001") {
-            setRemoteLogs(prev => [log, ...prev].slice(0, 500));
+    let ws;
+    
+    try {
+      ws = new WebSocket(wsUrl);
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "NEW_LOG" && isRemoteLog(msg.data)) {
+            const log = msg.data;
+            if (log.event_id !== "HEARTBEAT-001") {
+              setRemoteLogs(prev => [log, ...prev].slice(0, 500));
+            }
+            setLastSync(new Date());
           }
-          const host = log.details?.host || log.ip_address;
-          if (host) {
-            // Immediately add/update host on any incoming log — no poll wait needed
-            setActiveHosts(prev => {
-              const existing = prev.filter(h => h.host !== host);
-              const current = prev.find(h => h.host === host);
-              return [{ ...(current || {}), host, lastSeen: Date.now() }, ...existing];
-            });
-          }
-          setLastSync(new Date());
-        }
-        // Handle agent disconnect/reconnect broadcasts
-        if (msg.type === "AGENT_DISCONNECTED") {
-          setActiveHosts(prev => prev.map(h => h.host === msg.data.hostname ? { ...h, disconnected: true } : h));
-        }
-        if (msg.type === "AGENT_RECONNECTED") {
-          setActiveHosts(prev => prev.map(h => h.host === msg.data.hostname ? { ...h, disconnected: false } : h));
-        }
-      } catch (_) {}
-    };
+        } catch (_) {}
+      };
+      ws.onopen = () => setLiveMode(true);
+      ws.onclose = () => setLiveMode(false);
+    } catch (e) {
+      console.warn("WebSocket initialization failed, falling back to polling.");
+    }
 
-    ws.onopen = () => setLiveMode(true);
-    ws.onclose = () => setLiveMode(false);
-
-    // Poll every 3s (faster than before) — only for topology sync, WS handles real-time
+    // High-frequency polling fallback (every 3s)
     const poll = setInterval(() => fetchRemoteLogs(true), 3000);
 
     return () => {
-      ws.close();
+      if (ws) ws.close();
       clearInterval(poll);
-      clearInterval(intervalRef.current);
     };
   }, []);
 

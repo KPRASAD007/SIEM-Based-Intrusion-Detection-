@@ -118,8 +118,6 @@ function App() {
     const connectWebSocket = () => {
       ws = new WebSocket(`${WS_BASE_URL}/api/logs/ws`);
 
-
-      
       ws.onopen = () => {
         console.log("Connected to SOC real-time stream");
         clearTimeout(reconnectTimer);
@@ -142,8 +140,8 @@ function App() {
       };
 
       ws.onclose = () => {
-        console.log("SOC stream disconnected. Reconnecting in 3s...");
-        reconnectTimer = setTimeout(connectWebSocket, 3000);
+        console.log("SOC stream disconnected. Polling mode active.");
+        reconnectTimer = setTimeout(connectWebSocket, 5000); // Slower reconnect on fail
       };
 
       ws.onerror = (err) => {
@@ -152,11 +150,44 @@ function App() {
       };
     };
 
-    connectWebSocket();
+    // --- POLLING FALLBACK FOR VERCEL ---
+    // Since Vercel doesn't support WebSockets, we poll every 10s for new alerts
+    const pollAlerts = async () => {
+      // Only poll if WebSocket is not OPEN
+      if (ws && ws.readyState === WebSocket.OPEN) return;
+      
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/alerts?limit=1`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) {
+            const latest = data[0];
+            // Check if this alert is new (within last 30s)
+            const alertTime = new Date(latest.triggered_time).getTime();
+            if (Date.now() - alertTime < 30000) {
+              setLiveAlerts(prev => {
+                const exists = prev.some(a => (a._id || a.id) === (latest._id || latest.id));
+                if (exists) return prev;
+                
+                const next = [latest, ...prev].slice(0, 3);
+                setTimeout(() => {
+                  setLiveAlerts(current => current.filter(a => (a._id || a.id) !== (latest._id || latest.id)));
+                }, 5500);
+                return next;
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Polling fallback error:", err);
+      }
+    };
 
+    connectWebSocket();
+    const pollInterval = setInterval(pollAlerts, 10000);
     return () => {
-      if (ws) ws.close();
-      clearTimeout(reconnectTimer);
+        clearInterval(pollInterval);
+        if (ws) ws.close();
     };
   }, []);
 

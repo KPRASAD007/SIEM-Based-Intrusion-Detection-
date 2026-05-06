@@ -25,8 +25,19 @@ export default function Login({ onLogin }) {
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.detail || 'Invalid credentials');
+        let errorMsg = 'Invalid credentials';
+        try {
+          const errData = await response.json();
+          errorMsg = errData.detail || errorMsg;
+        } catch (e) {
+          // If we get an "Internal Server Error" string instead of JSON
+          if (response.status === 500) {
+            errorMsg = "DATABASE_OFFLINE: Failed to establish link with log vault.";
+          } else {
+            errorMsg = `COMM_ERROR: Server returned status ${response.status}`;
+          }
+        }
+        throw new Error(errorMsg);
       }
 
       const data = await response.json();
