@@ -21,7 +21,7 @@ export default function RemoteSensors() {
 
   const fetchRemoteLogs = (silent = false) => {
     if (!silent) setLoading(true);
-    fetch(`${API_BASE_URL}/api/logs?limit=1000`)
+    fetch(`${API_BASE_URL}/api/logs?limit=1000&t=${Date.now()}`)
       .then(res => res.json())
       .then(data => {
         const filtered = data.filter(isRemoteLog);
@@ -247,16 +247,27 @@ export default function RemoteSensors() {
                           <button
                             onClick={async () => {
                               if (!confirm(`Permanently remove all logs and history for "${h.host}"?`)) return;
-                              const token = localStorage.getItem('token');
-                              await fetch(`${API_BASE_URL}/api/logs/purge`, {
-                                method: 'POST',
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                  'Authorization': `Bearer ${token}`
-                                },
-                                body: JSON.stringify({ hostname: h.host })
-                              });
-                              setActiveHosts(prev => prev.filter(a => a.host !== h.host));
+                              try {
+                                const token = localStorage.getItem('token');
+                                const res = await fetch(`${API_BASE_URL}/api/logs/purge`, {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                  },
+                                  body: JSON.stringify({ hostname: h.host })
+                                });
+                                
+                                if (!res.ok) {
+                                  const error = await res.json();
+                                  alert(`Removal failed: ${error.detail || 'Unknown error'}`);
+                                  return;
+                                }
+                                
+                                setActiveHosts(prev => prev.filter(a => a.host !== h.host));
+                              } catch (err) {
+                                alert(`Network error: ${err.message}`);
+                              }
                             }}
                             className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest bg-soc-critical/5 border border-soc-critical/20 text-soc-critical/60 rounded-lg hover:bg-soc-critical hover:text-white transition-all"
                           >
@@ -279,16 +290,27 @@ export default function RemoteSensors() {
                             <button
                               onClick={async () => {
                                 if (!confirm(`Permanently remove all logs and history for "${h.host}"?`)) return;
-                                const token = localStorage.getItem('token');
-                                await fetch(`${API_BASE_URL}/api/logs/purge`, {
-                                  method: 'POST',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
-                                  },
-                                  body: JSON.stringify({ hostname: h.host })
-                                });
-                                setActiveHosts(prev => prev.filter(a => a.host !== h.host));
+                                try {
+                                  const token = localStorage.getItem('token');
+                                  const res = await fetch(`${API_BASE_URL}/api/logs/purge`, {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Authorization': `Bearer ${token}`
+                                    },
+                                    body: JSON.stringify({ hostname: h.host })
+                                  });
+                                  
+                                  if (!res.ok) {
+                                    const error = await res.json();
+                                    alert(`Removal failed: ${error.detail || 'Unknown error'}`);
+                                    return;
+                                  }
+                                  
+                                  setActiveHosts(prev => prev.filter(a => a.host !== h.host));
+                                } catch (err) {
+                                  alert(`Network error: ${err.message}`);
+                                }
                               }}
                               className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest bg-soc-critical/5 border border-soc-critical/20 text-soc-critical/60 rounded-lg hover:bg-soc-critical hover:text-white transition-all"
                             >
