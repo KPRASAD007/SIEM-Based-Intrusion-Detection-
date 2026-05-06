@@ -312,18 +312,18 @@ export default function RemoteSensors() {
                             <>
                               <p className="text-[9px] text-soc-muted uppercase tracking-widest mb-2 opacity-60">▶ RECOMMENDED (works in all PS sessions):</p>
                               <code id="deploy-cmd-1" className="text-soc-secondary break-all leading-relaxed block pr-14 mb-6">
-                                {`$env:SIEM_IP="${siemIp}"; iwr -useb "http://${siemIp}:8080/api/download/agent" | iex`}
+                                {`$env:SIEM_IP="${siemIp}"; iwr -useb "${API_BASE_URL}/api/download/agent" | iex`}
                               </code>
                               <p className="text-[9px] text-soc-muted uppercase tracking-widest mb-2 opacity-60">▶ ALTERNATE (same session only):</p>
                               <code id="deploy-cmd-2" className="text-soc-muted/60 break-all leading-relaxed block pr-14 text-xs">
-                                {`$s="${siemIp}"; iwr -useb "http://$s:8080/api/download/agent" | iex`}
+                                {`$s="${siemIp}"; iwr -useb "${API_BASE_URL}/api/download/agent" | iex`}
                               </code>
                             </>
                           )}
                           <button
                             onClick={() => {
                               const ip = siemIp || window.location.hostname;
-                              const cmd = `$env:SIEM_IP="${ip}"; iwr -useb "http://${ip}:8080/api/download/agent" | iex`;
+                              const cmd = `$env:SIEM_IP="${ip}"; iwr -useb "${API_BASE_URL}/api/download/agent" | iex`;
                               navigator.clipboard.writeText(cmd);
                               const btn = document.getElementById('copy-btn-provision');
                               if (btn) { btn.textContent = '✓ COPIED!'; btn.style.color = '#22c55e'; setTimeout(() => { btn.textContent = 'COPY'; btn.style.color = ''; }, 2000); }
