@@ -262,7 +262,7 @@ export default function LogManagement() {
                              if (!selectedLog.ip_address) return;
                              setEnriching(true);
                              try {
-                                const res = await fetch(`http://${window.location.hostname}:8080/api/intel/lookup/${encodeURIComponent(selectedLog.ip_address)}`);
+                                const res = await fetch(`${API_BASE_URL}/api/intel/lookup/${encodeURIComponent(selectedLog.ip_address)}`);
                                 if (res.ok) setIntel(await res.json());
                              } catch(err) { console.error(err); }
                              setEnriching(false);

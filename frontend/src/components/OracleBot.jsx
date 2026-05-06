@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Terminal, Send, Hexagon, Loader2, ShieldAlert } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export default function OracleBot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -40,7 +41,7 @@ export default function OracleBot() {
     setLoading(true);
 
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/oracle/chat`, {
+      const res = await fetch(`${API_BASE_URL}/api/oracle/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -83,7 +84,7 @@ export default function OracleBot() {
           </div>
           
           <img 
-            src={`http://${window.location.hostname}:8080/api/download/vanguard_logo.png?v=3.1`} 
+            src={`${API_BASE_URL}/api/download/vanguard_logo.png?v=3.1`} 
             alt="Vanguard AI" 
             className={`w-[70%] h-[70%] object-contain absolute transition-all duration-1000 z-10 ${loading ? 'scale-110 brightness-[1.5] animate-pulse' : 'scale-100 brightness-100 opacity-80'}`}
           />
@@ -123,7 +124,7 @@ export default function OracleBot() {
             <div className="flex items-center space-x-3">
              <div className="w-10 h-10 relative overflow-hidden flex items-center justify-center">
                 <img 
-                  src={`http://${window.location.hostname}:8080/api/download/vanguard_logo.png?v=3.1`} 
+                  src={`${API_BASE_URL}/api/download/vanguard_logo.png?v=3.1`} 
                   alt="V" 
                   className="w-full h-full object-contain animate-pulse"
                 />
