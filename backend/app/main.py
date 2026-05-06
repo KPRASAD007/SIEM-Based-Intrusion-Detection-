@@ -125,6 +125,38 @@ async def system_info():
 
     return ips
 
+@app.get("/api/debug/db-check")
+async def db_check():
+    """Diagnostic endpoint to verify environment setup."""
+    from .database import MONGO_URL, DB_NAME, db_instance
+    
+    # Mask URL for safety
+    safe_url = "NOT_SET"
+    if MONGO_URL:
+        if "@" in MONGO_URL:
+            safe_url = "mongodb://****:****@" + MONGO_URL.split("@")[1]
+        else:
+            safe_url = MONGO_URL[:15] + "..."
+            
+    try:
+        if db_instance.client:
+            await db_instance.client.admin.command('ping')
+            db_status = "CONNECTED"
+        else:
+            db_status = "NOT_INITIALIZED"
+    except Exception as e:
+        db_status = f"ERROR: {str(e)}"
+
+    return {
+        "status": "diagnostic_mode",
+        "db_status": db_status,
+        "env_check": {
+            "MONGO_URL_SET": MONGO_URL is not None and "localhost" not in MONGO_URL,
+            "MONGO_URL_PREVIEW": safe_url,
+            "DB_NAME": DB_NAME
+        }
+    }
+
 @app.get("/api/debug/seed")
 async def manual_seed(db=Depends(get_db)):
     if not db:
