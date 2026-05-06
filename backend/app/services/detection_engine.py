@@ -29,13 +29,13 @@ class DetectionEngine:
             # Keep only last 60 seconds
             self.failed_logins[source] = [t for t in self.failed_logins[source] if now - t <= 60]
             
-            # Exactly 5 failures? Trigger Alert! (We cap it at 5 so it doesn't spam alerts for every 6th, 7th fail in the window)
-            if len(self.failed_logins[source]) == 5:
+            # Exactly 4 failures? Trigger Alert! (We cap it at 4 so it doesn't spam alerts for every subsequent fail in the window)
+            if len(self.failed_logins[source]) == 4:
                 matched_rules.append({
                     "_id": "virtual_brute_force",
-                    "name": "SIEM: Windows RDP/Local Brute Force",
-                    "description": "5+ failed logon attempts (Event 4625) within 60 seconds.",
-                    "severity": "high",
+                    "name": "SIEM: Active Brute Force Detected",
+                    "description": "4+ failed logon attempts (Event 4625) within 60 seconds. High risk of credential compromise.",
+                    "severity": "critical",
                     "mitre_attack_id": "T1110.001",
                     "is_active": True
                 })
