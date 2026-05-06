@@ -17,6 +17,8 @@ export default function RulesEngine() {
   const [seeding, setSeeding] = useState(false);
 
   const token = localStorage.getItem('siem_token');
+  const userRole = localStorage.getItem('siem_role');
+  const isAdmin = userRole === 'admin';
 
   useEffect(() => {
     fetchRules();
@@ -114,27 +116,29 @@ export default function RulesEngine() {
            </h2>
            <p className="text-[10px] font-bold text-soc-muted tracking-[0.4em] mt-3">MANAGEMENT & ORCHESTRATION OF ADVERSARIAL SIGNAL LOGIC</p>
         </div>
-        <div className="flex space-x-4 self-start">
-           <button 
-             onClick={seedRules}
-             disabled={seeding}
-             className="px-6 py-3.5 bg-soc-bg border-2 border-soc-border text-soc-primary hover:border-soc-primary transition-all text-xs font-black uppercase tracking-widest italic flex items-center shadow-xl disabled:opacity-50"
-           >
-             <CheckCircle size={18} className="mr-2" /> {seeding ? 'SEEDING...' : 'RESTORE_DEFAULTS'}
-           </button>
-           <button 
-             onClick={() => setShowSigmaModal(true)}
-             className="px-6 py-3.5 bg-soc-bg border-2 border-soc-border text-soc-muted hover:border-soc-primary hover:text-white transition-all text-xs font-black uppercase tracking-widest italic flex items-center shadow-xl"
-           >
-             <FileText size={18} className="mr-2" /> IMPORT_SIGMA
-           </button>
-           <button 
-             onClick={() => setShowModal(true)}
-             className="px-6 py-3.5 bg-soc-primary text-soc-bg rounded-xl hover:bg-white transition-all text-xs font-black uppercase tracking-widest shadow-lg italic flex items-center"
-           >
-             <Plus size={18} className="mr-2" /> NEW_RULE
-           </button>
-        </div>
+        {isAdmin && (
+          <div className="flex space-x-4 self-start">
+             <button 
+               onClick={seedRules}
+               disabled={seeding}
+               className="px-6 py-3.5 bg-soc-bg border-2 border-soc-border text-soc-primary hover:border-soc-primary transition-all text-xs font-black uppercase tracking-widest italic flex items-center shadow-xl disabled:opacity-50"
+             >
+               <CheckCircle size={18} className="mr-2" /> {seeding ? 'SEEDING...' : 'RESTORE_DEFAULTS'}
+             </button>
+             <button 
+               onClick={() => setShowSigmaModal(true)}
+               className="px-6 py-3.5 bg-soc-bg border-2 border-soc-border text-soc-muted hover:border-soc-primary hover:text-white transition-all text-xs font-black uppercase tracking-widest italic flex items-center shadow-xl"
+             >
+               <FileText size={18} className="mr-2" /> IMPORT_SIGMA
+             </button>
+             <button 
+               onClick={() => setShowModal(true)}
+               className="px-6 py-3.5 bg-soc-primary text-soc-bg rounded-xl hover:bg-white transition-all text-xs font-black uppercase tracking-widest shadow-lg italic flex items-center"
+             >
+               <Plus size={18} className="mr-2" /> NEW_RULE
+             </button>
+          </div>
+        )}
       </div>
 
       <div className="bg-soc-panel/40 backdrop-blur-xl border-2 border-soc-border rounded-[2rem] shadow-2xl overflow-hidden relative">
@@ -177,17 +181,23 @@ export default function RulesEngine() {
                       </div>
                     </td>
                     <td className="px-8 py-5">
-                      <button 
-                        onClick={(e) => toggleRule(rule.id, e)} 
-                        className={`flex items-center px-4 py-1.5 rounded-xl text-[9px] font-black transition-all border-2 uppercase tracking-widest italic
-                          ${rule.is_active ? 'bg-soc-primary/10 text-soc-primary border-soc-primary/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-soc-bg border-soc-border text-soc-muted'}`}
-                      >
-                        {rule.is_active ? (
-                          <><CheckCircle size={14} className="mr-2" /> LIVE_SYNC</>
-                        ) : (
-                          <><XCircle size={14} className="mr-2" /> OFFLINE</>
-                        )}
-                      </button>
+                      {isAdmin ? (
+                        <button 
+                          onClick={(e) => toggleRule(rule.id, e)} 
+                          className={`flex items-center px-4 py-1.5 rounded-xl text-[9px] font-black transition-all border-2 uppercase tracking-widest italic
+                            ${rule.is_active ? 'bg-soc-primary/10 text-soc-primary border-soc-primary/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]' : 'bg-soc-bg border-soc-border text-soc-muted'}`}
+                        >
+                          {rule.is_active ? (
+                            <><CheckCircle size={14} className="mr-2" /> LIVE_SYNC</>
+                          ) : (
+                            <><XCircle size={14} className="mr-2" /> OFFLINE</>
+                          )}
+                        </button>
+                      ) : (
+                        <span className={`flex items-center px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest italic border-2 ${rule.is_active ? 'text-soc-primary border-soc-primary/30' : 'text-soc-muted border-soc-border'}`}>
+                           {rule.is_active ? 'ACTIVE' : 'DISABLED'}
+                        </span>
+                      )}
                     </td>
                     <td className="px-8 py-5">
                       <div className="font-black text-white italic text-base tracking-tight group-hover:text-soc-primary transition-colors uppercase">{rule.name}</div>
@@ -208,9 +218,11 @@ export default function RulesEngine() {
                        </div>
                     </td>
                     <td className="px-8 py-5 text-right">
-                      <button onClick={(e) => deleteRule(rule.id, e)} className="p-3 text-soc-muted hover:text-white hover:bg-soc-critical bg-soc-bg/50 rounded-xl transition-all border border-soc-border hover:border-soc-critical shadow-xl">
-                        <Trash2 size={18} />
-                      </button>
+                      {isAdmin && (
+                        <button onClick={(e) => deleteRule(rule.id, e)} className="p-3 text-soc-muted hover:text-white hover:bg-soc-critical bg-soc-bg/50 rounded-xl transition-all border border-soc-border hover:border-soc-critical shadow-xl">
+                          <Trash2 size={18} />
+                        </button>
+                      )}
                     </td>
                   </tr>
                   {expandedRule === rule.id && (
