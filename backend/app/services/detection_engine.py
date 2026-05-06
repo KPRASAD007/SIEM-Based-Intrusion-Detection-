@@ -40,6 +40,16 @@ class DetectionEngine:
                     "is_active": True
                 })
 
+        if str(log.get("event_id")) == "1102":
+            matched_rules.append({
+                "_id": "virtual_log_cleared",
+                "name": "SIEM: Audit Log Cleared (Anti-Forensics)",
+                "description": "The Windows Security Log was cleared. This is a high-confidence indicator of attacker activity attempting to hide tracks.",
+                "severity": "critical",
+                "mitre_attack_id": "T1070.001",
+                "is_active": True
+            })
+
         for rule in rules:
 
             if self._check_condition(log, rule):
