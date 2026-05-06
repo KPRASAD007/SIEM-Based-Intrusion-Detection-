@@ -31,7 +31,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchStats();
-    const interval = setInterval(fetchStats, 30000); // Auto refresh every 30s
+    const interval = setInterval(fetchStats, 5000); // Faster refresh (5s) for real-time simulation
     return () => clearInterval(interval);
   }, []);
 
