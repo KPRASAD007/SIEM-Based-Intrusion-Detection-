@@ -53,8 +53,14 @@ async def toggle_rule(id: str, db=Depends(get_db), current_user: dict = Depends(
 
 @router.post("/seed")
 async def seed_rules(db=Depends(get_db), current_user: dict = Depends(get_current_user)):
-    if current_user.get("role") != "admin":
+    # Check if the collection is empty
+    rule_count = await db.rules.count_documents({})
+    
+    # If not empty, only Admins can reset/seed
+    if rule_count > 0 and current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Unauthorized: Only SOC Admins can reset the rule vault.")
+    
+    # Clear existing rules if any
     await db.rules.delete_many({})
     seeds = [
         {
