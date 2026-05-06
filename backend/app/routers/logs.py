@@ -47,6 +47,10 @@ async def purge_logs(request: Request, db=Depends(get_db), current_user: dict = 
     # Purge filtered data
     log_result = await db.logs.delete_many(query)
     
+    # Also clear the Kill-Switch (blocklist) for this host if specific hostname provided
+    if hostname:
+        await db.blocked_agents.delete_many({"hostname": reg})
+    
     # If it was a full wipe (no query), clear alerts and incidents too
     if not query:
         await db.alerts.delete_many({})
