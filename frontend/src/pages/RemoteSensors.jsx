@@ -234,26 +234,68 @@ export default function RemoteSensors() {
                     {/* Disconnect / Reconnect controls */}
                     <div className="flex gap-2 mt-2 pt-2 border-t border-soc-border/30">
                       {isDisconnected ? (
-                        <button
-                          onClick={async () => {
-                            await fetch(`${API_BASE_URL}/api/logs/agents/${encodeURIComponent(h.host)}/reconnect`, { method: 'POST' });
-                            setActiveHosts(prev => prev.map(a => a.host === h.host ? { ...a, disconnected: false } : a));
-                          }}
-                          className="flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest bg-soc-secondary/10 border border-soc-secondary/30 text-soc-secondary rounded-lg hover:bg-soc-secondary hover:text-soc-bg transition-all"
-                        >
-                          ⚡ RECONNECT
-                        </button>
+                        <>
+                          <button
+                            onClick={async () => {
+                              await fetch(`${API_BASE_URL}/api/logs/agents/${encodeURIComponent(h.host)}/reconnect`, { method: 'POST' });
+                              setActiveHosts(prev => prev.map(a => a.host === h.host ? { ...a, disconnected: false } : a));
+                            }}
+                            className="flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest bg-soc-secondary/10 border border-soc-secondary/30 text-soc-secondary rounded-lg hover:bg-soc-secondary hover:text-soc-bg transition-all"
+                          >
+                            ⚡ RECONNECT
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!confirm(`Permanently remove all logs and history for "${h.host}"?`)) return;
+                              const token = localStorage.getItem('token');
+                              await fetch(`${API_BASE_URL}/api/logs/purge`, {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({ hostname: h.host })
+                              });
+                              setActiveHosts(prev => prev.filter(a => a.host !== h.host));
+                            }}
+                            className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest bg-soc-critical/5 border border-soc-critical/20 text-soc-critical/60 rounded-lg hover:bg-soc-critical hover:text-white transition-all"
+                          >
+                            ✕ REMOVE
+                          </button>
+                        </>
                       ) : (
-                        <button
-                          onClick={async () => {
-                            if (!confirm(`Disconnect agent "${h.host}"? The agent process on that machine will be terminated.`)) return;
-                            await fetch(`${API_BASE_URL}/api/logs/agents/${encodeURIComponent(h.host)}`, { method: 'DELETE' });
-                            setActiveHosts(prev => prev.map(a => a.host === h.host ? { ...a, disconnected: true } : a));
-                          }}
-                          className="flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest bg-soc-critical/10 border border-soc-critical/30 text-soc-critical rounded-lg hover:bg-soc-critical hover:text-white transition-all"
-                        >
-                          ✕ DISCONNECT
-                        </button>
+                        <>
+                          <button
+                            onClick={async () => {
+                              if (!confirm(`Disconnect agent "${h.host}"? The agent process on that machine will be terminated.`)) return;
+                              await fetch(`${API_BASE_URL}/api/logs/agents/${encodeURIComponent(h.host)}`, { method: 'DELETE' });
+                              setActiveHosts(prev => prev.map(a => a.host === h.host ? { ...a, disconnected: true } : a));
+                            }}
+                            className="flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest bg-soc-critical/10 border border-soc-critical/30 text-soc-critical rounded-lg hover:bg-soc-critical hover:text-white transition-all"
+                          >
+                            ✕ DISCONNECT
+                          </button>
+                          {isOffline && (
+                            <button
+                              onClick={async () => {
+                                if (!confirm(`Permanently remove all logs and history for "${h.host}"?`)) return;
+                                const token = localStorage.getItem('token');
+                                await fetch(`${API_BASE_URL}/api/logs/purge`, {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                  },
+                                  body: JSON.stringify({ hostname: h.host })
+                                });
+                                setActiveHosts(prev => prev.filter(a => a.host !== h.host));
+                              }}
+                              className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest bg-soc-critical/5 border border-soc-critical/20 text-soc-critical/60 rounded-lg hover:bg-soc-critical hover:text-white transition-all"
+                            >
+                              ✕ REMOVE
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
