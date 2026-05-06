@@ -30,7 +30,13 @@ async def purge_logs(request: Request, db=Depends(get_db), current_user: dict = 
     
     query = {}
     if hostname:
-        query["details.host"] = hostname
+        import re
+        # Use case-insensitive regex to match hostname across different casings
+        reg = re.compile(f"^{re.escape(hostname)}$", re.IGNORECASE)
+        query["$or"] = [
+            {"details.host": reg},
+            {"ip_address": hostname}
+        ]
     if min_severity:
         query["severity"] = min_severity
     if older_than_days:
