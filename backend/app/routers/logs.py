@@ -181,10 +181,14 @@ async def create_log(log: LogModel, background_tasks: BackgroundTasks, db=Depend
     # The agent script checks for this and exits cleanly.
     host = log_dict.get("details", {}).get("host") or ""
     if host:
-        blocked = await db.blocked_agents.find_one({"hostname": host})
+        import re
+        reg = re.compile(f"^{re.escape(host)}$", re.IGNORECASE)
+        blocked = await db.blocked_agents.find_one({"hostname": reg})
         if blocked:
-            print(f"KILL-SWITCH: Rejected log from blocked agent '{host}'")
-            raise HTTPException(status_code=410, detail=f"AGENT_TERMINATED: {host} has been disconnected by SIEM operator.")
+            # Auto-clear the block after sending the signal once, so it can "connect back normally" later
+            await db.blocked_agents.delete_many({"hostname": reg})
+            print(f"KILL-SWITCH: Signal sent to '{host}'. Block auto-cleared for next session.")
+            raise HTTPException(status_code=410, detail=f"AGENT_TERMINATED: {host} session ended by operator.")
     # ──────────────────────────────────────────────────────────────────────────
 
     if not isinstance(log_dict.get("timestamp"), datetime):
