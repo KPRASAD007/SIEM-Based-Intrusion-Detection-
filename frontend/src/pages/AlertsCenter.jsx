@@ -40,10 +40,23 @@ export default function AlertsCenter() {
         }
       });
       if (res.ok) {
-        setAllAlerts(prev => prev.map(a => (a.id === id || a._id === id) ? { ...a, status: newStatus } : a));
-        if (investigatingAlert?.id === id || investigatingAlert?._id === id) setInvestigatingAlert(null);
+        // Use a more robust comparison that handles both 'id' and '_id' as strings
+        setAllAlerts(prev => prev.map(a => {
+          const aId = String(a.id || a._id || '');
+          const targetId = String(id || '');
+          if (aId === targetId) {
+            return { ...a, status: newStatus };
+          }
+          return a;
+        }));
+        
+        if (investigatingAlert) {
+           const invId = String(investigatingAlert.id || investigatingAlert._id || '');
+           if (invId === String(id)) setInvestigatingAlert(null);
+        }
+        console.log(`SUCCESS: Alert ${id} resolved.`);
       } else {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
         console.error("Resolve failed:", err);
         alert(`Resolution failed: ${err.detail || 'Access Denied'}`);
       }
