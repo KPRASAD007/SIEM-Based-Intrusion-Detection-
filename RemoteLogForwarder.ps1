@@ -102,7 +102,7 @@ function Stream-Logs {
         $Payload = @{
             event_id = $EventId
             process_name = if ($EventId -eq "4688") { $ParsedData["NewProcessName"] -replace '.*\\', '' } else { "System" }
-            user = if ($EventId -eq "4624") { $ParsedData["TargetUserName"] } else { $ParsedData["SubjectUserName"] }
+            user = if ($EventId -eq "4624" -or $EventId -eq "4625") { $ParsedData["TargetUserName"] } else { $ParsedData["SubjectUserName"] }
             ip_address = if ($ParsedData["IpAddress"] -and $ParsedData["IpAddress"] -ne "-") { $ParsedData["IpAddress"] } else { $Hostname }
             command_line = if ($EventId -eq "4688") { $ParsedData["CommandLine"] } else { "" }
             event_type = if ($EventId -eq "4688") { "Process Execution" } elseif ($EventId -eq "4624") { "Successful Logon" } elseif ($EventId -eq "4625") { "Failed Logon" } else { "Logon" }
