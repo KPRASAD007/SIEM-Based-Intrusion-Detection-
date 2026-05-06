@@ -249,7 +249,6 @@ function App() {
 
 
   return (
-  return (
     <Router>
       <div className="flex h-screen bg-soc-bg text-soc-text selection:bg-soc-primary selection:text-black">
         
