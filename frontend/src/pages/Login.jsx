@@ -62,8 +62,14 @@ export default function Login({ onLogin }) {
 
       <div className="w-full max-w-md z-10">
         <div className="text-center mb-10">
-          <div className="w-20 h-20 mx-auto mb-6 bg-soc-panel border border-soc-border rounded-2xl flex items-center justify-center shadow-2xl">
-            <Shield size={40} className="text-soc-primary" />
+          <div className="w-24 h-24 mx-auto mb-6 bg-soc-panel border border-soc-border rounded-3xl flex items-center justify-center shadow-2xl p-4 overflow-hidden group">
+            <img 
+              src={logoUrl} 
+              alt="CyberDetect" 
+              className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
+              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
+            />
+            <Shield size={48} className="text-soc-primary hidden" />
           </div>
           <h1 className="text-3xl font-black text-white tracking-tight uppercase italic">
             CYBER<span className="text-soc-primary">DETECT</span>_LAB

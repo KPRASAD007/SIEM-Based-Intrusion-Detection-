@@ -254,8 +254,10 @@ function App() {
         
         {/* Sidebar */}
         <div className="w-20 hover:w-64 bg-soc-panel border-r border-soc-border transition-all duration-500 ease-in-out z-50 flex flex-col group/sidebar">
-          <div className="h-20 flex items-center px-6 overflow-hidden">
-            <Shield size={32} className="text-soc-primary shrink-0" />
+          <div className="h-24 flex items-center px-6 overflow-hidden">
+            <div className="w-10 h-10 shrink-0 bg-soc-bg border border-soc-border rounded-lg flex items-center justify-center p-1.5 overflow-hidden">
+               <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" onError={(e) => e.target.style.display = 'none'} />
+            </div>
             <span className="ml-4 font-black text-lg tracking-tighter uppercase italic whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity">
               CYBER<span className="text-soc-primary">DETECT</span>
             </span>

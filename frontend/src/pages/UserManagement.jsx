@@ -87,21 +87,20 @@ export default function UserManagement() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b-2 border-soc-primary/20 pb-8 relative z-10">
-        <div className="absolute -bottom-[2px] left-0 w-32 h-[2px] bg-soc-primary shadow-[0_0_15px_rgba(0,243,255,0.8)]"></div>
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-soc-border pb-8">
         <div>
-           <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-soc-primary to-soc-bg tracking-[0.2em] uppercase italic flex items-center">
-             <Users className="mr-4 text-soc-primary drop-shadow-[0_0_10px_rgba(0,243,255,0.8)]" size={36} /> OPERATOR_MANAGEMENT
+           <h2 className="text-3xl font-black text-white tracking-tight uppercase italic flex items-center">
+             <Users className="mr-4 text-soc-primary" size={32} /> TEAM_OPERATIONS
            </h2>
-           <p className="text-[10px] font-bold text-soc-secondary tracking-[0.4em] mt-3 flex items-center italic">
-             <span className="w-2 h-2 bg-soc-primary rounded-full inline-block mr-2 animate-pulse"></span> SOC IDENTITY AND ACCESS CONTROL
+           <p className="text-[10px] font-bold text-soc-muted tracking-[0.4em] mt-2 flex items-center uppercase opacity-60">
+             Identity and Access Governance
            </p>
         </div>
         <button 
           onClick={() => setShowAddModal(true)}
-          className="flex items-center px-8 py-4 bg-soc-primary/10 border-2 border-soc-primary/30 rounded-2xl hover:bg-soc-primary hover:text-soc-bg transition-all text-xs font-black uppercase tracking-widest shadow-[0_0_30px_rgba(0,243,255,0.2)] group"
+          className="flex items-center px-6 py-3 bg-soc-primary text-black rounded-xl hover:bg-white transition-all text-[10px] font-black uppercase tracking-widest shadow-lg"
         >
-          <UserPlus size={16} className="mr-3 group-hover:scale-110 transition-transform" /> Commission_New_Operator
+          <UserPlus size={16} className="mr-3" /> Commission_Operator
         </button>
       </div>
 
@@ -182,57 +181,55 @@ export default function UserManagement() {
 
       {/* Add User Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[300] bg-soc-bg/95 backdrop-blur-3xl flex items-center justify-center p-4">
-           <div className="bg-soc-panel border-2 border-soc-primary/30 rounded-[3rem] shadow-[0_0_100px_rgba(0,243,255,0.2)] w-full max-w-xl overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-soc-primary to-transparent"></div>
-              
-              <div className="p-12">
-                 <div className="flex justify-between items-start mb-6">
+        <div className="fixed inset-0 z-[300] bg-soc-bg/80 backdrop-blur-xl flex items-center justify-center p-4">
+           <div className="bg-soc-panel border border-soc-border rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden relative">
+              <div className="p-10">
+                 <div className="flex justify-between items-start mb-10">
                     <div>
-                       <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">New_Operator_Commission</h3>
-                       <p className="text-[10px] text-soc-primary font-black uppercase tracking-[0.4em] mt-2 italic">ESTABLISHING VANGUARD CLEARANCE</p>
+                       <h3 className="text-2xl font-black text-white italic uppercase tracking-tight">New_Operator</h3>
+                       <p className="text-[10px] text-soc-muted font-bold uppercase tracking-[0.3em] mt-1 opacity-60">Identity Provisioning</p>
                     </div>
-                    <button onClick={() => setShowAddModal(false)} className="p-3 bg-soc-bg border border-soc-border rounded-2xl hover:border-soc-primary transition-all text-soc-muted">
+                    <button onClick={() => setShowAddModal(false)} className="p-2 text-soc-muted hover:text-white transition-all">
                        <X size={24} />
                     </button>
                  </div>
 
                  {modalError && (
-                    <div className="mb-6 bg-soc-critical/10 border-l-4 border-soc-critical p-4 rounded-xl flex items-center space-x-3 animate-in fade-in zoom-in duration-300">
-                       <AlertTriangle className="text-soc-critical shrink-0" size={20} />
-                       <p className="text-[10px] font-black text-soc-critical uppercase tracking-widest italic">{modalError}</p>
+                    <div className="mb-6 bg-soc-critical/10 border-l-4 border-soc-critical p-4 rounded-xl flex items-center space-x-3">
+                       <AlertTriangle className="text-soc-critical shrink-0" size={18} />
+                       <p className="text-[10px] font-bold text-soc-critical uppercase tracking-widest">{modalError}</p>
                     </div>
                  )}
 
-                 <form onSubmit={handleAddUser} className="space-y-8">
+                 <form onSubmit={handleAddUser} className="space-y-6">
                     <div className="space-y-2">
-                       <label className="text-[10px] font-black text-soc-muted uppercase tracking-widest">Operator Identity (Username)</label>
+                       <label className="text-[10px] font-black text-soc-muted uppercase tracking-widest px-1">Operator ID</label>
                        <input 
                          required
-                         className="w-full bg-soc-bg border-b-2 border-soc-border p-4 text-white font-black outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/20 italic"
-                         placeholder="ID_SEQUENCE"
+                         className="w-full bg-soc-bg border border-soc-border rounded-2xl p-4 text-white font-bold outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/20"
+                         placeholder="Username"
                          value={newUser.username}
                          onChange={e => setNewUser({...newUser, username: e.target.value})}
                        />
                     </div>
                     <div className="space-y-2">
-                       <label className="text-[10px] font-black text-soc-muted uppercase tracking-widest">Neural Password (Password)</label>
+                       <label className="text-[10px] font-black text-soc-muted uppercase tracking-widest px-1">Access Phrase</label>
                        <input 
                          required
                          type="password"
-                         className="w-full bg-soc-bg border-b-2 border-soc-border p-4 text-white font-black outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/20 italic tracking-widest"
+                         className="w-full bg-soc-bg border border-soc-border rounded-2xl p-4 text-white font-bold outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/20"
                          placeholder="••••••••"
                          value={newUser.password}
                          onChange={e => setNewUser({...newUser, password: e.target.value})}
                        />
                     </div>
                     <div className="space-y-2">
-                       <label className="text-[10px] font-black text-soc-muted uppercase tracking-widest">Comms Link (Email)</label>
+                       <label className="text-[10px] font-black text-soc-muted uppercase tracking-widest px-1">Comms Link</label>
                        <input 
                          required
                          type="email"
-                         className="w-full bg-soc-bg border-b-2 border-soc-border p-4 text-white font-black outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/20 italic"
-                         placeholder="ANALYST@SOC.NEXUS"
+                         className="w-full bg-soc-bg border border-soc-border rounded-2xl p-4 text-white font-bold outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/20"
+                         placeholder="email@soc.nexus"
                          value={newUser.alert_email}
                          onChange={e => setNewUser({...newUser, alert_email: e.target.value})}
                        />
@@ -240,9 +237,9 @@ export default function UserManagement() {
 
                     <button 
                       type="submit"
-                      className="w-full py-5 bg-soc-primary text-soc-bg font-black uppercase tracking-[0.4em] rounded-2xl shadow-[0_0_40px_rgba(0,243,255,0.3)] hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center italic"
+                      className="w-full py-4 bg-soc-primary text-black font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg hover:bg-white transition-all active:scale-95 flex items-center justify-center text-[10px]"
                     >
-                       <Lock size={18} className="mr-3" /> Commit_Identity_Sequence
+                       <Lock size={16} className="mr-3" /> Commit_Identity
                     </button>
                  </form>
               </div>

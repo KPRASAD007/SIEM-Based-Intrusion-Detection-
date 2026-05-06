@@ -64,38 +64,31 @@ export default function Landing() {
       <div className="absolute inset-0 bg-[linear-gradient(rgba(0,243,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none z-0"></div>
 
       {/* Hero Section */}
-      <div className="relative border-y border-soc-primary/20 py-20 overflow-hidden bg-[#050510]/40 backdrop-blur-3xl z-10 w-full rounded-[4rem] shadow-[0_0_100px_rgba(0,0,0,0.5),inset_0_0_50px_rgba(0,243,255,0.05)]">
-        {/* Rotating Tactical HUD Rings */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] border border-soc-primary/10 rounded-full animate-hud-rotate pointer-events-none"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] border border-soc-secondary/5 rounded-full animate-[hud-rotate_30s_linear_infinite_reverse] pointer-events-none"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-soc-primary/5 rounded-full blur-[120px] pointer-events-none mix-blend-screen animate-pulse-slow"></div>
-        
+      <div className="relative border border-soc-border py-24 overflow-hidden bg-soc-panel/40 backdrop-blur-3xl z-10 w-full rounded-[3rem] shadow-2xl">
         <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto space-y-10">
-           <div className="flex items-center space-x-4 bg-soc-bg/80 border border-soc-primary/30 p-2 pr-8 rounded-full shadow-[0_0_30px_rgba(0,243,255,0.1)]">
-              <div className="w-12 h-12 rounded-full bg-soc-primary/20 border border-soc-primary flex items-center justify-center animate-pulse">
-                 <Terminal size={22} className="text-soc-primary shadow-[0_0_10px_currentColor]" />
+           <div className="flex items-center space-x-4 bg-soc-bg border border-soc-border p-2 pr-8 rounded-full">
+              <div className="w-10 h-10 rounded-full bg-soc-primary/10 border border-soc-primary/30 flex items-center justify-center">
+                 <Terminal size={18} className="text-soc-primary" />
               </div>
-              <span className="font-mono text-[11px] text-soc-primary uppercase tracking-[0.4em] font-black">{typedText}<span className="inline-block w-3 h-4 bg-soc-primary animate-ping ml-1 opacity-80"></span></span>
+              <span className="font-mono text-[10px] text-soc-muted uppercase tracking-[0.3em] font-bold">{typedText}<span className="inline-block w-2 h-4 bg-soc-primary animate-pulse ml-1"></span></span>
            </div>
            
-           <h1 className="text-7xl md:text-9xl font-black text-white italic tracking-tighter uppercase leading-[0.8] animate-text-flicker">
-              CYBER<span className="text-transparent bg-clip-text bg-gradient-to-r from-soc-primary via-white to-soc-secondary">DETECT</span>
+           <h1 className="text-6xl md:text-8xl font-black text-white italic tracking-tighter uppercase leading-[0.8]">
+              CYBER<span className="text-soc-primary">DETECT</span>
               <br/>
-              <span className="text-4xl md:text-5xl opacity-40">LAB_SYSTEM_v2</span>
+              <span className="text-3xl md:text-4xl opacity-20">SYSTEM_v2</span>
            </h1>
 
-           
-           <p className="text-soc-muted text-sm tracking-[0.2em] uppercase font-mono max-w-3xl leading-relaxed">
-             Next-Gen Security Information & Event Management (SIEM). Architected for Real-Time Threat Hunting, Zero-Trust Telemetry Ingestion, and Automated AI Defenses.
+           <p className="text-soc-muted text-xs tracking-[0.2em] uppercase font-bold max-w-2xl leading-relaxed opacity-70">
+             Professional Security Information & Event Management. Engineered for Unified Threat Detection and Enterprise Telemetry Governance.
            </p>
 
-           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-8 pt-8">
-             <Link to="/alerts" className="group relative flex items-center justify-center px-12 py-5 bg-soc-primary/10 border-2 border-soc-primary text-soc-primary hover:bg-soc-primary hover:text-white text-sm font-black uppercase tracking-[0.2em] italic rounded hover:scale-105 transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:shadow-[0_0_50px_rgba(16,185,129,0.6)] overflow-hidden">
-               <span className="absolute w-[200%] h-[200%] bg-gradient-to-tr from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[spin_1.5s_linear_infinite] opacity-50 pointer-events-none"></span>
-               <Crosshair size={18} className="mr-3 relative z-10" /> <span className="relative z-10">Intercept Threats</span>
+           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6 pt-6">
+             <Link to="/alerts" className="flex items-center justify-center px-10 py-4 bg-soc-primary text-black text-[10px] font-black uppercase tracking-[0.2em] italic rounded-xl hover:bg-white transition-all shadow-lg">
+               <Crosshair size={16} className="mr-3" /> Monitor Threats
              </Link>
-             <Link to="/dashboard" className="group flex items-center justify-center px-12 py-5 bg-soc-bg border border-soc-border text-soc-muted hover:text-white text-sm font-black uppercase tracking-[0.2em] italic rounded hover:border-soc-secondary transition-all shadow-2xl">
-               <Activity size={18} className="mr-3 group-hover:text-soc-secondary group-hover:scale-125 transition-all" /> Enter Console
+             <Link to="/dashboard" className="flex items-center justify-center px-10 py-4 bg-soc-bg border border-soc-border text-soc-muted hover:text-white text-[10px] font-black uppercase tracking-[0.2em] italic rounded-xl transition-all">
+               <Activity size={16} className="mr-3" /> Enter Dashboard
              </Link>
            </div>
         </div>
