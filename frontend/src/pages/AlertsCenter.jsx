@@ -526,7 +526,7 @@ export default function AlertsCenter() {
                    NO_ATTACK_DETECTED
                  </button>
                  <button 
-                  onClick={() => handleStatusChange(investigatingAlert.id, 'resolved')}
+                  onClick={() => handleStatusChange(investigatingAlert.id || investigatingAlert._id, 'resolved')}
                   className="flex-1 md:flex-none px-10 py-3 bg-soc-primary text-soc-bg rounded-xl text-xs font-black uppercase tracking-widest hover:bg-soc-hacker transition-all italic shadow-[0_0_30px_rgba(16,185,129,0.25)] flex items-center justify-center"
                  >
                    <CheckCircle size={18} className="mr-2" />
