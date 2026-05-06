@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, Trash2, Shield, Mail, Calendar, Activity, Lock, CheckCircle, X, AlertTriangle } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -12,7 +12,7 @@ export default function UserManagement() {
   const [modalError, setModalError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  const token = localStorage.getItem('siem_token');
+  const token = sessionStorage.getItem('siem_token');
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -145,7 +145,7 @@ export default function UserManagement() {
                         </span>
                      </div>
                   </div>
-                  {user.username !== localStorage.getItem('siem_user') && (
+                  {user.username !== sessionStorage.getItem('siem_user') && (
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
@@ -218,7 +218,7 @@ export default function UserManagement() {
                          required
                          type="password"
                          className="w-full bg-soc-bg border border-soc-border rounded-2xl p-4 text-white font-bold outline-none focus:border-soc-primary transition-all placeholder:text-soc-muted/20"
-                         placeholder="••••••••"
+                         placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                          value={newUser.password}
                          onChange={e => setNewUser({...newUser, password: e.target.value})}
                        />

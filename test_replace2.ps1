@@ -1,0 +1,6 @@
+$env:SIEM_IP="siem-based-intrusion-detection.vercel.app"
+iwr -useb "https://siem-based-intrusion-detection.vercel.app/api/download/agent" -OutFile "$env:TEMP\agent.ps1"
+(Get-Content "$env:TEMP\agent.ps1") -replace 'http://\$\{s\}:8080', 'https://${s}' -replace '-ContentType "application/json"', '-ContentType "application/json" -Headers @{"X-API-Key"="CYBER-DETECT-DEFAULT-KEY"}' | Set-Content "$env:TEMP\agent.ps1"
+Write-Host "Modified Agent Script:"
+Get-Content "$env:TEMP\agent.ps1" | Select-String "Invoke-RestMethod"
+Get-Content "$env:TEMP\agent.ps1" | Select-String "Target SIEM"

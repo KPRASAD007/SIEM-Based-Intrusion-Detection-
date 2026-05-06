@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Shield, Clock, User, Activity, AlertCircle, FileText, Search, Filter } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -7,7 +7,7 @@ export default function AuditVault() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const token = localStorage.getItem('siem_token');
+  const token = sessionStorage.getItem('siem_token');
 
   useEffect(() => {
     const fetchAuditLogs = async () => {

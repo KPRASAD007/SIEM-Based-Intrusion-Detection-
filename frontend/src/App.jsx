@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+﻿import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, WS_BASE_URL } from './config';
 
@@ -41,10 +41,10 @@ function SidebarItem({ to, icon: Icon, label }) {
 
 function App() {
   const [liveAlerts, setLiveAlerts] = useState([]);
-  const [currentUser, setCurrentUser] = useState(localStorage.getItem('siem_user') || null);
-  const [userRole, setUserRole] = useState(localStorage.getItem('siem_role') || null);
-  const [authToken, setAuthToken] = useState(localStorage.getItem('siem_token') || null);
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('siem_token'));
+  const [currentUser, setCurrentUser] = useState(sessionStorage.getItem('siem_user') || null);
+  const [userRole, setUserRole] = useState(sessionStorage.getItem('siem_role') || null);
+  const [authToken, setAuthToken] = useState(sessionStorage.getItem('siem_token') || null);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!sessionStorage.getItem('siem_token'));
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [alertEmail, setAlertEmail] = useState('');
   const [savingEmail, setSavingEmail] = useState(false);
@@ -81,7 +81,7 @@ function App() {
           if (data.alert_email) setAlertEmail(data.alert_email);
           if (data.role) {
             setUserRole(data.role);
-            localStorage.setItem('siem_role', data.role);
+            sessionStorage.setItem('siem_role', data.role);
           }
         })
         .catch(err => console.error("Error fetching profile", err));
@@ -191,9 +191,9 @@ function App() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('siem_token');
-    localStorage.removeItem('siem_user');
-    localStorage.removeItem('siem_role');
+    sessionStorage.removeItem('siem_token');
+    sessionStorage.removeItem('siem_user');
+    sessionStorage.removeItem('siem_role');
     setIsAuthenticated(false);
     setCurrentUser(null);
     setUserRole(null);
@@ -234,9 +234,9 @@ function App() {
       setCurrentUser(username); 
       setUserRole(role);
       setAuthToken(token);
-      localStorage.setItem('siem_token', token);
-      localStorage.setItem('siem_user', username);
-      localStorage.setItem('siem_role', role);
+      sessionStorage.setItem('siem_token', token);
+      sessionStorage.setItem('siem_user', username);
+      sessionStorage.setItem('siem_role', role);
       setShowWelcome(true); 
     }} />;
   }

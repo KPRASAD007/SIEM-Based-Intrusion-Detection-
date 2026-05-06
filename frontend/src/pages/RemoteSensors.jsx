@@ -248,7 +248,7 @@ export default function RemoteSensors() {
                             onClick={async () => {
                               if (!confirm(`Permanently remove all logs and history for "${h.host}"?`)) return;
                               try {
-                                const token = localStorage.getItem('token');
+                                const token = sessionStorage.getItem('siem_token');
                                 const res = await fetch(`${API_BASE_URL}/api/logs/purge`, {
                                   method: 'POST',
                                   headers: {
@@ -291,7 +291,7 @@ export default function RemoteSensors() {
                               onClick={async () => {
                                 if (!confirm(`Permanently remove all logs and history for "${h.host}"?`)) return;
                                 try {
-                                  const token = localStorage.getItem('token');
+                                  const token = sessionStorage.getItem('siem_token');
                                   const res = await fetch(`${API_BASE_URL}/api/logs/purge`, {
                                     method: 'POST',
                                     headers: {

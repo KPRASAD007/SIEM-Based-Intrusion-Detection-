@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { ShieldAlert, CheckCircle, Clock, X, AlertTriangle, Activity, Lock, Search, Filter, Globe, Database, ShieldCheck, ShieldX, Zap, RefreshCw, Target, Scan } from 'lucide-react';
 import { API_BASE_URL, WS_BASE_URL } from '../config';
 
@@ -50,7 +50,7 @@ export default function AlertsCenter() {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const token = localStorage.getItem('siem_token');
+      const token = sessionStorage.getItem('siem_token');
       const res = await fetch(`${API_BASE_URL}/api/alerts/${id}/status?status=${newStatus}`, {
         method: 'PUT',
         headers: {
@@ -380,13 +380,13 @@ export default function AlertsCenter() {
                                       // Clean display for internal / Tailscale IPs
                                       <div className="space-y-2">
                                         <div className="flex items-center gap-2">
-                                          <span className="text-lg font-black text-soc-secondary italic">🔒 Internal / VPN</span>
+                                          <span className="text-lg font-black text-soc-secondary italic">ðŸ”’ Internal / VPN</span>
                                         </div>
                                         <p className="text-[10px] text-soc-muted font-mono">Source: Tailscale Mesh VPN</p>
                                         <p className="text-[10px] text-soc-muted font-mono">Address Space: RFC1918 / Private</p>
                                         <p className="text-[10px] text-soc-muted font-mono">IP: {intelData.ip}</p>
                                         <div className="mt-2 px-3 py-1.5 bg-soc-secondary/10 border border-soc-secondary/30 rounded-lg">
-                                          <p className="text-[10px] text-soc-secondary font-black">⚡ This endpoint is on your trusted Tailscale network. Geolocation is not applicable for private addresses.</p>
+                                          <p className="text-[10px] text-soc-secondary font-black">âš¡ This endpoint is on your trusted Tailscale network. Geolocation is not applicable for private addresses.</p>
                                         </div>
                                       </div>
                                     ) : (
@@ -394,7 +394,7 @@ export default function AlertsCenter() {
                                       <>
                                         <p className="text-lg font-black text-white italic">
                                           {[intelData.geodata.city, intelData.geodata.region, intelData.geodata.country].filter(v => v && v !== 'Unknown').join(', ')}
-                                          {intelData.geodata.country_code && intelData.geodata.country_code !== '–' && (
+                                          {intelData.geodata.country_code && intelData.geodata.country_code !== 'â€“' && (
                                             <span className="ml-2 text-xs bg-soc-panel border border-soc-border px-2 py-0.5 rounded-lg not-italic font-mono">
                                               {intelData.geodata.country_code}
                                             </span>
@@ -411,7 +411,7 @@ export default function AlertsCenter() {
                                         )}
                                         {intelData.geodata.lat && (
                                           <p className="text-[10px] text-soc-muted font-mono">
-                                            📍 {intelData.geodata.lat?.toFixed(4)}, {intelData.geodata.lon?.toFixed(4)}
+                                            ðŸ“ {intelData.geodata.lat?.toFixed(4)}, {intelData.geodata.lon?.toFixed(4)}
                                           </p>
                                         )}
                                         {(intelData.geodata.is_proxy || intelData.geodata.is_hosting) && (

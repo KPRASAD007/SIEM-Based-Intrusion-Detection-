@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Settings, Plus, Trash2, Info, ChevronDown, ChevronRight, Activity, Target, CheckCircle, XCircle, FileText, X } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -16,8 +16,8 @@ export default function RulesEngine() {
   });
   const [seeding, setSeeding] = useState(false);
 
-  const token = localStorage.getItem('siem_token');
-  const userRole = localStorage.getItem('siem_role');
+  const token = sessionStorage.getItem('siem_token');
+  const userRole = sessionStorage.getItem('siem_role');
   const isAdmin = userRole === 'admin';
 
   useEffect(() => {
