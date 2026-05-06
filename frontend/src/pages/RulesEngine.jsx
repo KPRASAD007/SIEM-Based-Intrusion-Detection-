@@ -14,6 +14,9 @@ export default function RulesEngine() {
   const [newRule, setNewRule] = useState({
     name: '', description: '', field: 'process_name', operator: 'equals', value: '', severity: 'high', mitre_attack_id: 'T1000'
   });
+  const [seeding, setSeeding] = useState(false);
+
+  const token = localStorage.getItem('siem_token');
 
   useEffect(() => {
     fetchRules();
@@ -30,13 +33,19 @@ export default function RulesEngine() {
 
   const toggleRule = (id, e) => {
     e.stopPropagation();
-    fetch(`${API_BASE_URL}/api/rules/${id}/toggle`, { method: 'PUT' })
+    fetch(`${API_BASE_URL}/api/rules/${id}/toggle`, { 
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(() => fetchRules());
   };
 
   const deleteRule = (id, e) => {
     e.stopPropagation();
-    fetch(`${API_BASE_URL}/api/rules/${id}`, { method: 'DELETE' })
+    fetch(`${API_BASE_URL}/api/rules/${id}`, { 
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(() => fetchRules());
   };
 
@@ -44,7 +53,10 @@ export default function RulesEngine() {
     e.preventDefault();
     fetch(`${API_BASE_URL}/api/rules`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(newRule)
     }).then(() => {
       setShowModal(false);
@@ -56,7 +68,8 @@ export default function RulesEngine() {
     e.preventDefault();
     setImportingSigma(true);
     fetch(`${API_BASE_URL}/api/sigma/convert?rule_yaml=${encodeURIComponent(sigmaContent)}`, {
-      method: 'POST'
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
     }).then(res => res.json())
       .then(() => {
         setShowSigmaModal(false);
@@ -67,6 +80,21 @@ export default function RulesEngine() {
         console.error(err);
         setImportingSigma(false);
       });
+  };
+
+  const seedRules = () => {
+    if (!window.confirm("Restore default detection rules? This will append to your existing ruleset.")) return;
+    setSeeding(true);
+    fetch(`${API_BASE_URL}/api/rules/seed`, { 
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(() => {
+        fetchRules();
+        setSeeding(false);
+      })
+      .catch(() => setSeeding(false));
   };
   
   const toggleExpand = (id) => {
@@ -88,16 +116,23 @@ export default function RulesEngine() {
         </div>
         <div className="flex space-x-4 self-start">
            <button 
+             onClick={seedRules}
+             disabled={seeding}
+             className="px-6 py-3.5 bg-soc-bg border-2 border-soc-border text-soc-primary hover:border-soc-primary transition-all text-xs font-black uppercase tracking-widest italic flex items-center shadow-xl disabled:opacity-50"
+           >
+             <CheckCircle size={18} className="mr-2" /> {seeding ? 'SEEDING...' : 'RESTORE_DEFAULTS'}
+           </button>
+           <button 
              onClick={() => setShowSigmaModal(true)}
-             className="px-8 py-3.5 bg-soc-bg border-2 border-soc-border text-soc-muted hover:border-soc-primary hover:text-white transition-all text-xs font-black uppercase tracking-widest italic flex items-center shadow-xl"
+             className="px-6 py-3.5 bg-soc-bg border-2 border-soc-border text-soc-muted hover:border-soc-primary hover:text-white transition-all text-xs font-black uppercase tracking-widest italic flex items-center shadow-xl"
            >
              <FileText size={18} className="mr-2" /> IMPORT_SIGMA
            </button>
            <button 
              onClick={() => setShowModal(true)}
-             className="px-8 py-3.5 bg-soc-primary text-soc-bg rounded-xl hover:bg-soc-hacker transition-all text-xs font-black uppercase tracking-widest shadow-[0_0_30px_rgba(16,185,129,0.3)] italic flex items-center"
+             className="px-6 py-3.5 bg-soc-primary text-soc-bg rounded-xl hover:bg-white transition-all text-xs font-black uppercase tracking-widest shadow-lg italic flex items-center"
            >
-             <Plus size={18} className="mr-2" /> INITIALIZE_NEW_RULE
+             <Plus size={18} className="mr-2" /> NEW_RULE
            </button>
         </div>
       </div>
